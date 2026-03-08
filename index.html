@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>班表查詢與工作提醒系統</title>
+    <title>班表查詢與工作提醒系統_蔡宏和製作20260308</title>
     <style>
         :root {
             --primary: #4F46E5;
@@ -39,9 +39,10 @@
 
         h1 {
             text-align: center;
-            font-size: 1.5rem;
+            font-size: 1.35rem;
             margin-bottom: 20px;
             color: var(--primary);
+            line-height: 1.4;
         }
 
         .card {
@@ -88,7 +89,6 @@
             text-align: center;
         }
         
-        /* 模式切換按鈕樣式 */
         .toggle-group {
             display: flex;
             justify-content: center;
@@ -123,7 +123,6 @@
             font-size: 0.95rem;
         }
 
-        /* 班別顏色設定 */
         .shift-morn { background: var(--morn-color); color: var(--morn-text); }
         .shift-mid { background: var(--mid-color); color: var(--mid-text); }
         .shift-night { background: var(--night-color); color: var(--night-text); }
@@ -202,7 +201,6 @@
             display: block;
         }
 
-        /* 月曆表格樣式 */
         .calendar-table {
             width: 100%;
             border-collapse: collapse;
@@ -222,18 +220,31 @@
         }
 
         .calendar-today-row {
-            background-color: #FEF9C3; /* 淺黃色高亮選取日 */
+            background-color: #FEF9C3;
         }
         
         .table-container {
             overflow-x: auto;
+        }
+        
+        .setting-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .setting-grid label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            display: block;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📝 班表與工作查詢系統</h1>
+    <h1>📝 班表與工作查詢系統<br><span style="font-size: 1rem; color: var(--text-muted);">_蔡宏和製作20260308</span></h1>
 
     <div class="card date-picker-container" style="margin-bottom: 10px; box-shadow: none; padding: 0; background: transparent;">
         <button class="btn btn-icon" style="background: var(--card-bg); color: var(--primary);" onclick="changeDate(-1)">◀</button>
@@ -247,9 +258,9 @@
     </div>
 
     <div class="card">
-        <div class="card-title">👨‍💻 你的班表狀態 (<span id="myTeamTitle">C班</span>)</div>
+        <div class="card-title" style="justify-content: center;">👨‍💻 你的班表狀態</div>
         <div class="team-row" style="border: none; padding-bottom: 0;">
-            <span class="team-name" id="myTeamName">C班 蔡宏和</span>
+            <span class="team-name" id="myTeamName">載入中...</span>
             <span id="myShiftBadge" class="shift-badge">載入中...</span>
         </div>
     </div>
@@ -278,53 +289,89 @@
 
     <div class="card settings-panel" id="settingsPanel" style="margin-top: 15px;">
         <div class="card-title">系統設定 (自動儲存)</div>
-        <label>我的班別 (預設C班)：</label>
+        
+        <label style="font-weight:bold;">我的專屬班別：</label>
         <select id="setMyTeam">
             <option value="A">A班</option>
             <option value="B">B班</option>
-            <option value="C" selected>C班</option>
+            <option value="C">C班</option>
             <option value="D">D班</option>
         </select>
 
-        <label>基準日 (預設 2026-01-01)：</label>
+        <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
+
+        <label style="font-weight:bold;">基準日設定：</label>
         <input type="date" id="setBaseDate">
 
-        <label>A班 人員名稱：</label>
-        <input type="text" id="setTeamA">
-        
-        <label>B班 人員名稱：</label>
-        <input type="text" id="setTeamB">
-        
-        <label>C班 人員名稱：</label>
-        <input type="text" id="setTeamC">
-        
-        <label>D班 人員名稱：</label>
-        <input type="text" id="setTeamD">
+        <label style="font-weight:bold; display:block; margin-top:10px;">基準日當天各班狀態：</label>
+        <div class="setting-grid">
+            <div>
+                <label>A班 基準班別</label>
+                <select id="setTeamA_Shift">
+                    <option value="0">早班1</option><option value="1">早班2</option>
+                    <option value="2">中班1</option><option value="3">中班2</option>
+                    <option value="4">小休</option><option value="5">晚班1</option>
+                    <option value="6">晚班2</option><option value="7">大休</option>
+                </select>
+            </div>
+            <div>
+                <label>B班 基準班別</label>
+                <select id="setTeamB_Shift">
+                    <option value="0">早班1</option><option value="1">早班2</option>
+                    <option value="2">中班1</option><option value="3">中班2</option>
+                    <option value="4">小休</option><option value="5">晚班1</option>
+                    <option value="6">晚班2</option><option value="7">大休</option>
+                </select>
+            </div>
+            <div>
+                <label>C班 基準班別</label>
+                <select id="setTeamC_Shift">
+                    <option value="0">早班1</option><option value="1">早班2</option>
+                    <option value="2">中班1</option><option value="3">中班2</option>
+                    <option value="4">小休</option><option value="5">晚班1</option>
+                    <option value="6">晚班2</option><option value="7">大休</option>
+                </select>
+            </div>
+            <div>
+                <label>D班 基準班別</label>
+                <select id="setTeamD_Shift">
+                    <option value="0">早班1</option><option value="1">早班2</option>
+                    <option value="2">中班1</option><option value="3">中班2</option>
+                    <option value="4">小休</option><option value="5">晚班1</option>
+                    <option value="6">晚班2</option><option value="7">大休</option>
+                </select>
+            </div>
+        </div>
 
-        <button class="btn" onclick="saveSettings()">💾 儲存設定並重新計算</button>
+        <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
+
+        <label style="font-weight:bold;">各班人員名稱：</label>
+        <input type="text" id="setTeamA" placeholder="A班人員">
+        <input type="text" id="setTeamB" placeholder="B班人員">
+        <input type="text" id="setTeamC" placeholder="C班人員">
+        <input type="text" id="setTeamD" placeholder="D班人員">
+
+        <button class="btn" onclick="saveSettings()" style="margin-top: 10px;">💾 儲存設定並重新計算</button>
     </div>
 </div>
 
 <script>
-    // --- 系統預設資料與常數 ---
     const SHIFT_CYCLE = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
-    let isActualMode = true; // 預設改為實際出勤模式
+    let isActualMode = true;
     
-    // 更新為核對過後的正確 2026/01/01 基準狀態
     const defaultSettings = {
         baseDate: "2026-01-01",
         myTeam: "C",
         teams: {
-            "A": { name: "蘇明理", offset: 5 }, // 2026/01/01 是 晚班1
-            "B": { name: "林致漢", offset: 7 }, // 2026/01/01 是 大休
-            "C": { name: "蔡宏和", offset: 1 }, // 2026/01/01 是 早班2
-            "D": { name: "林明宗", offset: 3 }  // 2026/01/01 是 中班2
+            "A": { name: "蘇明理", offset: 5 }, 
+            "B": { name: "林致漢", offset: 7 }, 
+            "C": { name: "蔡宏和", offset: 1 }, 
+            "D": { name: "林明宗", offset: 3 }  
         }
     };
 
     let appSettings = JSON.parse(localStorage.getItem("shiftSettings")) || defaultSettings;
 
-    // --- 初始化執行 ---
     document.addEventListener("DOMContentLoaded", () => {
         const today = new Date();
         document.getElementById("queryDate").value = formatDateToYYYYMMDD(today);
@@ -333,7 +380,6 @@
         renderApp();
     });
 
-    // --- 切換模式功能 ---
     function setMode(mode) {
         isActualMode = mode;
         document.getElementById('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
@@ -341,18 +387,14 @@
         renderApp();
     }
 
-    // --- 實際出勤轉換邏輯 ---
     function applyShiftMapping(shiftText) {
-        if (!isActualMode) return shiftText; // 若為標準模式則不轉換
-        
+        if (!isActualMode) return shiftText; 
         if (shiftText === "小休") return "晚班1";
         if (shiftText === "晚班1") return "晚班2";
         if (shiftText === "晚班2") return "小休";
-        // 大休及早中班保持不變
         return shiftText;
     }
 
-    // --- 日期增減功能 ---
     function changeDate(days) {
         const dateInput = document.getElementById("queryDate");
         let currentDate = new Date(dateInput.value);
@@ -361,7 +403,6 @@
         renderApp();
     }
 
-    // --- 核心邏輯 ---
     function renderApp() {
         const queryDateStr = document.getElementById("queryDate").value;
         if (!queryDateStr) return;
@@ -376,17 +417,12 @@
         let myShiftText = "";
         let allTeamsHTML = "";
 
-        // 更新標題的班別代號
-        document.getElementById("myTeamTitle").innerText = myTeamId + "班";
-
-        // 1. 計算各班今日班別
         const teamIds = ["A", "B", "C", "D"];
         teamIds.forEach(id => {
             const team = appSettings.teams[id];
             let shiftIndex = (team.offset + diffDays) % 8;
             if (shiftIndex < 0) shiftIndex = (shiftIndex % 8 + 8) % 8; 
             
-            // 取得原始班別後，套用出勤轉換邏輯
             let logicalShiftText = SHIFT_CYCLE[shiftIndex];
             let shiftText = applyShiftMapping(logicalShiftText);
             
@@ -409,22 +445,16 @@
         });
         
         document.getElementById("allTeamsContainer").innerHTML = allTeamsHTML;
-
-        // 2. 計算工作提醒 (提醒邏輯依照你的需求，不受切換模式影響，因為都綁定早班或月份)
         renderTasks(targetDate, myTeamId, myShiftText);
-
-        // 3. 渲染當月班表
         renderMonthTable(targetDate, baseDate);
     }
 
     function renderTasks(date, myTeamId, myShiftText) {
         let tasks = [];
-        // 工作提醒以「早班」為主，不受晚休切換影響
         const isMorning = (myShiftText === "早班1" || myShiftText === "早班2");
         const dayOfMonth = date.getDate();
         const dayOfWeek = date.getDay(); 
 
-        // 例行早班任務
         if (isMorning) {
             if (dayOfMonth === 1) {
                 tasks.push("每月1日：MI檢查表要填儲槽計量表");
@@ -443,7 +473,6 @@
 
         const monthsElapsed = (date.getFullYear() - 2026) * 12 + date.getMonth();
         
-        // 月盤查量油取樣 (連兩個月)
         const invCycle = Math.floor(monthsElapsed / 2);
         const invTeams = ["D", "A", "B", "C"];
         const assignedInvTeam = invTeams[((invCycle % 4) + 4) % 4];
@@ -452,7 +481,6 @@
             tasks.push(`輪值月份：該月要月盤查量油取樣 (營業油槽，20日附近)`);
         }
 
-        // 全規範取樣 (單數月)
         if ((date.getMonth() + 1) % 2 !== 0) {
             const specCycle = Math.floor(monthsElapsed / 2);
             const specTeams = ["B", "C", "D", "A"];
@@ -463,7 +491,6 @@
             }
         }
 
-        // 渲染任務清單
         const taskListEl = document.getElementById("taskList");
         taskListEl.innerHTML = "";
         
@@ -509,7 +536,6 @@
                 let shiftIndex = (team.offset + diffDays) % 8;
                 if (shiftIndex < 0) shiftIndex = (shiftIndex % 8 + 8) % 8;
                 
-                // 套用出勤轉換邏輯
                 let logicalShiftText = SHIFT_CYCLE[shiftIndex];
                 let shiftText = applyShiftMapping(logicalShiftText);
                 
@@ -528,7 +554,6 @@
         document.getElementById("monthTable").innerHTML = tableHTML;
     }
 
-    // --- 輔助與設定功能 ---
     function getBadgeClass(shiftText) {
         if (shiftText.includes("早")) return "shift-morn";
         if (shiftText.includes("中")) return "shift-mid";
@@ -551,6 +576,12 @@
     function loadSettingsToForm() {
         document.getElementById("setBaseDate").value = appSettings.baseDate;
         document.getElementById("setMyTeam").value = appSettings.myTeam;
+        
+        document.getElementById("setTeamA_Shift").value = appSettings.teams["A"].offset;
+        document.getElementById("setTeamB_Shift").value = appSettings.teams["B"].offset;
+        document.getElementById("setTeamC_Shift").value = appSettings.teams["C"].offset;
+        document.getElementById("setTeamD_Shift").value = appSettings.teams["D"].offset;
+
         document.getElementById("setTeamA").value = appSettings.teams["A"].name;
         document.getElementById("setTeamB").value = appSettings.teams["B"].name;
         document.getElementById("setTeamC").value = appSettings.teams["C"].name;
@@ -560,6 +591,12 @@
     function saveSettings() {
         appSettings.baseDate = document.getElementById("setBaseDate").value;
         appSettings.myTeam = document.getElementById("setMyTeam").value;
+        
+        appSettings.teams["A"].offset = parseInt(document.getElementById("setTeamA_Shift").value);
+        appSettings.teams["B"].offset = parseInt(document.getElementById("setTeamB_Shift").value);
+        appSettings.teams["C"].offset = parseInt(document.getElementById("setTeamC_Shift").value);
+        appSettings.teams["D"].offset = parseInt(document.getElementById("setTeamD_Shift").value);
+
         appSettings.teams["A"].name = document.getElementById("setTeamA").value;
         appSettings.teams["B"].name = document.getElementById("setTeamB").value;
         appSettings.teams["C"].name = document.getElementById("setTeamC").value;
