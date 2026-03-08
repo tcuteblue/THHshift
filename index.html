@@ -39,7 +39,7 @@
 
         h1 {
             text-align: center;
-            font-size: 1.35rem;
+            font-size: 1.5rem; /* 放大標題 */
             margin-bottom: 20px;
             color: var(--primary);
             line-height: 1.4;
@@ -54,7 +54,7 @@
         }
 
         .card-title {
-            font-size: 1.1rem;
+            font-size: 1.25rem; /* 放大區塊標題 */
             font-weight: bold;
             margin-top: 0;
             margin-bottom: 15px;
@@ -77,7 +77,7 @@
             padding: 10px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 1.1rem; /* 放大輸入框文字 */
             width: 100%;
             box-sizing: border-box;
             margin-bottom: 10px;
@@ -98,13 +98,13 @@
 
         .btn-mode {
             flex: 1;
-            padding: 10px 0;
+            padding: 12px 0;
             border: 1px solid var(--primary);
             border-radius: 8px;
             background: transparent;
             color: var(--primary);
             font-weight: bold;
-            font-size: 1rem;
+            font-size: 1.1rem; /* 放大按鈕文字 */
             cursor: pointer;
             text-align: center;
             transition: all 0.2s;
@@ -120,7 +120,7 @@
             padding: 6px 12px;
             border-radius: 20px;
             font-weight: bold;
-            font-size: 0.95rem;
+            font-size: 1.1rem; /* 放大班別標籤文字 */
         }
 
         .shift-morn { background: var(--morn-color); color: var(--morn-text); }
@@ -140,7 +140,7 @@
         }
 
         .team-name {
-            font-size: 1.05rem;
+            font-size: 1.15rem; /* 放大各班人員名字 */
         }
 
         .task-list {
@@ -152,11 +152,12 @@
         .task-list li {
             background: #FEF2F2;
             color: #DC2626;
-            padding: 12px;
+            padding: 15px 12px;
             border-radius: 8px;
             margin-bottom: 10px;
-            font-size: 0.95rem;
+            font-size: 1.1rem; /* 放大任務提醒文字 */
             border-left: 4px solid #EF4444;
+            line-height: 1.5;
         }
         
         .task-list li.no-task {
@@ -169,9 +170,9 @@
             background: var(--primary);
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 12px 15px;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 1.1rem; /* 放大一般按鈕文字 */
             cursor: pointer;
             width: 100%;
             font-weight: bold;
@@ -182,7 +183,7 @@
             width: auto;
             flex-grow: 0;
             padding: 10px 15px;
-            font-size: 1.2rem;
+            font-size: 1.3rem; /* 放大箭頭 */
         }
 
         .btn-outline {
@@ -211,19 +212,20 @@
         .calendar-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85rem;
+            font-size: 0.95rem; /* 適度放大概覽表格文字 */
             text-align: center;
         }
         
         .calendar-table th, .calendar-table td {
             border: 1px solid var(--border-color);
-            padding: 8px 2px;
+            padding: 10px 2px;
         }
         
         .calendar-table th {
             background: #F3F4F6;
             font-weight: bold;
             color: var(--text-muted);
+            font-size: 1rem;
         }
 
         .calendar-today-row {
@@ -241,7 +243,7 @@
             margin-bottom: 10px;
         }
         .setting-grid label {
-            font-size: 0.9rem;
+            font-size: 1rem; /* 放大設定區標籤 */
             color: var(--text-muted);
             margin-bottom: 4px;
             display: block;
@@ -259,12 +261,12 @@
 <div class="container">
     <h1>
         📝 班表與工作查詢系統
-        <span style="display: block; font-size: 1rem; color: var(--text-muted); font-weight: normal; margin-top: 5px;">蔡宏和製作20260308</span>
+        <span style="display: block; font-size: 1.1rem; color: var(--text-muted); font-weight: normal; margin-top: 5px;">蔡宏和製作20260308</span>
     </h1>
 
     <div class="card date-picker-container" style="margin-bottom: 10px; box-shadow: none; padding: 0; background: transparent;">
         <button class="btn btn-icon" style="background: var(--card-bg); color: var(--primary);" onclick="changeDate(-1)">◀</button>
-        <input type="date" id="queryDate" style="margin-bottom: 0; height: 44px; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+        <input type="date" id="queryDate" style="margin-bottom: 0; height: 48px; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
         <button class="btn btn-icon" style="background: var(--card-bg); color: var(--primary);" onclick="changeDate(1)">▶</button>
     </div>
 
@@ -643,14 +645,10 @@
         toggleSettings();
     }
 
-    // 新增：恢復預設值功能
     function restoreDefaults() {
         if (confirm("確定要恢復原廠預設設定嗎？\n這將會清除您手動修改的基準日與領班名稱。")) {
-            // 深拷貝預設設定
             appSettings = JSON.parse(JSON.stringify(defaultSettings));
-            // 清除 localStorage 的自訂記錄
             localStorage.removeItem("shiftSettings");
-            // 更新畫面
             loadSettingsToForm();
             renderApp();
             alert("已成功恢復預設值！");
