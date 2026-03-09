@@ -563,7 +563,7 @@
         if (todayTasks.length === 0) htmlContent += `<li class="no-task">🎉 今日無特殊排程任務。</li>`;
         else todayTasks.forEach(task => htmlContent += `<li>📍 ${task}</li>`);
 
-        htmlContent += `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 15px 0 8px 0; font-weight: bold; color: #D97706; border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">🗓️ 本月輪值專案</li>`;
+        htmlContent += `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 15px 0 8px 0; font-weight: bold; color: #D97706; border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">🗓️ 本月輪值任務</li>`;
         
         if (monthTasks.length === 0) htmlContent += `<li class="no-task" style="background: #FFFBEB; color: #B45309; border-left-color: #F59E0B;">本月無輪值專案。</li>`;
         else monthTasks.forEach(task => htmlContent += `<li style="background: #FFFBEB; color: #B45309; border-left-color: #F59E0B;">📌 ${task}</li>`);
@@ -785,3 +785,4 @@
 
 </body>
 </html>
+
