@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>班表查詢與工作提醒系統 蔡宏和製作20260308</title>
-    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="班表查詢">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#4F46E5">
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     
@@ -323,6 +327,35 @@
             .calendar-today-row td:first-child {
                 background-color: #FEF9C3;
             }
+        }
+/* === 提升 App 質感的動畫與點擊回饋 === */
+        
+        /* 1. 按鈕的觸控回饋 (手指按下去時會稍微縮小，放開彈回) */
+        .btn:active, .btn-icon:active, .btn-mode:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+
+        /* 2. 定義任務列表的滑入動畫 */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 3. 將動畫套用到任務項目與卡片上 */
+        .task-list li {
+            animation: slideInUp 0.35s ease-out forwards;
+        }
+        
+        /* 讓不同區塊載入時有非常微小的浮現效果，更像原生讀取 */
+        .card {
+            animation: slideInUp 0.4s ease-out forwards;
         }
     </style>
 </head>
@@ -728,5 +761,6 @@
 
 </body>
 </html>
+
 
 
