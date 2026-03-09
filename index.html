@@ -1,794 +1,825 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="班表查詢">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#4F46E5">
-    
-    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="班表查詢">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#4F46E5">
+    
+    <link rel="manifest" href="manifest.json">
 
-    <title>班表查詢與工作提醒系統 蔡宏和製作20260308</title>
-    
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="apple-touch-icon" href="icon.png">
-    
-    <style>
-        /* 消除手機網頁預設的點擊反白閃爍 */
-        * {
-            -webkit-tap-highlight-color: transparent;
-        }
-        :root {
-            --primary: #4F46E5;
-            --bg-color: #F3F4F6;
-            --card-bg: #FFFFFF;
-            --text-main: #1F2937;
-            --text-muted: #6B7280;
-            --border-color: #E5E7EB;
-            --morn-color: #FEF3C7;
-            --morn-text: #D97706;
-            --mid-color: #DBEAFE;
-            --mid-text: #2563EB;
-            --night-color: #F3E8FF;
-            --night-text: #9333EA;
-            --rest-color: #F3F4F6;
-            --rest-text: #4B5563;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px 15px;
-            display: flex;
-            justify-content: center;
-        }
+    <title>班表查詢與工作提醒系統 蔡宏和製作20260308</title>
+    
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <style>
 
-        .container {
-            width: 100%;
-            max-width: 500px;
-        }
+        /* 消除手機網頁預設的點擊反白閃爍 */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+   
+        :root {
 
-        h1 {
-            text-align: center;
-            font-size: 1.35rem;
-            margin-bottom: 20px;
-            color: var(--primary);
-            line-height: 1.4;
-        }
+       /* 消除手機網頁預設的點擊反白閃爍，讓觸控更像原生 App */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
 
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            animation: slideInUp 0.4s ease-out forwards;
-        }
+            --primary: #4F46E5;
+            --bg-color: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+            --border-color: #E5E7EB;
+            --morn-color: #FEF3C7;
+            --morn-text: #D97706;
+            --mid-color: #DBEAFE;
+            --mid-text: #2563EB;
+            --night-color: #F3E8FF;
+            --night-text: #9333EA;
+            --rest-color: #F3F4F6;
+            --rest-text: #4B5563;
+        }
 
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-top: 0;
-            margin-bottom: 15px;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px 15px;
+            display: flex;
+            justify-content: center;
+        }
 
-        .date-picker-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
 
-        input[type="date"], select, input[type="text"] {
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1rem;
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-        }
+        h1 {
+            text-align: center;
+            font-size: 1.35rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+            line-height: 1.4;
+        }
 
-        input[type="date"] {
-            margin-bottom: 0;
-            flex-grow: 1;
-            text-align: center;
-        }
-        
-        .toggle-group {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            animation: slideInUp 0.4s ease-out forwards;
+        }
 
-        .btn-mode {
-            flex: 1;
-            padding: 10px 0;
-            border: 1px solid var(--primary);
-            border-radius: 8px;
-            background: transparent;
-            color: var(--primary);
-            font-weight: bold;
-            font-size: 1rem;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s;
-        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-        .btn-mode.active {
-            background: var(--primary);
-            color: white;
-        }
+        .date-picker-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
 
-        .shift-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.95rem;
-        }
+        input[type="date"], select, input[type="text"] {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
 
-        .shift-morn { background: var(--morn-color); color: var(--morn-text); }
-        .shift-mid { background: var(--mid-color); color: var(--mid-text); }
-        .shift-night { background: var(--night-color); color: var(--night-text); }
-        .shift-rest { background: var(--rest-color); color: var(--rest-text); }
+        input[type="date"] {
+            margin-bottom: 0;
+            flex-grow: 1;
+            text-align: center;
+        }
+        
+        .toggle-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
 
-        .team-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .team-row:last-child {
-            border-bottom: none;
-        }
+        .btn-mode {
+            flex: 1;
+            padding: 10px 0;
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
 
-        .team-name {
-            font-size: 1.05rem;
-        }
+        .btn-mode.active {
+            background: var(--primary);
+            color: white;
+        }
 
-        .task-list {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
+        .shift-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
 
-        .task-list li {
-            background: #FEF2F2;
-            color: #DC2626;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
-            border-left: 4px solid #EF4444;
-            animation: slideInUp 0.35s ease-out forwards;
-        }
-        
-        .task-list li.no-task {
-            background: #ECFCCB;
-            color: #4D7C0F;
-            border-left: 4px solid #84CC16;
-        }
+        .shift-morn { background: var(--morn-color); color: var(--morn-text); }
+        .shift-mid { background: var(--mid-color); color: var(--mid-text); }
+        .shift-night { background: var(--night-color); color: var(--night-text); }
+        .shift-rest { background: var(--rest-color); color: var(--rest-text); }
 
-        .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-            text-align: center;
-        }
+        .team-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .team-row:last-child {
+            border-bottom: none;
+        }
 
-        .btn-icon {
-            width: auto;
-            flex-grow: 0;
-            padding: 10px 15px;
-            font-size: 1.2rem;
-        }
+        .team-name {
+            font-size: 1.05rem;
+        }
 
-        .btn-outline {
-            background: transparent;
-            color: var(--primary);
-            border: 1px solid var(--primary);
-            margin-top: 10px;
-        }
+        .task-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
 
-        .btn-danger {
-            background: transparent;
-            color: #DC2626;
-            border: 1px solid #DC2626;
-            margin-top: 10px;
-        }
+        .task-list li {
+            background: #FEF2F2;
+            color: #DC2626;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            border-left: 4px solid #EF4444;
+            animation: slideInUp 0.35s ease-out forwards;
+        }
+        
+        .task-list li.no-task {
+            background: #ECFCCB;
+            color: #4D7C0F;
+            border-left: 4px solid #84CC16;
+        }
 
-        /* 點擊回饋動畫 */
-        .btn:active, .btn-icon:active, .btn-mode:active {
-            transform: scale(0.95);
-            transition: transform 0.1s;
-        }
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            text-align: center;
+        }
 
-        /* 滑入動畫 */
-        @keyframes slideInUp {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .btn-icon {
+            width: auto;
+            flex-grow: 0;
+            padding: 10px 15px;
+            font-size: 1.2rem;
+        }
 
-        .settings-panel {
-            display: none;
-            background: #F9FAFB;
-        }
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            margin-top: 10px;
+        }
 
-        .settings-panel.active {
-            display: block;
-        }
+        .btn-danger {
+            background: transparent;
+            color: #DC2626;
+            border: 1px solid #DC2626;
+            margin-top: 10px;
+        }
 
-        .calendar-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-            text-align: center;
-        }
-        
-        .calendar-table th, .calendar-table td {
-            border: 1px solid var(--border-color);
-            padding: 8px 2px;
-        }
-        
-        .calendar-table th {
-            background: #F3F4F6;
-            font-weight: bold;
-            color: var(--text-muted);
-        }
+        /* 點擊回饋動畫 */
+        .btn:active, .btn-icon:active, .btn-mode:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
 
-        .calendar-today-row {
-            background-color: #FEF9C3;
-        }
-        
-        .table-container {
-            overflow-x: auto;
-        }
-        
-        .setting-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .setting-grid label {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-            display: block;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
+        /* 滑入動畫 */
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-      /* === 手機螢幕極致緊湊與「特大」字體 === */
-        @media screen and (max-width: 480px) {
-            /* 1. 基礎字體再次霸氣加大 (從 16px 提升到 18px) */
-            html { font-size: 18px; }
-            
-            /* 2. 為了塞下大字體，頁面邊界再往外推到極限 */
-            body { padding: 6px 2px; }
-            .card { padding: 10px; margin-bottom: 8px; }
-            
-            /* 3. 標題與標籤的間距縮減 */
-           /* 3. 主標題設定為比基準字體 (1rem) 剛好大 2px */
-            h1 { font-size: calc(1rem + 2px); margin-bottom: 8px; }
-            /* 卡片副標題設定為比基準字體剛好大 2px */
-            .card-title { font-size: calc(1rem + 2px); margin-bottom: 8px; padding-bottom: 5px; }
-            .date-picker-container { margin-bottom: 10px; }
-            .toggle-group { margin-bottom: 10px; }
-            
-            /* 4. 列表與按鈕的極致壓縮 (留白減少，把空間給字體) */
-            .team-row { padding: 6px 0; }
-            .task-list li { padding: 6px 8px; margin-bottom: 6px; }
-            input[type="date"], select, input[type="text"], .btn { padding: 5px 6px; }
-            
-            /* 班別徽章微調，避免字太大把徽章撐破 */
-            .shift-badge { padding: 2px 6px; font-size: 0.95rem; }
+        .settings-panel {
+            display: none;
+            background: #F9FAFB;
+        }
 
-            /* 5. 表格字體放大，框線極度內縮 */
-            .calendar-table { font-size: 0.95rem; }
-            .calendar-table th, .calendar-table td {
-                padding: 6px 2px; /* 左右間距壓到最小，讓滑動時畫面能顯示更多天 */
-                white-space: nowrap; 
-            }
+        .settings-panel.active {
+            display: block;
+        }
 
-            /* 固定首欄 (Sticky) 設定保持不變 */
-            .calendar-table th:first-child, 
-            .calendar-table td:first-child {
-                position: sticky;
-                left: 0;
-                background-color: #F9FAFB;
-                z-index: 1;
-                border-right: 2px solid #D1D5DB;
-            }
-            .calendar-table th:first-child { z-index: 2; }
-            .calendar-today-row td:first-child { background-color: #FEF9C3; }
-        }
-    </style>
+        .calendar-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+        
+        .calendar-table th, .calendar-table td {
+            border: 1px solid var(--border-color);
+            padding: 8px 2px;
+        }
+        
+        .calendar-table th {
+            background: #F3F4F6;
+            font-weight: bold;
+            color: var(--text-muted);
+        }
+
+        .calendar-today-row {
+            background-color: #FEF9C3;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .setting-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .setting-grid label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            display: block;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+      /* === 手機螢幕極致緊湊與「特大」字體 === */
+        @media screen and (max-width: 480px) {
+            /* 1. 基礎字體再次霸氣加大 (從 16px 提升到 18px) */
+            html { font-size: 18px; }
+            
+            /* 2. 為了塞下大字體，頁面邊界再往外推到極限 */
+            body { padding: 6px 2px; }
+            .card { padding: 10px; margin-bottom: 8px; }
+            
+            /* 3. 標題與標籤的間距縮減 */
+            /* 3. 主標題設定為比基準字體 (1rem) 剛好大 2px */
+            h1 { font-size: calc(1rem + 2px); margin-bottom: 8px; }
+            .card-title { margin-bottom: 8px; padding-bottom: 5px; font-size: 1.15rem; }
+            .date-picker-container { margin-bottom: 10px; }
+            .toggle-group { margin-bottom: 10px; }
+            
+            /* 4. 列表與按鈕的極致壓縮 (留白減少，把空間給字體) */
+            .team-row { padding: 6px 0; }
+            .task-list li { padding: 6px 8px; margin-bottom: 6px; }
+            input[type="date"], select, input[type="text"], .btn { padding: 5px 6px; }
+            
+            /* 班別徽章微調，避免字太大把徽章撐破 */
+            .shift-badge { padding: 2px 6px; font-size: 0.95rem; }
+
+            /* 5. 表格字體放大，框線極度內縮 */
+            .calendar-table { font-size: 0.95rem; }
+            .calendar-table th, .calendar-table td {
+                padding: 6px 2px; /* 左右間距壓到最小，讓滑動時畫面能顯示更多天 */
+                white-space: nowrap; 
+            }
+
+            /* 固定首欄 (Sticky) 設定保持不變 */
+            .calendar-table th:first-child, 
+            .calendar-table td:first-child {
+                position: sticky;
+                left: 0;
+                background-color: #F9FAFB;
+                z-index: 1;
+                border-right: 2px solid #D1D5DB;
+            }
+            .calendar-table th:first-child { z-index: 2; }
+            .calendar-today-row td:first-child { background-color: #FEF9C3; }
+        }
+    </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>
-        📝 班表與工作查詢系統
-        <span style="display: block; font-size: 1rem; color: var(--text-muted); font-weight: normal; margin-top: 5px;">蔡宏和製作20260308</span>
-    </h1>
+    <h1>
+        📝 班表與工作查詢系統
+        <span style="display: block; font-size: 1rem; color: var(--text-muted); font-weight: normal; margin-top: 5px;">蔡宏和製作20260308</span>
+    </h1>
 
-    <div class="card date-picker-container" style="margin-bottom: 10px; box-shadow: none; padding: 0; background: transparent;">
-        <button class="btn btn-icon" style="background: var(--card-bg); color: var(--primary);" onclick="changeDate(-1)">◀</button>
-        <input type="date" id="queryDate" style="margin-bottom: 0; height: 44px; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-        <button class="btn btn-icon" style="background: var(--card-bg); color: var(--primary);" onclick="changeDate(1)">▶</button>
-    </div>
+    <div class="card date-picker-container" style="margin-bottom: 10px; box-shadow: none; padding: 0; background: transparent;">
+        <button class="btn btn-icon" style="background: var(--card-bg); color: var(--primary);" onclick="changeDate(-1)">◀</button>
+        <input type="date" id="queryDate" style="margin-bottom: 0; height: 44px; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+        <button class="btn btn-icon" style="background: var(--card-bg); color: var(--primary);" onclick="changeDate(1)">▶</button>
+    </div>
 
-    <div class="toggle-group">
-        <button id="btnLogical" class="btn-mode" onclick="setMode(false)">📅 標準班表</button>
-        <button id="btnActual" class="btn-mode active" onclick="setMode(true)">🏃 實際出勤</button>
-    </div>
+    <div class="toggle-group">
+        <button id="btnLogical" class="btn-mode" onclick="setMode(false)">📅 標準班表</button>
+        <button id="btnActual" class="btn-mode active" onclick="setMode(true)">🏃 實際出勤</button>
+    </div>
 
-    <div class="card">
-        <div class="card-title" style="justify-content: center;">👨‍💻 你的班表狀態</div>
-        <div class="team-row" style="border: none; padding-bottom: 0;">
-            <span class="team-name" id="myTeamName">載入中...</span>
-            <span id="myShiftBadge" class="shift-badge">載入中...</span>
-        </div>
-    </div>
+    <div class="card">
+        <div class="card-title" style="justify-content: center;">👨‍💻 你的班表狀態</div>
+        <div class="team-row" style="border: none; padding-bottom: 0;">
+            <span class="team-name" id="myTeamName">載入中...</span>
+            <span id="myShiftBadge" class="shift-badge">載入中...</span>
+        </div>
+    </div>
 
-   <div class="card">
-        <div class="card-title" style="justify-content: center;">工作提醒</div>
-        <ul class="task-list" id="taskList">
-            </ul>
-    </div>
+    <div class="card">
+       <div class="card">
+        <div class="card-title" style="justify-content: center;">🛠️工作提醒</div>
+        <ul class="task-list" id="taskList">
+            </ul>
+    </div>
+        <ul class="task-list" id="taskList">
+            </ul>
+    </div>
 
-    <div class="card">
-        <div class="card-title">📊 四班今日班別</div>
-        <div id="allTeamsContainer">
-            </div>
-    </div>
+    <div class="card">
+        <div class="card-title">📊 四班當日班別</div>
+        <div id="allTeamsContainer">
+            </div>
+    </div>
 
-    <div class="card">
-        <div class="card-title">🗓️ 本月班表總覽</div>
-        <div class="table-container">
-            <table class="calendar-table" id="monthTable">
-                </table>
-        </div>
-    </div>
+    <div class="card">
+        <div class="card-title">🗓️ 當月班表總覽</div>
+        <div class="table-container">
+            <table class="calendar-table" id="monthTable">
+                </table>
+        </div>
+    </div>
 
-    <button class="btn btn-outline" onclick="toggleSettings()">⚙️ 開啟/關閉設定區塊</button>
+    <button class="btn btn-outline" onclick="toggleSettings()">⚙️ 開啟/關閉設定區塊</button>
 
-    <div class="card settings-panel" id="settingsPanel" style="margin-top: 15px;">
-        <div class="card-title">系統設定 (自動儲存)</div>
-        
-        <label style="font-weight:bold;">我的專屬班別：</label>
-        <select id="setMyTeam">
-            <option value="A">A班</option>
-            <option value="B">B班</option>
-            <option value="C" selected>C班</option>
-            <option value="D">D班</option>
-        </select>
+    <div class="card settings-panel" id="settingsPanel" style="margin-top: 15px;">
+        <div class="card-title">系統設定 (自動儲存)</div>
+        
+        <label style="font-weight:bold;">我的專屬班別：</label>
+        <select id="setMyTeam">
+            <option value="A">A班</option>
+            <option value="B">B班</option>
+            <option value="C" selected>C班</option>
+            <option value="D">D班</option>
+        </select>
 
-        <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
+        <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
 
-        <label style="font-weight:bold;">基準日設定：</label>
-        <input type="date" id="setBaseDate">
+        <label style="font-weight:bold;">基準日設定：</label>
+        <input type="date" id="setBaseDate">
 
-        <label style="font-weight:bold; display:block; margin-top:10px;">基準日當天各班狀態：</label>
-        <div class="setting-grid">
-            <div>
-                <label>A班 基準班別</label>
-                <select id="setTeamA_Shift">
-                    <option value="0">早班1</option><option value="1">早班2</option>
-                    <option value="2">中班1</option><option value="3">中班2</option>
-                    <option value="4">小休</option><option value="5">晚班1</option>
-                    <option value="6">晚班2</option><option value="7">大休</option>
-                </select>
-            </div>
-            <div>
-                <label>B班 基準班別</label>
-                <select id="setTeamB_Shift">
-                    <option value="0">早班1</option><option value="1">早班2</option>
-                    <option value="2">中班1</option><option value="3">中班2</option>
-                    <option value="4">小休</option><option value="5">晚班1</option>
-                    <option value="6">晚班2</option><option value="7">大休</option>
-                </select>
-            </div>
-            <div>
-                <label>C班 基準班別</label>
-                <select id="setTeamC_Shift">
-                    <option value="0">早班1</option><option value="1">早班2</option>
-                    <option value="2">中班1</option><option value="3">中班2</option>
-                    <option value="4">小休</option><option value="5">晚班1</option>
-                    <option value="6">晚班2</option><option value="7">大休</option>
-                </select>
-            </div>
-            <div>
-                <label>D班 基準班別</label>
-                <select id="setTeamD_Shift">
-                    <option value="0">早班1</option><option value="1">早班2</option>
-                    <option value="2">中班1</option><option value="3">中班2</option>
-                    <option value="4">小休</option><option value="5">晚班1</option>
-                    <option value="6">晚班2</option><option value="7">大休</option>
-                </select>
-            </div>
-        </div>
+        <label style="font-weight:bold; display:block; margin-top:10px;">基準日當天各班狀態：</label>
+        <div class="setting-grid">
+            <div>
+                <label>A班 基準班別</label>
+                <select id="setTeamA_Shift">
+                    <option value="0">早班1</option><option value="1">早班2</option>
+                    <option value="2">中班1</option><option value="3">中班2</option>
+                    <option value="4">小休</option><option value="5">晚班1</option>
+                    <option value="6">晚班2</option><option value="7">大休</option>
+                </select>
+            </div>
+            <div>
+                <label>B班 基準班別</label>
+                <select id="setTeamB_Shift">
+                    <option value="0">早班1</option><option value="1">早班2</option>
+                    <option value="2">中班1</option><option value="3">中班2</option>
+                    <option value="4">小休</option><option value="5">晚班1</option>
+                    <option value="6">晚班2</option><option value="7">大休</option>
+                </select>
+            </div>
+            <div>
+                <label>C班 基準班別</label>
+                <select id="setTeamC_Shift">
+                    <option value="0">早班1</option><option value="1">早班2</option>
+                    <option value="2">中班1</option><option value="3">中班2</option>
+                    <option value="4">小休</option><option value="5">晚班1</option>
+                    <option value="6">晚班2</option><option value="7">大休</option>
+                </select>
+            </div>
+            <div>
+                <label>D班 基準班別</label>
+                <select id="setTeamD_Shift">
+                    <option value="0">早班1</option><option value="1">早班2</option>
+                    <option value="2">中班1</option><option value="3">中班2</option>
+                    <option value="4">小休</option><option value="5">晚班1</option>
+                    <option value="6">晚班2</option><option value="7">大休</option>
+                </select>
+            </div>
+        </div>
 
-        <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
+        <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
 
-        <label style="font-weight:bold; display:block; margin-bottom: 5px;">各班領班名稱：</label>
-        <div class="setting-grid">
-            <div>
-                <label>A班 領班</label>
-                <input type="text" id="setTeamA" placeholder="輸入A班領班">
-            </div>
-            <div>
-                <label>B班 領班</label>
-                <input type="text" id="setTeamB" placeholder="輸入B班領班">
-            </div>
-            <div>
-                <label>C班 領班</label>
-                <input type="text" id="setTeamC" placeholder="輸入C班領班">
-            </div>
-            <div>
-                <label>D班 領班</label>
-                <input type="text" id="setTeamD" placeholder="輸入D班領班">
-            </div>
-        </div>
+        <label style="font-weight:bold; display:block; margin-bottom: 5px;">各班領班名稱：</label>
+        <div class="setting-grid">
+            <div>
+                <label>A班 領班</label>
+                <input type="text" id="setTeamA" placeholder="輸入A班領班">
+            </div>
+            <div>
+                <label>B班 領班</label>
+                <input type="text" id="setTeamB" placeholder="輸入B班領班">
+            </div>
+            <div>
+                <label>C班 領班</label>
+                <input type="text" id="setTeamC" placeholder="輸入C班領班">
+            </div>
+            <div>
+                <label>D班 領班</label>
+                <input type="text" id="setTeamD" placeholder="輸入D班領班">
+            </div>
+        </div>
 
-        <div class="action-buttons">
-            <button class="btn btn-danger" onclick="restoreDefaults()" style="flex: 1; margin-top: 0;">🔄 恢復預設值</button>
-            <button class="btn" onclick="saveSettings()" style="flex: 2; margin-top: 0;">💾 儲存並重新計算</button>
-        </div>
-    </div>
+        <div class="action-buttons">
+            <button class="btn btn-danger" onclick="restoreDefaults()" style="flex: 1; margin-top: 0;">🔄 恢復預設值</button>
+            <button class="btn" onclick="saveSettings()" style="flex: 2; margin-top: 0;">💾 儲存並重新計算</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    const SHIFT_CYCLE = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
-    let isActualMode = true;
-    
-    const defaultSettings = {
-        baseDate: "2026-01-01",
-        myTeam: "C",
-        teams: {
-            "A": { name: "蘇明理", offset: 5 }, 
-            "B": { name: "林致漢", offset: 7 }, 
-            "C": { name: "蔡宏和", offset: 1 }, 
-            "D": { name: "林明宗", offset: 3 }  
-        }
-    };
+    const SHIFT_CYCLE = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
+    let isActualMode = true;
+    
+    // === 1. 原生 App 微震動回饋函數放在這裡 (最上方) ===
+    function triggerVibrate() {
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+    }
+    
+    const defaultSettings = {
+        baseDate: "2026-01-01",
+        myTeam: "C",
+        teams: {
+            "A": { name: "蘇明理", offset: 5 }, 
+            "B": { name: "林致漢", offset: 7 }, 
+            "C": { name: "蔡宏和", offset: 1 }, 
+            "D": { name: "林明宗", offset: 3 }  
+        }
+    };
 
-    let appSettings = JSON.parse(localStorage.getItem("shiftSettings")) || JSON.parse(JSON.stringify(defaultSettings));
+    let appSettings = JSON.parse(localStorage.getItem("shiftSettings")) || JSON.parse(JSON.stringify(defaultSettings));
 
-    document.addEventListener("DOMContentLoaded", () => {
-        const today = new Date();
-        document.getElementById("queryDate").value = formatDateToYYYYMMDD(today);
-        document.getElementById("queryDate").addEventListener("change", renderApp);
-        loadSettingsToForm();
-        renderApp();
-    });
+    document.addEventListener("DOMContentLoaded", () => {
+        const today = new Date();
+        document.getElementById("queryDate").value = formatDateToYYYYMMDD(today);
+        document.getElementById("queryDate").addEventListener("change", renderApp);
+        loadSettingsToForm();
+        renderApp();
+    });
 
-    function setMode(mode) {
-        isActualMode = mode;
-        document.getElementById('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
-        document.getElementById('btnActual').className = isActualMode ? 'btn-mode active' : 'btn-mode';
-        renderApp();
-    }
+    function setMode(mode) {
+        triggerVibrate(); // 觸發震動
+        isActualMode = mode;
+        document.getElementById('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
+        document.getElementById('btnActual').className = isActualMode ? 'btn-mode active' : 'btn-mode';
+        renderApp();
+    }
 
-    function applyShiftMapping(shiftText) {
-        if (!isActualMode) return shiftText; 
-        if (shiftText === "小休") return "晚班1";
-        if (shiftText === "晚班1") return "晚班2";
-        if (shiftText === "晚班2") return "小休";
-        return shiftText;
-    }
+    function applyShiftMapping(shiftText) {
+        if (!isActualMode) return shiftText; 
+        if (shiftText === "小休") return "晚班1";
+        if (shiftText === "晚班1") return "晚班2";
+        if (shiftText === "晚班2") return "小休";
+        return shiftText;
+    }
 
-    function changeDate(days) {
-        const dateInput = document.getElementById("queryDate");
-        let currentDate = new Date(dateInput.value);
-        currentDate.setDate(currentDate.getDate() + days);
-        dateInput.value = formatDateToYYYYMMDD(currentDate);
-        renderApp();
-    }
+    function changeDate(days) {
+        triggerVibrate(); // 觸發震動
+        const dateInput = document.getElementById("queryDate");
+        let currentDate = new Date(dateInput.value);
+        currentDate.setDate(currentDate.getDate() + days);
+        dateInput.value = formatDateToYYYYMMDD(currentDate);
+        renderApp();
+    }
 
-    function renderApp() {
-        const queryDateStr = document.getElementById("queryDate").value;
-        if (!queryDateStr) return;
-        
-        const targetDate = new Date(queryDateStr);
-        const baseDate = new Date(appSettings.baseDate);
-        
-        const diffTime = targetDate - baseDate;
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    function renderApp() {
+        const queryDateStr = document.getElementById("queryDate").value;
+        if (!queryDateStr) return;
+        
+        const targetDate = new Date(queryDateStr);
+        const baseDate = new Date(appSettings.baseDate);
+        
+        const diffTime = targetDate - baseDate;
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-        let myTeamId = appSettings.myTeam;
-        let myShiftText = "";
-        let allTeamsHTML = "";
+        let myTeamId = appSettings.myTeam;
+        let myShiftText = "";
+        let allTeamsHTML = "";
 
-        const teamIds = ["A", "B", "C", "D"];
-        teamIds.forEach(id => {
-            const team = appSettings.teams[id];
-            let shiftIndex = (team.offset + diffDays) % 8;
-            if (shiftIndex < 0) shiftIndex = (shiftIndex % 8 + 8) % 8; 
-            
-            let logicalShiftText = SHIFT_CYCLE[shiftIndex];
-            let shiftText = applyShiftMapping(logicalShiftText);
-            
-            const badgeClass = getBadgeClass(shiftText);
+        const teamIds = ["A", "B", "C", "D"];
+        teamIds.forEach(id => {
+            const team = appSettings.teams[id];
+            let shiftIndex = (team.offset + diffDays) % 8;
+            if (shiftIndex < 0) shiftIndex = (shiftIndex % 8 + 8) % 8; 
+            
+            let logicalShiftText = SHIFT_CYCLE[shiftIndex];
+            let shiftText = applyShiftMapping(logicalShiftText);
+            
+            const badgeClass = getBadgeClass(shiftText);
 
-            if (id === myTeamId) {
-                myShiftText = shiftText;
-                document.getElementById("myTeamName").innerText = `${id}班 ${team.name}`;
-                const badge = document.getElementById("myShiftBadge");
-                badge.innerText = shiftText;
-                badge.className = `shift-badge ${badgeClass}`;
-            }
+            if (id === myTeamId) {
+                myShiftText = shiftText;
+                document.getElementById("myTeamName").innerText = `${id}班 ${team.name}`;
+                const badge = document.getElementById("myShiftBadge");
+                badge.innerText = shiftText;
+                badge.className = `shift-badge ${badgeClass}`;
+            }
 
-            allTeamsHTML += `
-                <div class="team-row">
-                    <span class="team-name">${id}班 (${team.name})</span>
-                    <span class="shift-badge ${badgeClass}">${shiftText}</span>
-                </div>
-            `;
-        });
-        
-        document.getElementById("allTeamsContainer").innerHTML = allTeamsHTML;
-        renderTasks(targetDate, myTeamId, myShiftText);
-        renderMonthTable(targetDate, baseDate);
-    }
+            allTeamsHTML += `
+                <div class="team-row">
+                    <span class="team-name">${id}班 (${team.name})</span>
+                    <span class="shift-badge ${badgeClass}">${shiftText}</span>
+                </div>
+            `;
+        });
+        
+        document.getElementById("allTeamsContainer").innerHTML = allTeamsHTML;
+        renderTasks(targetDate, myTeamId, myShiftText);
+        renderMonthTable(targetDate, baseDate);
+    }
 
-  function renderTasks(date, myTeamId, myShiftText) {
-        let todayTasks = []; // 存放今日任務
-        let monthTasks = []; // 存放本月常駐任務
-        
-        const isMorning = (myShiftText === "早班1" || myShiftText === "早班2");
-        const isMid = (myShiftText === "中班1" || myShiftText === "中班2"); 
-        
-        const dayOfMonth = date.getDate();
-        const dayOfWeek = date.getDay(); // 0是週日，1是週一
-        
-        // 取得本月總天數 (用來判斷月底最後一天)
-        const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+function renderTasks(date, myTeamId, myShiftText) {
+        let todayTasks = []; // 存放今日任務
+        let monthTasks = []; // 存放本月常駐任務
+        
+        const isMorning = (myShiftText === "早班1" || myShiftText === "早班2");
+        const isMid = (myShiftText === "中班1" || myShiftText === "中班2"); 
+        
+        const dayOfMonth = date.getDate();
+        const dayOfWeek = date.getDay(); // 0是週日，1是週一
+        
+        // 取得目前月份，JavaScript 的月份是 0~11 (0 是 1月，2 是 3月，10 是 11月)
+        const currentMonth = date.getMonth(); 
+        
+        // 取得本月總天數 (用來判斷月底最後一天)
+        const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 
-        // ==========================================
-        // 1. 📅 判斷「今日當班工作」(todayTasks)
-        // ==========================================
-        if (isMorning) {
-            todayTasks.push("每次早班：填MI的泵浦操作");
+        // ==========================================
+        // 1. 📅 判斷「今日當班工作」(todayTasks)
+        // ==========================================
+        if (isMorning) {
+            todayTasks.push("每次早班：填MI的泵浦操作");
 
-            if (dayOfMonth === 1) {
-                todayTasks.push("每月1日：MI檢查表要填儲槽計量表");
-                todayTasks.push("每月1日：列印上個月壓力圖");
-            }
-            if (dayOfWeek === 1) {
-                todayTasks.push("每週一：填MI檢查表的儲槽操作");
-                todayTasks.push("每週一：填關鍵閥門檢查表");
-                todayTasks.push("每週一：漏油偵測器檢查表");
-                todayTasks.push("每週一：緊急沖淋器檢查表");
-                
-                let nextWeek = new Date(date);
-                nextWeek.setDate(date.getDate() + 7);
-                if (nextWeek.getMonth() !== date.getMonth()) {
-                    todayTasks.push("每月最後一個週一：平板檢查表的緊急沖淋、漏油警報");
-                }
-            }
-        }
+            // ⭐ 新增：每年的 3月 到 11月，每次早班要填高氣溫戶外作業評估檢點表
+            if (currentMonth >= 2 && currentMonth <= 10) {
+                todayTasks.push("每次早班(3~11月)：填高氣溫戶外作業評估檢點表");
+            }
 
-        // 當天真的來到月底最後一天，且是「中班」時，放入今日強烈提醒
-        if (isMid && dayOfMonth === daysInMonth) {
-            todayTasks.push("🔥 今日任務：填機車里程報告書");
-        }
+            if (dayOfMonth === 1) {
+                todayTasks.push("每月1日：MI檢查表要填儲槽計量表");
+                todayTasks.push("每月1日：列印上個月壓力圖");
+            }
+            if (dayOfWeek === 1) {
+                todayTasks.push("每週一：填MI檢查表的儲槽操作");
+                todayTasks.push("每週一：填關鍵閥門檢查表");
+                todayTasks.push("每週一：漏油偵測器檢查表");
+                todayTasks.push("每週一：緊急沖淋器檢查表");
+                
+                let nextWeek = new Date(date);
+                nextWeek.setDate(date.getDate() + 7);
+                if (nextWeek.getMonth() !== date.getMonth()) {
+                    todayTasks.push("每月最後一個週一：平板檢查表的緊急沖淋、漏油警報");
+                }
+            }
+        }
+
+        // 當天真的來到月底最後一天，且是「中班」時，放入今日強烈提醒
+        if (isMid && dayOfMonth === daysInMonth) {
+            todayTasks.push("🔥 今日任務：填機車里程報告書");
+        }
 
 
-        // ==========================================
-        // 2. 🗓️ 判斷「本月待辦專案」(monthTasks)
-        // ==========================================
-        
-        // 整個月都會掛在待辦區提醒你
-        monthTasks.push("月底最後一天 (中班)：填機車里程報告書");
+        // ==========================================
+        // 2. 🗓️ 判斷「本月待辦專案」(monthTasks)
+        // ==========================================
+        
+        // 整個月都會掛在待辦區提醒你
+        monthTasks.push("月底最後一天 (中班)：填機車里程報告書");
 
-        const monthsElapsed = (date.getFullYear() - 2026) * 12 + date.getMonth();
-        
-        // 月盤查輪值
-        const invCycle = Math.floor(monthsElapsed / 2);
-        const invTeams = ["D", "A", "B", "C"];
-        const assignedInvTeam = invTeams[((invCycle % 4) + 4) % 4];
-        if (assignedInvTeam === myTeamId) {
-            monthTasks.push(`輪值月份：本月需月盤查量油取樣 (約20日)`);
-        }
+        const monthsElapsed = (date.getFullYear() - 2026) * 12 + date.getMonth();
+        
+        // 月盤查輪值
+        const invCycle = Math.floor(monthsElapsed / 2);
+        const invTeams = ["D", "A", "B", "C"];
+        const assignedInvTeam = invTeams[((invCycle % 4) + 4) % 4];
+        if (assignedInvTeam === myTeamId) {
+            monthTasks.push(`輪值月份：本月需月盤查量油取樣 (約20日)`);
+        }
 
-        // 全規範取樣輪值
-        if ((date.getMonth() + 1) % 2 !== 0) {
-            const specCycle = Math.floor(monthsElapsed / 2);
-            const specTeams = ["B", "C", "D", "A"];
-            const assignedSpecTeam = specTeams[((specCycle % 4) + 4) % 4];
-            if (assignedSpecTeam === myTeamId) {
-                monthTasks.push(`輪值月份：本月需全規範取樣 (10日前)`);
-            }
-        }
+        // 全規範取樣輪值
+        if ((date.getMonth() + 1) % 2 !== 0) {
+            const specCycle = Math.floor(monthsElapsed / 2);
+            const specTeams = ["B", "C", "D", "A"];
+            const assignedSpecTeam = specTeams[((specCycle % 4) + 4) % 4];
+            if (assignedSpecTeam === myTeamId) {
+                monthTasks.push(`輪值月份：本月需全規範取樣 (10日前)`);
+            }
+        }
 
-        // ==========================================
-        // 3. 🎨 將兩個陣列渲染到畫面上
-        // ==========================================
-        const taskListEl = document.getElementById("taskList");
-        let htmlContent = "";
+        // ==========================================
+        // 3. 🎨 將兩個陣列渲染到畫面上
+        // ==========================================
+        const taskListEl = document.getElementById("taskList");
+        let htmlContent = "";
 
-        // -- 渲染今日提醒區塊 --
-        htmlContent += `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 0 0 8px 0; font-weight: bold; color: var(--primary); border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">📅 今日當班工作</li>`;
-        
-        if (todayTasks.length === 0) {
-            htmlContent += `<li class="no-task">🎉 今日無特殊排程任務。</li>`;
-        } else {
-            todayTasks.forEach(task => {
-                htmlContent += `<li>📍 ${task}</li>`;
-            });
-        }
+        // -- 渲染今日提醒區塊 --
+        htmlContent += `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 0 0 8px 0; font-weight: bold; color: var(--primary); border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">📅 今日當班工作</li>`;
+        
+        if (todayTasks.length === 0) {
+            htmlContent += `<li class="no-task">🎉 今日無特殊排程任務。</li>`;
+        } else {
+            todayTasks.forEach(task => {
+                htmlContent += `<li>📍 ${task}</li>`;
+            });
+        }
 
-        // -- 渲染本月待辦區塊 --
-        htmlContent += `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 15px 0 8px 0; font-weight: bold; color: #D97706; border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">🗓️ 本月待辦專案</li>`;
-        
-        if (monthTasks.length === 0) {
-            // 理論上現在一定會有任務，但為了以防萬一還是保留空狀態
-            htmlContent += `<li class="no-task" style="background: #FFFBEB; color: #B45309; border-left-color: #F59E0B;">本月無輪值專案。</li>`;
-        } else {
-            monthTasks.forEach(task => {
-                // 給本月任務換個暖色系，區分視覺感
-                htmlContent += `<li style="background: #FFFBEB; color: #B45309; border-left-color: #F59E0B;">📌 ${task}</li>`;
-            });
-        }
+        // -- 渲染本月待辦區塊 --
+        htmlContent += `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 15px 0 8px 0; font-weight: bold; color: #D97706; border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">🗓️ 本月待辦專案</li>`;
+        
+        if (monthTasks.length === 0) {
+            htmlContent += `<li class="no-task" style="background: #FFFBEB; color: #B45309; border-left-color: #F59E0B;">本月無輪值專案。</li>`;
+        } else {
+            monthTasks.forEach(task => {
+                htmlContent += `<li style="background: #FFFBEB; color: #B45309; border-left-color: #F59E0B;">📌 ${task}</li>`;
+            });
+        }
 
-        taskListEl.innerHTML = htmlContent;
-    }
-    function renderMonthTable(targetDate, baseDate) {
-        const year = targetDate.getFullYear();
-        const month = targetDate.getMonth();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
-        let tableHTML = `
-            <tr>
-                <th>日期</th>
-                <th>A班</th>
-                <th>B班</th>
-                <th>C班</th>
-                <th>D班</th>
-            </tr>
-        `;
+        taskListEl.innerHTML = htmlContent;
+    }
 
-        const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
+    function renderMonthTable(targetDate, baseDate) {
+        const year = targetDate.getFullYear();
+        const month = targetDate.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        let tableHTML = `
+            <tr>
+                <th>日期</th>
+                <th>A班</th>
+                <th>B班</th>
+                <th>C班</th>
+                <th>D班</th>
+            </tr>
+        `;
 
-        for (let day = 1; day <= daysInMonth; day++) {
-            let iterDate = new Date(year, month, day);
-            let diffTime = iterDate - baseDate;
-            let diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-            
-            let isTargetDay = (day === targetDate.getDate()) ? "calendar-today-row" : "";
-            let dateStr = `${month + 1}/${day}(${weekDays[iterDate.getDay()]})`;
+        const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
 
-            tableHTML += `<tr class="${isTargetDay}"><td>${dateStr}</td>`;
+        for (let day = 1; day <= daysInMonth; day++) {
+            let iterDate = new Date(year, month, day);
+            let diffTime = iterDate - baseDate;
+            let diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            
+            let isTargetDay = (day === targetDate.getDate()) ? "calendar-today-row" : "";
+            let dateStr = `${month + 1}/${day}(${weekDays[iterDate.getDay()]})`;
 
-            const teamIds = ["A", "B", "C", "D"];
-            teamIds.forEach(id => {
-                const team = appSettings.teams[id];
-                let shiftIndex = (team.offset + diffDays) % 8;
-                if (shiftIndex < 0) shiftIndex = (shiftIndex % 8 + 8) % 8;
-                
-                let logicalShiftText = SHIFT_CYCLE[shiftIndex];
-                let shiftText = applyShiftMapping(logicalShiftText);
-                
-                let shortText = shiftText.replace("班", ""); 
-                
-                let cellStyle = "";
-                if (shiftText.includes("早")) cellStyle = `color: var(--morn-text); font-weight:bold;`;
-                if (shiftText.includes("中")) cellStyle = `color: var(--mid-text); font-weight:bold;`;
-                if (shiftText.includes("晚")) cellStyle = `color: var(--night-text); font-weight:bold;`;
-                if (shiftText.includes("休")) cellStyle = `color: var(--rest-text);`;
+            tableHTML += `<tr class="${isTargetDay}"><td>${dateStr}</td>`;
 
-                tableHTML += `<td style="${cellStyle}">${shortText}</td>`;
-            });
-            tableHTML += `</tr>`;
-        }
-        document.getElementById("monthTable").innerHTML = tableHTML;
-    }
+            const teamIds = ["A", "B", "C", "D"];
+            teamIds.forEach(id => {
+                const team = appSettings.teams[id];
+                let shiftIndex = (team.offset + diffDays) % 8;
+                if (shiftIndex < 0) shiftIndex = (shiftIndex % 8 + 8) % 8;
+                
+                let logicalShiftText = SHIFT_CYCLE[shiftIndex];
+                let shiftText = applyShiftMapping(logicalShiftText);
+                
+                let shortText = shiftText.replace("班", ""); 
+                
+                let cellStyle = "";
+                if (shiftText.includes("早")) cellStyle = `color: var(--morn-text); font-weight:bold;`;
+                if (shiftText.includes("中")) cellStyle = `color: var(--mid-text); font-weight:bold;`;
+                if (shiftText.includes("晚")) cellStyle = `color: var(--night-text); font-weight:bold;`;
+                if (shiftText.includes("休")) cellStyle = `color: var(--rest-text);`;
 
-    function getBadgeClass(shiftText) {
-        if (shiftText.includes("早")) return "shift-morn";
-        if (shiftText.includes("中")) return "shift-mid";
-        if (shiftText.includes("晚")) return "shift-night";
-        return "shift-rest";
-    }
+                tableHTML += `<td style="${cellStyle}">${shortText}</td>`;
+            });
+            tableHTML += `</tr>`;
+        }
+        document.getElementById("monthTable").innerHTML = tableHTML;
+    }
 
-    function formatDateToYYYYMMDD(date) {
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const d = String(date.getDate()).padStart(2, '0');
-        return `${y}-${m}-${d}`;
-    }
+    function getBadgeClass(shiftText) {
+        if (shiftText.includes("早")) return "shift-morn";
+        if (shiftText.includes("中")) return "shift-mid";
+        if (shiftText.includes("晚")) return "shift-night";
+        return "shift-rest";
+    }
 
-    function toggleSettings() {
-        const panel = document.getElementById("settingsPanel");
-        panel.classList.toggle("active");
-        
-        // 新增：如果設定面板被打開了，就自動平滑往下滾動
-        if (panel.classList.contains("active")) {
-            setTimeout(() => {
-                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100); // 加上 0.1 秒延遲，確保面板展開後才滑動
-        }
-    }
+    function formatDateToYYYYMMDD(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
 
-    function loadSettingsToForm() {
-        document.getElementById("setBaseDate").value = appSettings.baseDate;
-        document.getElementById("setMyTeam").value = appSettings.myTeam;
-        
-        document.getElementById("setTeamA_Shift").value = appSettings.teams["A"].offset;
-        document.getElementById("setTeamB_Shift").value = appSettings.teams["B"].offset;
-        document.getElementById("setTeamC_Shift").value = appSettings.teams["C"].offset;
-        document.getElementById("setTeamD_Shift").value = appSettings.teams["D"].offset;
+    function toggleSettings() {
+        triggerVibrate(); // 觸發震動
+        const panel = document.getElementById("settingsPanel");
+        panel.classList.toggle("active");
+        
+        // 設定面板打開時，自動平滑往下滾動
+        if (panel.classList.contains("active")) {
+            setTimeout(() => {
+                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+    }
 
-        document.getElementById("setTeamA").value = appSettings.teams["A"].name;
-        document.getElementById("setTeamB").value = appSettings.teams["B"].name;
-        document.getElementById("setTeamC").value = appSettings.teams["C"].name;
-        document.getElementById("setTeamD").value = appSettings.teams["D"].name;
-    }
+    function loadSettingsToForm() {
+        document.getElementById("setBaseDate").value = appSettings.baseDate;
+        document.getElementById("setMyTeam").value = appSettings.myTeam;
+        
+        document.getElementById("setTeamA_Shift").value = appSettings.teams["A"].offset;
+        document.getElementById("setTeamB_Shift").value = appSettings.teams["B"].offset;
+        document.getElementById("setTeamC_Shift").value = appSettings.teams["C"].offset;
+        document.getElementById("setTeamD_Shift").value = appSettings.teams["D"].offset;
 
-    function saveSettings() {
-        appSettings.baseDate = document.getElementById("setBaseDate").value;
-        appSettings.myTeam = document.getElementById("setMyTeam").value;
-        
-        appSettings.teams["A"].offset = parseInt(document.getElementById("setTeamA_Shift").value);
-        appSettings.teams["B"].offset = parseInt(document.getElementById("setTeamB_Shift").value);
-        appSettings.teams["C"].offset = parseInt(document.getElementById("setTeamC_Shift").value);
-        appSettings.teams["D"].offset = parseInt(document.getElementById("setTeamD_Shift").value);
+        document.getElementById("setTeamA").value = appSettings.teams["A"].name;
+        document.getElementById("setTeamB").value = appSettings.teams["B"].name;
+        document.getElementById("setTeamC").value = appSettings.teams["C"].name;
+        document.getElementById("setTeamD").value = appSettings.teams["D"].name;
+    }
 
-        appSettings.teams["A"].name = document.getElementById("setTeamA").value;
-        appSettings.teams["B"].name = document.getElementById("setTeamB").value;
-        appSettings.teams["C"].name = document.getElementById("setTeamC").value;
-        appSettings.teams["D"].name = document.getElementById("setTeamD").value;
+    function saveSettings() {
+        triggerVibrate(); // 觸發震動
+        appSettings.baseDate = document.getElementById("setBaseDate").value;
+        appSettings.myTeam = document.getElementById("setMyTeam").value;
+        
+        appSettings.teams["A"].offset = parseInt(document.getElementById("setTeamA_Shift").value);
+        appSettings.teams["B"].offset = parseInt(document.getElementById("setTeamB_Shift").value);
+        appSettings.teams["C"].offset = parseInt(document.getElementById("setTeamC_Shift").value);
+        appSettings.teams["D"].offset = parseInt(document.getElementById("setTeamD_Shift").value);
 
-        localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
-        alert("設定已儲存！");
-        renderApp();
-        toggleSettings();
-    }
+        appSettings.teams["A"].name = document.getElementById("setTeamA").value;
+        appSettings.teams["B"].name = document.getElementById("setTeamB").value;
+        appSettings.teams["C"].name = document.getElementById("setTeamC").value;
+        appSettings.teams["D"].name = document.getElementById("setTeamD").value;
 
-    function restoreDefaults() {
-        if (confirm("確定要恢復原廠預設設定嗎？\n這將會清除您手動修改的基準日與領班名稱。")) {
-            appSettings = JSON.parse(JSON.stringify(defaultSettings));
-            localStorage.removeItem("shiftSettings");
-            loadSettingsToForm();
-            renderApp();
-            alert("已成功恢復預設值！");
-        }
-    }
+        localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
+        alert("設定已儲存！");
+        renderApp();
+        toggleSettings();
+    }
 
-    // === 註冊 Service Worker (讓網頁變成 PWA 並支援離線) ===
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('App 安裝服務註冊成功'))
-                .catch(err => console.log('App 安裝服務註冊失敗', err));
-        });
-    }
+    function restoreDefaults() {
+        triggerVibrate(); // 觸發震動
+        if (confirm("確定要恢復原廠預設設定嗎？\n這將會清除您手動修改的基準日與領班名稱。")) {
+            appSettings = JSON.parse(JSON.stringify(defaultSettings));
+            localStorage.removeItem("shiftSettings");
+            loadSettingsToForm();
+            renderApp();
+            alert("已成功恢復預設值！");
+        }
+    }
+
+    // === 註冊 Service Worker (讓網頁變成 PWA 並支援離線) ===
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('App 安裝服務註冊成功'))
+                .catch(err => console.log('App 安裝服務註冊失敗', err));
+        });
+    }
 </script>
 
 </body>
