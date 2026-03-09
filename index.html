@@ -256,6 +256,47 @@
             gap: 10px;
             margin-top: 15px;
         }
+/* === 手機螢幕自動縮放設定 === */
+        @media screen and (max-width: 480px) {
+            /* 1. 縮小基礎字體 (預設是 16px)。這會讓所有使用 rem 單位的字體等比例縮小 */
+            html {
+                font-size: 14px; 
+            }
+            
+            /* 2. 縮小頁面外圍的留白 */
+            body {
+                padding: 10px 8px;
+            }
+
+            /* 3. 縮小卡片內部的留白與間距 */
+            .card {
+                padding: 15px;
+                margin-bottom: 10px;
+            }
+
+            /* 4. 縮小主標題 */
+            h1 {
+                font-size: 1.25rem;
+                margin-bottom: 15px;
+            }
+
+            /* 5. 讓日曆表格更緊湊 */
+            .calendar-table {
+                font-size: 0.8rem;
+            }
+            .calendar-table th, .calendar-table td {
+                padding: 6px 1px; /* 縮減表格上下左右的空間 */
+            }
+
+            /* 6. 微調按鈕與輸入框的空間 */
+            input[type="date"], select, input[type="text"], .btn {
+                padding: 8px 10px;
+            }
+            
+            .shift-badge {
+                padding: 4px 8px; /* 縮小班別標籤 */
+            }
+        }
     </style>
 </head>
 <body>
@@ -660,3 +701,4 @@
 
 </body>
 </html>
+
