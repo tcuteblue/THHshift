@@ -280,23 +280,30 @@
             margin-top: 15px;
         }
 
-        /* === 手機螢幕自動縮放與表格最佳化 === */
+       /* === 手機螢幕自動縮放與表格最佳化 === */
         @media screen and (max-width: 480px) {
-            html { font-size: 14px; }
+            /* 1. 基礎字體從 14px 調大到 15px (整體字都會跟著微幅放大) */
+            html { font-size: 15px; }
+            
             body { padding: 10px 8px; }
             .card { padding: 15px; margin-bottom: 10px; }
-            h1 { font-size: 1.25rem; margin-bottom: 15px; }
-            .calendar-table { font-size: 0.8rem; }
+            
+            /* 2. 標題也順應稍微調大 */
+            h1 { font-size: 1.3rem; margin-bottom: 15px; }
+            
+            /* 3. 日曆表格的字體從 0.8rem 調大到 0.88rem */
+            .calendar-table { font-size: 0.88rem; }
             
             .calendar-table th, .calendar-table td {
                 padding: 8px 6px; 
                 white-space: nowrap; 
             }
             
-            input[type="date"], select, input[type="text"], .btn { padding: 8px 10px; }
+            /* 4. 關鍵！字變大了，我們把輸入框跟按鈕的「上下 padding」從 8px 縮成 6px，維持高度不變 */
+            input[type="date"], select, input[type="text"], .btn { padding: 6px 10px; }
             .shift-badge { padding: 4px 8px; }
 
-            /* 固定首欄 (Sticky) 設定 */
+            /* 固定首欄 (Sticky) 設定保持不變 */
             .calendar-table th:first-child, 
             .calendar-table td:first-child {
                 position: sticky;
@@ -661,6 +668,13 @@
     function toggleSettings() {
         const panel = document.getElementById("settingsPanel");
         panel.classList.toggle("active");
+        
+        // 新增：如果設定面板被打開了，就自動平滑往下滾動
+        if (panel.classList.contains("active")) {
+            setTimeout(() => {
+                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100); // 加上 0.1 秒延遲，確保面板展開後才滑動
+        }
     }
 
     function loadSettingsToForm() {
@@ -720,3 +734,4 @@
 
 </body>
 </html>
+
