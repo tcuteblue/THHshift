@@ -283,31 +283,35 @@
             margin-top: 15px;
         }
 
-      /* === 手機螢幕極致緊湊與放大字體 === */
+      /* === 手機螢幕極致緊湊與「特大」字體 === */
         @media screen and (max-width: 480px) {
-            /* 1. 基礎字體再加大 */
-            html { font-size: 16px; }
+            /* 1. 基礎字體再次霸氣加大 (從 16px 提升到 18px) */
+            html { font-size: 18px; }
             
-            /* 2. 極限壓縮外部與內部留白 */
-            body { padding: 6px 4px; }
-            .card { padding: 10px 12px; margin-bottom: 8px; }
+            /* 2. 為了塞下大字體，頁面邊界再往外推到極限 */
+            body { padding: 6px 2px; }
+            .card { padding: 10px; margin-bottom: 8px; }
             
             /* 3. 標題與標籤的間距縮減 */
-            h1 { font-size: 1.3rem; margin-bottom: 10px; }
-            .card-title { margin-bottom: 8px; padding-bottom: 5px; font-size: 1.15rem; }
+           /* 3. 主標題設定為比基準字體 (1rem) 剛好大 2px */
+            h1 { font-size: calc(1rem + 2px); margin-bottom: 8px; }
+            /* 卡片副標題設定為比基準字體剛好大 2px */
+            .card-title { font-size: calc(1rem + 2px); margin-bottom: 8px; padding-bottom: 5px; }
             .date-picker-container { margin-bottom: 10px; }
-            .toggle-group { margin-bottom: 12px; }
+            .toggle-group { margin-bottom: 10px; }
             
-            /* 4. 列表與按鈕的極致壓縮 */
-            .team-row { padding: 8px 0; }
-            .task-list li { padding: 8px 10px; margin-bottom: 6px; }
-            input[type="date"], select, input[type="text"], .btn { padding: 6px 8px; }
-            .shift-badge { padding: 3px 6px; font-size: 1rem; }
+            /* 4. 列表與按鈕的極致壓縮 (留白減少，把空間給字體) */
+            .team-row { padding: 6px 0; }
+            .task-list li { padding: 6px 8px; margin-bottom: 6px; }
+            input[type="date"], select, input[type="text"], .btn { padding: 5px 6px; }
+            
+            /* 班別徽章微調，避免字太大把徽章撐破 */
+            .shift-badge { padding: 2px 6px; font-size: 0.95rem; }
 
-            /* 5. 表格字體放大，框線內縮 */
+            /* 5. 表格字體放大，框線極度內縮 */
             .calendar-table { font-size: 0.95rem; }
             .calendar-table th, .calendar-table td {
-                padding: 6px 4px; /* 上下左右空間再縮小 */
+                padding: 6px 2px; /* 左右間距壓到最小，讓滑動時畫面能顯示更多天 */
                 white-space: nowrap; 
             }
 
@@ -741,5 +745,6 @@
 
 </body>
 </html>
+
 
 
