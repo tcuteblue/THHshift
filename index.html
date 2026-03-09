@@ -559,7 +559,10 @@
 
     function renderTasks(date, myTeamId, myShiftText) {
         let tasks = [];
+        // 判斷是否為早班或中班
         const isMorning = (myShiftText === "早班1" || myShiftText === "早班2");
+        const isMid = (myShiftText === "中班1" || myShiftText === "中班2"); // ⭐ 新增：判斷中班
+        
         const dayOfMonth = date.getDate();
         const dayOfWeek = date.getDay(); // 0是週日，1是週一
         
@@ -568,6 +571,8 @@
 
         // === 1. 早班專屬任務 ===
         if (isMorning) {
+            tasks.push("每次早班：填MI的泵浦操作"); // 每次早班都會提醒
+
             if (dayOfMonth === 1) {
                 tasks.push("每月1日：MI檢查表要填儲槽計量表");
                 tasks.push("每月1日：列印上個月壓力圖");
@@ -575,13 +580,10 @@
             // 遇到週一
             if (dayOfWeek === 1) {
                 tasks.push("每週一：填MI檢查表的儲槽操作");
-                
-                // 新增：每週一早班固定檢查表
                 tasks.push("每週一：填關鍵閥門檢查表");
                 tasks.push("每週一：漏油偵測器檢查表");
                 tasks.push("每週一：緊急沖淋器檢查表");
                 
-                // (保留原本的) 每月最後一個週一
                 let nextWeek = new Date(date);
                 nextWeek.setDate(date.getDate() + 7);
                 if (nextWeek.getMonth() !== date.getMonth()) {
@@ -590,10 +592,10 @@
             }
         }
 
-        // === 2. 不分班別，指定日期的任務 ===
-        // 新增：每個月的最後一天
-        if (dayOfMonth === daysInMonth) {
-            tasks.push("月底最後一天：填機車里程報告書");
+        // === 2. 中班專屬任務 ===
+        // ⭐ 修改：只有「中班」且遇到「月底最後一天」才要填機車里程
+        if (isMid && dayOfMonth === daysInMonth) {
+            tasks.push("月底最後一天(中班)：填機車里程報告書");
         }
 
         // === 3. 輪值月份專案任務 ===
@@ -764,6 +766,7 @@
 
 </body>
 </html>
+
 
 
 
