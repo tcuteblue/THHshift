@@ -587,6 +587,8 @@ function renderTasks(date, myTeamId, myShiftText) {
         
         const isMorning = (myShiftText === "早班1" || myShiftText === "早班2");
         const isMid = (myShiftText === "中班1" || myShiftText === "中班2"); 
+        // ⭐ 新增晚班的判斷條件
+        const isNight = (myShiftText === "晚班1" || myShiftText === "晚班2"); 
         
         const dayOfMonth = date.getDate();
         const dayOfWeek = date.getDay(); // 0是週日，1是週一
@@ -600,37 +602,46 @@ function renderTasks(date, myTeamId, myShiftText) {
         // ==========================================
         // 1. 📅 判斷「今日當班工作」(todayTasks)
         // ==========================================
+        
+        // 🌅 早班任務
         if (isMorning) {
-            todayTasks.push("每次早班：填MI的泵浦操作");
+            todayTasks.push("今天早班：填MI的泵浦操作");
+            // ⭐ 新增：早班的紙本檢查表
+            todayTasks.push("今天早班：填寫多份的紙本檢查表");
 
-            // ⭐ 新增：每年的 3月 到 11月，每次早班要填高氣溫戶外作業評估檢點表
+            // 每年的 3月 到 11月，每次早班要填高氣溫戶外作業評估檢點表
             if (currentMonth >= 2 && currentMonth <= 10) {
-                todayTasks.push("每次早班(3~11月)：填高氣溫戶外作業評估檢點表");
+                todayTasks.push("今天早班(3~11月)：填高氣溫戶外作業評估檢點表");
             }
 
             if (dayOfMonth === 1) {
-                todayTasks.push("每月1日：MI檢查表要填儲槽計量表");
-                todayTasks.push("每月1日：列印上個月壓力圖");
+                todayTasks.push("今天1日早班：MI檢查表要填儲槽計量表");
+                todayTasks.push("今天1日早班：列印上個月壓力圖");
             }
             if (dayOfWeek === 1) {
-                todayTasks.push("每週一：填MI檢查表的儲槽操作");
-                todayTasks.push("每週一：填關鍵閥門檢查表");
-                todayTasks.push("每週一：漏油偵測器檢查表");
-                todayTasks.push("每週一：緊急沖淋器檢查表");
+                todayTasks.push("每週一早班：填MI檢查表的儲槽操作");
+                todayTasks.push("每週一早班：填關鍵閥門檢查表");
+                todayTasks.push("每週一早班：漏油偵測器檢查表");
+                todayTasks.push("每週一早班：緊急沖淋器檢查表");
                 
                 let nextWeek = new Date(date);
                 nextWeek.setDate(date.getDate() + 7);
                 if (nextWeek.getMonth() !== date.getMonth()) {
-                    todayTasks.push("每月最後一個週一：平板檢查表的緊急沖淋、漏油警報");
+                    todayTasks.push("每月最後一個週一早班：平板檢查表的緊急沖淋、漏油警報");
                 }
             }
+        }
+
+        // 🌙 晚班任務 (⭐ 這次新增的區塊)
+        if (isNight) {
+            todayTasks.push("今天晚班：填量油結帳記錄表");
+            todayTasks.push("今天晚班：填寫油槽放水記錄表");
         }
 
         // 當天真的來到月底最後一天，且是「中班」時，放入今日強烈提醒
         if (isMid && dayOfMonth === daysInMonth) {
             todayTasks.push("🔥 今日任務：填機車里程報告書");
         }
-
 
         // ==========================================
         // 2. 🗓️ 判斷「本月待辦專案」(monthTasks)
