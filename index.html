@@ -557,81 +557,108 @@
         renderMonthTable(targetDate, baseDate);
     }
 
-    function renderTasks(date, myTeamId, myShiftText) {
-        let tasks = [];
-        // 判斷是否為早班或中班
+  function renderTasks(date, myTeamId, myShiftText) {
+        let todayTasks = []; // 存放今日任務
+        let monthTasks = []; // 存放本月常駐任務
+        
         const isMorning = (myShiftText === "早班1" || myShiftText === "早班2");
-        const isMid = (myShiftText === "中班1" || myShiftText === "中班2"); // ⭐ 新增：判斷中班
+        const isMid = (myShiftText === "中班1" || myShiftText === "中班2"); 
         
         const dayOfMonth = date.getDate();
         const dayOfWeek = date.getDay(); // 0是週日，1是週一
         
-        // 取得這個月的「總天數」，用來判斷今天是不是該月的最後一天
+        // 取得本月總天數 (用來判斷月底最後一天)
         const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 
-        // === 1. 早班專屬任務 ===
+        // ==========================================
+        // 1. 📅 判斷「今日當班提醒」(todayTasks)
+        // ==========================================
         if (isMorning) {
-            tasks.push("每次早班：填MI的泵浦操作"); // 每次早班都會提醒
+            todayTasks.push("每次早班：填MI的泵浦操作");
 
             if (dayOfMonth === 1) {
-                tasks.push("每月1日：MI檢查表要填儲槽計量表");
-                tasks.push("每月1日：列印上個月壓力圖");
+                todayTasks.push("每月1日：MI檢查表要填儲槽計量表");
+                todayTasks.push("每月1日：列印上個月壓力圖");
             }
-            // 遇到週一
             if (dayOfWeek === 1) {
-                tasks.push("每週一：填MI檢查表的儲槽操作");
-                tasks.push("每週一：填關鍵閥門檢查表");
-                tasks.push("每週一：漏油偵測器檢查表");
-                tasks.push("每週一：緊急沖淋器檢查表");
+                todayTasks.push("每週一：填MI檢查表的儲槽操作");
+                todayTasks.push("每週一：填關鍵閥門檢查表");
+                todayTasks.push("每週一：漏油偵測器檢查表");
+                todayTasks.push("每週一：緊急沖淋器檢查表");
                 
                 let nextWeek = new Date(date);
                 nextWeek.setDate(date.getDate() + 7);
                 if (nextWeek.getMonth() !== date.getMonth()) {
-                    tasks.push("每月最後一個週一：平板檢查表的緊急沖淋、漏油警報");
+                    todayTasks.push("每月最後一個週一：平板檢查表的緊急沖淋、漏油警報");
                 }
             }
         }
 
-        // === 2. 中班專屬任務 ===
-        // ⭐ 修改：只有「中班」且遇到「月底最後一天」才要填機車里程
+        // 當天真的來到月底最後一天，且是「中班」時，放入今日強烈提醒
         if (isMid && dayOfMonth === daysInMonth) {
-            tasks.push("月底最後一天(中班)：填機車里程報告書");
+            todayTasks.push("🔥 今日任務：填機車里程報告書");
         }
 
-        // === 3. 輪值月份專案任務 ===
+
+        // ==========================================
+        // 2. 🗓️ 判斷「本月待辦專案」(monthTasks)
+        // ==========================================
+        
+        // 整個月都會掛在待辦區提醒你
+        monthTasks.push("月底最後一天 (中班)：填機車里程報告書");
+
         const monthsElapsed = (date.getFullYear() - 2026) * 12 + date.getMonth();
         
+        // 月盤查輪值
         const invCycle = Math.floor(monthsElapsed / 2);
         const invTeams = ["D", "A", "B", "C"];
         const assignedInvTeam = invTeams[((invCycle % 4) + 4) % 4];
-        
         if (assignedInvTeam === myTeamId) {
-            tasks.push(`輪值月份：本月要月盤查量油取樣 (營業油槽，20日附近)`);
+            monthTasks.push(`輪值月份：本月需月盤查量油取樣 (約20日)`);
         }
 
+        // 全規範取樣輪值
         if ((date.getMonth() + 1) % 2 !== 0) {
             const specCycle = Math.floor(monthsElapsed / 2);
             const specTeams = ["B", "C", "D", "A"];
             const assignedSpecTeam = specTeams[((specCycle % 4) + 4) % 4];
-            
             if (assignedSpecTeam === myTeamId) {
-                tasks.push(`輪值月份：本月要全規範取樣 (每月10日前)`);
+                monthTasks.push(`輪值月份：本月需全規範取樣 (10日前)`);
             }
         }
 
-        // === 4. 將任務渲染到畫面上 ===
+        // ==========================================
+        // 3. 🎨 將兩個陣列渲染到畫面上
+        // ==========================================
         const taskListEl = document.getElementById("taskList");
-        taskListEl.innerHTML = "";
+        let htmlContent = "";
+
+        // -- 渲染今日提醒區塊 --
+        htmlContent += `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 0 0 8px 0; font-weight: bold; color: var(--primary); border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">📅 今日當班提醒</li>`;
         
-        if (tasks.length === 0) {
-            taskListEl.innerHTML = `<li class="no-task">🎉 今日無特殊專案任務或提醒。</li>`;
+        if (todayTasks.length === 0) {
+            htmlContent += `<li class="no-task">🎉 今日無特殊排程任務。</li>`;
         } else {
-            tasks.forEach(task => {
-                taskListEl.innerHTML += `<li>📍 ${task}</li>`;
+            todayTasks.forEach(task => {
+                htmlContent += `<li>📍 ${task}</li>`;
             });
         }
-    }
 
+        // -- 渲染本月待辦區塊 --
+        htmlContent += `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 15px 0 8px 0; font-weight: bold; color: #D97706; border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">🗓️ 本月待辦專案</li>`;
+        
+        if (monthTasks.length === 0) {
+            // 理論上現在一定會有任務，但為了以防萬一還是保留空狀態
+            htmlContent += `<li class="no-task" style="background: #FFFBEB; color: #B45309; border-left-color: #F59E0B;">本月無輪值專案。</li>`;
+        } else {
+            monthTasks.forEach(task => {
+                // 給本月任務換個暖色系，區分視覺感
+                htmlContent += `<li style="background: #FFFBEB; color: #B45309; border-left-color: #F59E0B;">📌 ${task}</li>`;
+            });
+        }
+
+        taskListEl.innerHTML = htmlContent;
+    }
     function renderMonthTable(targetDate, baseDate) {
         const year = targetDate.getFullYear();
         const month = targetDate.getMonth();
@@ -766,6 +793,7 @@
 
 </body>
 </html>
+
 
 
 
