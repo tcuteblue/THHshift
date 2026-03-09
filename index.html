@@ -232,17 +232,17 @@
     </div>
 
     <div class="card">
-        <div class="card-title" style="justify-content: center;">🛠️工作提醒</div>
+        <div class="card-title" style="justify-content: center;">🛠️ 工作提醒</div>
         <ul class="task-list" id="taskList"></ul>
     </div>
 
     <div class="card">
-        <div class="card-title">📊 四班當日班別</div>
+        <div class="card-title" style="justify-content: center;">📊 四班今日班別</div>
         <div id="allTeamsContainer"></div>
     </div>
 
     <div class="card">
-        <div class="card-title">🗓️ 當月班表總覽</div>
+        <div class="card-title" style="justify-content: center;">🗓️ 本月班表總覽</div>
         <div class="table-container">
             <table class="calendar-table" id="monthTable"></table>
         </div>
@@ -402,7 +402,6 @@
         }
     };
 
-    // ⭐ 保護機制 1：如果 localStorage 資料損毀，能安全重置，不會白畫面崩潰
     let appSettings;
     try {
         let savedData = localStorage.getItem("shiftSettings");
@@ -414,7 +413,6 @@
     
     if (!appSettings.holidays) appSettings.holidays = JSON.parse(JSON.stringify(defaultSettings.holidays));
     
-    // ⭐ 保護機制 2：確保任務陣列存在
     if (!appSettings.tasks || !Array.isArray(appSettings.tasks)) {
         appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks));
     }
@@ -536,7 +534,6 @@
             if (!shiftMatch) return; 
 
             let ruleMatch = false;
-            // ⭐ 保護機制 3：嚴格修正變數宣告，避免舊版手機瀏覽器產生語法錯誤
             switch(task.rule) {
                 case 'every_shift': 
                     ruleMatch = true; break;
