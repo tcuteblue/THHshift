@@ -18,6 +18,10 @@
     <link rel="apple-touch-icon" href="icon.png">
     
     <style>
+        /* 消除手機網頁預設的點擊反白閃爍 */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
         :root {
             --primary: #4F46E5;
             --bg-color: #F3F4F6;
@@ -34,7 +38,6 @@
             --rest-color: #F3F4F6;
             --rest-text: #4B5563;
         }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg-color);
@@ -280,28 +283,33 @@
             margin-top: 15px;
         }
 
-       /* === 手機螢幕自動縮放與表格最佳化 === */
+      /* === 手機螢幕極致緊湊與放大字體 === */
         @media screen and (max-width: 480px) {
-            /* 1. 基礎字體從 14px 調大到 15px (整體字都會跟著微幅放大) */
-            html { font-size: 15px; }
+            /* 1. 基礎字體再加大 */
+            html { font-size: 16px; }
             
-            body { padding: 10px 8px; }
-            .card { padding: 15px; margin-bottom: 10px; }
+            /* 2. 極限壓縮外部與內部留白 */
+            body { padding: 6px 4px; }
+            .card { padding: 10px 12px; margin-bottom: 8px; }
             
-            /* 2. 標題也順應稍微調大 */
-            h1 { font-size: 1.3rem; margin-bottom: 15px; }
+            /* 3. 標題與標籤的間距縮減 */
+            h1 { font-size: 1.3rem; margin-bottom: 10px; }
+            .card-title { margin-bottom: 8px; padding-bottom: 5px; font-size: 1.15rem; }
+            .date-picker-container { margin-bottom: 10px; }
+            .toggle-group { margin-bottom: 12px; }
             
-            /* 3. 日曆表格的字體從 0.8rem 調大到 0.88rem */
-            .calendar-table { font-size: 0.88rem; }
-            
+            /* 4. 列表與按鈕的極致壓縮 */
+            .team-row { padding: 8px 0; }
+            .task-list li { padding: 8px 10px; margin-bottom: 6px; }
+            input[type="date"], select, input[type="text"], .btn { padding: 6px 8px; }
+            .shift-badge { padding: 3px 6px; font-size: 1rem; }
+
+            /* 5. 表格字體放大，框線內縮 */
+            .calendar-table { font-size: 0.95rem; }
             .calendar-table th, .calendar-table td {
-                padding: 8px 6px; 
+                padding: 6px 4px; /* 上下左右空間再縮小 */
                 white-space: nowrap; 
             }
-            
-            /* 4. 關鍵！字變大了，我們把輸入框跟按鈕的「上下 padding」從 8px 縮成 6px，維持高度不變 */
-            input[type="date"], select, input[type="text"], .btn { padding: 6px 10px; }
-            .shift-badge { padding: 4px 8px; }
 
             /* 固定首欄 (Sticky) 設定保持不變 */
             .calendar-table th:first-child, 
@@ -312,7 +320,6 @@
                 z-index: 1;
                 border-right: 2px solid #D1D5DB;
             }
-            
             .calendar-table th:first-child { z-index: 2; }
             .calendar-today-row td:first-child { background-color: #FEF9C3; }
         }
@@ -734,4 +741,5 @@
 
 </body>
 </html>
+
 
