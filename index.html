@@ -363,13 +363,13 @@
     </div>
 
     <div class="card">
-        <div class="card-title">📊 四班當日班別</div>
+        <div class="card-title">📊 四班今日班別</div>
         <div id="allTeamsContainer">
             </div>
     </div>
 
     <div class="card">
-        <div class="card-title">🗓️ 當月班表總覽</div>
+        <div class="card-title">🗓️ 本月班表總覽</div>
         <div class="table-container">
             <table class="calendar-table" id="monthTable">
                 </table>
@@ -634,7 +634,7 @@
         let htmlContent = "";
 
         // -- 渲染今日提醒區塊 --
-        htmlContent += `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 0 0 8px 0; font-weight: bold; color: var(--primary); border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">📅 今日當班提醒</li>`;
+        htmlContent += `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 0 0 8px 0; font-weight: bold; color: var(--primary); border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">📅 今日當班工作</li>`;
         
         if (todayTasks.length === 0) {
             htmlContent += `<li class="no-task">🎉 今日無特殊排程任務。</li>`;
@@ -793,6 +793,7 @@
 
 </body>
 </html>
+
 
 
 
