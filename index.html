@@ -448,18 +448,21 @@
     }
     
     const defaultTasks = [
-        { id: "t1", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：MI泵浦運轉前/啟動檢點表登錄" },
-        { id: "t2", shift: "早班", rule: "every_shift", ruleValue: "", text: "紙本檢查表填寫(CPI放水閥操作等7份)" },
-        { id: "t3", shift: "早班", rule: "yearly_range", ruleValue: "3-11", text: "3~11月早班：高氣溫戶外作業評估檢點表填寫" },
-        { id: "t4", shift: "早班", rule: "monthly_day", ruleValue: "1", text: "初一早班：MI儲槽計量設備每月檢查表登錄" },
-        { id: "t5", shift: "早班", rule: "monthly_day", ruleValue: "1", text: "初一早班：列印管壓趨勢圖" },
-        { id: "t6", shift: "早班", rule: "weekly", ruleValue: "1", text: "每週一早班：MI儲槽操作保養檢查表登錄" },
-        { id: "t7", shift: "早班", rule: "weekly", ruleValue: "1", text: "每週一早班：泵浦軸封設備元件每週檢查表填寫" },
-        { id: "t8", shift: "早班", rule: "weekly", ruleValue: "1", text: "每週一早班：漏油偵測警報系統檢查表填寫" },
-        { id: "t9", shift: "早班", rule: "weekly", ruleValue: "1", text: "每週一早班：緊急洗眼沖淋設備檢查表填寫" },
-        { id: "t10", shift: "早班", rule: "last_monday", ruleValue: "", text: "每月底週一早班：平板緊急洗眼沖淋與漏油警報登錄" },
-        { id: "t11", shift: "晚班", rule: "every_shift", ruleValue: "", text: "晚班：結帳量油與油槽放水記錄表填寫" },
-        { id: "t12", shift: "中班", rule: "monthly_last", ruleValue: "", text: "每月底中班：機車行駛記錄表填寫" }
+        { id: "t1", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：登錄MI系統的各型泵浦運轉前暨啟動時檢點表" },
+        { id: "t2", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：填寫CPI放水閥操作記錄表等7份檢查表" },
+        { id: "t3", shift: "中班", rule: "every_shift", ruleValue: "", text: "中班：填寫CPI放水閥操作記錄表" },
+        { id: "t4", shift: "早班", rule: "yearly_range", ruleValue: "3-11", text: "3~11月早班：填寫高氣溫戶外作業評估檢點表" },
+        { id: "t5", shift: "早班", rule: "monthly_day", ruleValue: "1", text: "初一早班：登錄MI系統的儲槽計量設備每月檢查表" },
+        { id: "t6", shift: "早班", rule: "monthly_day", ruleValue: "1", text: "初一早班：列印上個月的管壓趨勢圖" },
+        { id: "t7, shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：登錄MI系統的的儲槽操作前後(或每週)保養檢查表" },
+        { id: "t8" shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫一般重質輕質液泵浦軸封設備元件每週目視檢查表" },
+        { id: "t9", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫漏油偵測警報系統檢查表" },
+        { id: "t10", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫緊急洗眼沖淋設備檢查表" },
+        { id: "t11", shift: "早班", rule: "last_monday", ruleValue: "", text: "月底週一早班：登錄平板的緊急洗眼沖淋設備檢查表" },
+        { id: "t12", shift: "早班", rule: "last_monday", ruleValue: "", text: "月底週一早班：登錄平板的漏油偵測警報系統檢查表" },
+        { id: "t13", shift: "晚班", rule: "every_shift", ruleValue: "", text: "晚班：填寫結帳量油記錄表" },
+        { id: "t14", shift: "晚班", rule: "every_shift", ruleValue: "", text: "晚班：填寫油槽放水記錄表" },
+        { id: "t15", shift: "中班", rule: "monthly_last", ruleValue: "", text: "每月底中班：填寫機車行駛記錄表" }
     ];
 
     const defaultSettings = {
@@ -752,5 +755,3 @@
 
 </body>
 </html>
-
-
