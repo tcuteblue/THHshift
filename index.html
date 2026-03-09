@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>班表查詢與工作提醒系統 蔡宏和製作20260308</title>
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="班表查詢">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#4F46E5">
+    
+    <link rel="manifest" href="manifest.json">
+
+    <title>班表查詢與工作提醒系統 蔡宏和製作20260308</title>
+    
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     
@@ -60,6 +64,7 @@
             padding: 20px;
             margin-bottom: 15px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            animation: slideInUp 0.4s ease-out forwards;
         }
 
         .card-title {
@@ -166,6 +171,7 @@
             margin-bottom: 10px;
             font-size: 0.95rem;
             border-left: 4px solid #EF4444;
+            animation: slideInUp 0.35s ease-out forwards;
         }
         
         .task-list li.no-task {
@@ -206,6 +212,18 @@
             color: #DC2626;
             border: 1px solid #DC2626;
             margin-top: 10px;
+        }
+
+        /* 點擊回饋動畫 */
+        .btn:active, .btn-icon:active, .btn-mode:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+
+        /* 滑入動畫 */
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .settings-panel {
@@ -261,102 +279,35 @@
             gap: 10px;
             margin-top: 15px;
         }
-/* === 手機螢幕自動縮放設定 === */
+
+        /* === 手機螢幕自動縮放與表格最佳化 === */
         @media screen and (max-width: 480px) {
-            /* 1. 縮小基礎字體 (預設是 16px)。這會讓所有使用 rem 單位的字體等比例縮小 */
-            html {
-                font-size: 14px; 
-            }
+            html { font-size: 14px; }
+            body { padding: 10px 8px; }
+            .card { padding: 15px; margin-bottom: 10px; }
+            h1 { font-size: 1.25rem; margin-bottom: 15px; }
+            .calendar-table { font-size: 0.8rem; }
             
-            /* 2. 縮小頁面外圍的留白 */
-            body {
-                padding: 10px 8px;
-            }
-
-            /* 3. 縮小卡片內部的留白與間距 */
-            .card {
-                padding: 15px;
-                margin-bottom: 10px;
-            }
-
-            /* 4. 縮小主標題 */
-            h1 {
-                font-size: 1.25rem;
-                margin-bottom: 15px;
-            }
-
-            /* 5. 讓日曆表格更緊湊 */
-            .calendar-table {
-                font-size: 0.8rem;
-            }
             .calendar-table th, .calendar-table td {
-                padding: 6px 1px; /* 縮減表格上下左右的空間 */
-            }
-
-            /* 6. 微調按鈕與輸入框的空間 */
-            input[type="date"], select, input[type="text"], .btn {
-                padding: 8px 10px;
-            }
-            
-            .shift-badge {
-                padding: 4px 8px; /* 縮小班別標籤 */
-            }
-/* === 班表總覽表格專屬優化 === */
-            
-            /* 1. 強制表格文字不換行，讓字不會因為螢幕窄而擠成兩三行 */
-            .calendar-table th, .calendar-table td {
+                padding: 8px 6px; 
                 white-space: nowrap; 
-                padding: 8px 6px; /* 稍微給一點左右呼吸空間 */
             }
+            
+            input[type="date"], select, input[type="text"], .btn { padding: 8px 10px; }
+            .shift-badge { padding: 4px 8px; }
 
-            /* 2. 讓「日期」這一欄固定在左側！往右滑動看其他班別時，日期依然可見 */
+            /* 固定首欄 (Sticky) 設定 */
             .calendar-table th:first-child, 
             .calendar-table td:first-child {
                 position: sticky;
                 left: 0;
-                background-color: #F9FAFB; /* 加上一點微灰底色，避免滑動時字體與後方重疊 */
-                z-index: 1; /* 確保浮在最上層 */
-                border-right: 2px solid #D1D5DB; /* 加深右側邊框，做出立體區隔感 */
+                background-color: #F9FAFB;
+                z-index: 1;
+                border-right: 2px solid #D1D5DB;
             }
             
-            /* 左上角的「日期」表頭要特別設定更高的層級 */
-            .calendar-table th:first-child {
-                z-index: 2;
-            }
-
-            /* 3. 讓「今天」的那一列，左側固定的日期也保持突出的黃色底色 */
-            .calendar-today-row td:first-child {
-                background-color: #FEF9C3;
-            }
-        }
-/* === 提升 App 質感的動畫與點擊回饋 === */
-        
-        /* 1. 按鈕的觸控回饋 (手指按下去時會稍微縮小，放開彈回) */
-        .btn:active, .btn-icon:active, .btn-mode:active {
-            transform: scale(0.95);
-            transition: transform 0.1s;
-        }
-
-        /* 2. 定義任務列表的滑入動畫 */
-        @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translateY(15px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* 3. 將動畫套用到任務項目與卡片上 */
-        .task-list li {
-            animation: slideInUp 0.35s ease-out forwards;
-        }
-        
-        /* 讓不同區塊載入時有非常微小的浮現效果，更像原生讀取 */
-        .card {
-            animation: slideInUp 0.4s ease-out forwards;
+            .calendar-table th:first-child { z-index: 2; }
+            .calendar-today-row td:first-child { background-color: #FEF9C3; }
         }
     </style>
 </head>
@@ -498,7 +449,6 @@
     const SHIFT_CYCLE = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
     let isActualMode = true;
     
-    // 原始預設值，用來當作恢復預設的基準
     const defaultSettings = {
         baseDate: "2026-01-01",
         myTeam: "C",
@@ -510,7 +460,6 @@
         }
     };
 
-    // 從 localStorage 讀取或使用預設值 (深拷貝避免互相污染)
     let appSettings = JSON.parse(localStorage.getItem("shiftSettings")) || JSON.parse(JSON.stringify(defaultSettings));
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -758,7 +707,8 @@
             alert("已成功恢復預設值！");
         }
     }
-// 註冊 Service Worker (讓網頁變成 PWA 並支援離線)
+
+    // === 註冊 Service Worker (讓網頁變成 PWA 並支援離線) ===
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
@@ -770,7 +720,3 @@
 
 </body>
 </html>
-
-
-
-
