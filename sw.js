@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shift-app-v1';
+const CACHE_NAME = 'shift-app-v2';
 const urlsToCache = [
   '.',
   '.index.html',
@@ -27,4 +27,5 @@ self.addEventListener('fetch', event = {
         return fetch(event.request);  從網路回傳
       })
   );
+
 });
