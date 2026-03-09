@@ -296,6 +296,33 @@
             .shift-badge {
                 padding: 4px 8px; /* 縮小班別標籤 */
             }
+/* === 班表總覽表格專屬優化 === */
+            
+            /* 1. 強制表格文字不換行，讓字不會因為螢幕窄而擠成兩三行 */
+            .calendar-table th, .calendar-table td {
+                white-space: nowrap; 
+                padding: 8px 6px; /* 稍微給一點左右呼吸空間 */
+            }
+
+            /* 2. 讓「日期」這一欄固定在左側！往右滑動看其他班別時，日期依然可見 */
+            .calendar-table th:first-child, 
+            .calendar-table td:first-child {
+                position: sticky;
+                left: 0;
+                background-color: #F9FAFB; /* 加上一點微灰底色，避免滑動時字體與後方重疊 */
+                z-index: 1; /* 確保浮在最上層 */
+                border-right: 2px solid #D1D5DB; /* 加深右側邊框，做出立體區隔感 */
+            }
+            
+            /* 左上角的「日期」表頭要特別設定更高的層級 */
+            .calendar-table th:first-child {
+                z-index: 2;
+            }
+
+            /* 3. 讓「今天」的那一列，左側固定的日期也保持突出的黃色底色 */
+            .calendar-today-row td:first-child {
+                background-color: #FEF9C3;
+            }
         }
     </style>
 </head>
@@ -701,4 +728,5 @@
 
 </body>
 </html>
+
 
