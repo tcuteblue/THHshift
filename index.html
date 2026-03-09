@@ -557,7 +557,7 @@
         renderMonthTable(targetDate, baseDate);
     }
 
-  function renderTasks(date, myTeamId, myShiftText) {
+ function renderTasks(date, myTeamId, myShiftText) {
         let todayTasks = []; // 存放今日任務
         let monthTasks = []; // 存放本月常駐任務
         
@@ -567,6 +567,9 @@
         const dayOfMonth = date.getDate();
         const dayOfWeek = date.getDay(); // 0是週日，1是週一
         
+        // 取得目前月份，JavaScript 的月份是 0~11 (0 是 1月，2 是 3月，10 是 11月)
+        const currentMonth = date.getMonth(); 
+        
         // 取得本月總天數 (用來判斷月底最後一天)
         const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 
@@ -575,6 +578,11 @@
         // ==========================================
         if (isMorning) {
             todayTasks.push("每次早班：填MI的泵浦操作");
+
+            // ⭐ 新增：每年的 3月 到 11月，每次早班要填高氣溫戶外作業評估檢點表
+            if (currentMonth >= 2 && currentMonth <= 10) {
+                todayTasks.push("每次早班(3~11月)：填高氣溫戶外作業評估檢點表");
+            }
 
             if (dayOfMonth === 1) {
                 todayTasks.push("每月1日：MI檢查表要填儲槽計量表");
@@ -627,6 +635,36 @@
             }
         }
 
+        // ==========================================
+        // 3. 🎨 將兩個陣列渲染到畫面上
+        // ==========================================
+        const taskListEl = document.getElementById("taskList");
+        let htmlContent = "";
+
+        // -- 渲染今日提醒區塊 --
+        htmlContent += `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 0 0 8px 0; font-weight: bold; color: var(--primary); border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">📅 今日當班工作</li>`;
+        
+        if (todayTasks.length === 0) {
+            htmlContent += `<li class="no-task">🎉 今日無特殊排程任務。</li>`;
+        } else {
+            todayTasks.forEach(task => {
+                htmlContent += `<li>📍 ${task}</li>`;
+            });
+        }
+
+        // -- 渲染本月待辦區塊 --
+        htmlContent += `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 15px 0 8px 0; font-weight: bold; color: #D97706; border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">🗓️ 本月待辦專案</li>`;
+        
+        if (monthTasks.length === 0) {
+            htmlContent += `<li class="no-task" style="background: #FFFBEB; color: #B45309; border-left-color: #F59E0B;">本月無輪值專案。</li>`;
+        } else {
+            monthTasks.forEach(task => {
+                htmlContent += `<li style="background: #FFFBEB; color: #B45309; border-left-color: #F59E0B;">📌 ${task}</li>`;
+            });
+        }
+
+        taskListEl.innerHTML = htmlContent;
+    }
         // ==========================================
         // 3. 🎨 將兩個陣列渲染到畫面上
         // ==========================================
@@ -793,6 +831,7 @@
 
 </body>
 </html>
+
 
 
 
