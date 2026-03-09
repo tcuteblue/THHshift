@@ -526,7 +526,10 @@
     function changeDate(days) {
         triggerVibrate(); // 觸發震動
         const dateInput = document.getElementById("queryDate");
-        let currentDate = new Date(dateInput.value);
+        // 關鍵修改：將日期字串的 "-" 替換成 "/"，避免手機瀏覽器的時區解析錯誤
+        const safeDateString = dateInput.value.replace(/-/g, '/');
+        let currentDate = new Date(safeDateString);
+        
         currentDate.setDate(currentDate.getDate() + days);
         dateInput.value = formatDateToYYYYMMDD(currentDate);
         renderApp();
@@ -824,4 +827,3 @@ function renderTasks(date, myTeamId, myShiftText) {
 
 </body>
 </html>
-
