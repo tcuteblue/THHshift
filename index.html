@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>班表查詢與工作提醒系統 蔡宏和製作20260308</title>
@@ -757,10 +758,19 @@
             alert("已成功恢復預設值！");
         }
     }
+// 註冊 Service Worker (讓網頁變成 PWA 並支援離線)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('App 安裝服務註冊成功'))
+                .catch(err => console.log('App 安裝服務註冊失敗', err));
+        });
+    }
 </script>
 
 </body>
 </html>
+
 
 
 
