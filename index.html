@@ -51,12 +51,35 @@
             justify-content: flex-start;
         }
 
+        /* ============================== */
+        /* ★ 專屬啟動過場畫面 CSS (已修復圖示尺寸) ★ */
+        /* ============================== */
+        .splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 9999;
+            transition: opacity 0.4s ease-out;
+        }
+        @keyframes pulseIcon {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .splash-icon {
+            width: 70px; /* 強制縮小圖示尺寸，防止在手機上變超大 */
+            height: 70px;
+            margin-bottom: 20px; border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            animation: pulseIcon 1.5s infinite;
+        }
+
         /* 標題與日期控制區塊 (動態響應頁籤) */
         .header-section {
-            padding: 15px 15px 0 15px; /* 預設 padding */
+            padding: 15px 15px 0 15px; 
             background: var(--bg-color);
             border-bottom: 1px solid var(--border-color);
-            transition: padding-bottom 0.15s ease, margin-bottom 0.15s ease; /* 平滑收合效果 */
+            transition: padding-bottom 0.15s ease, margin-bottom 0.15s ease; 
         }
 
         .container { width: 100%; max-width: 500px; margin: 0 auto; }
@@ -66,10 +89,10 @@
             color: var(--primary); line-height: 1.3;
         }
 
-        /* 智能封裝控制項容器 (可被切換顯示) */
+        /* 智能封裝控制項容器 */
         .header-controls-container {
-            transition: opacity 0.15s ease, height 0.15s ease; /* 平滑隱藏效果 */
-            overflow: hidden; /* 防止內容溢出 */
+            transition: opacity 0.15s ease, height 0.15s ease; 
+            overflow: hidden; 
         }
 
         .date-picker-container { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 5px; }
@@ -123,13 +146,12 @@
         /* 按鈕點擊效果 */
         .btn:active, .btn-icon:active, .btn-mode:active, .tab-btn:active { transform: scale(0.97); transition: transform 0.05s; }
 
-        /* 滑入動畫 */
         @keyframes slideInUp {
             from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* 班別狀態樣式 (保留完整) */
+        /* 班別狀態樣式 */
         .shift-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; }
         .shift-morn { background: var(--morn-color); color: var(--morn-text); }
         .shift-mid { background: var(--mid-color); color: var(--mid-text); }
@@ -168,39 +190,29 @@
             font-size: 0.75rem; color: #374151; margin-right: 5px; font-weight: bold;
         }
 
-        /* ★ 頁籤功能的專屬 CSS (完整重組) ★ */
+        /* 頁籤功能CSS */
         .tab-content {
-            display: none;
-            flex: 1;
-            padding: 15px;
-            padding-bottom: 80px; /* 為底部導覽留空間 */
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            display: none; flex: 1; padding: 15px; padding-bottom: 80px; 
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
         }
-
-        .tab-content.active {
-            display: block;
-        }
-
+        .tab-content.active { display: block; }
         .tab-bar {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 65px;
             background: #FFFFFF; border-top: 1px solid var(--border-color);
             display: flex; justify-content: space-around; align-items: center;
             z-index: 1000; box-shadow: 0 -3px 10px rgba(0,0,0,0.05);
-            padding-bottom: env(safe-area-inset-bottom); /* iOS 安全區域 */
+            padding-bottom: env(safe-area-inset-bottom);
         }
-
         .tab-btn {
             flex: 1; height: 100%; display: flex; flex-direction: column;
             justify-content: center; align-items: center; border: none;
             background: transparent; cursor: pointer; color: var(--text-muted);
         }
-
         .tab-icon { font-size: 1.4rem; margin-bottom: 4px; }
         .tab-text { font-size: 0.8rem; font-weight: bold; }
         .tab-btn.active { color: var(--primary); }
 
-        /* RWD 手機版優化 (完整修復) */
+        /* RWD 手機版優化 */
         @media screen and (max-width: 480px) {
             html { font-size: 16px; }
             .header-section { padding: 10px 10px 0 10px; }
@@ -235,6 +247,7 @@
 </div>
 
 <script>
+    // 2秒後淡出啟動畫面
     setTimeout(function() {
         var splash = document.getElementById('splashScreen');
         if (splash) {
@@ -424,7 +437,6 @@
 </div>
 
 <script>
-    // --- 核心班表常數與資料邏輯 (完全保留) ---
     const SHIFT_CYCLE = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
     let isActualMode = true;
     
@@ -488,46 +500,37 @@
         renderApp();
     });
 
-    // ==============================
-    // ★ 頁籤切換邏輯 (完整優化) ★
-    // ==============================
+    // 頁籤切換與頂部隱藏邏輯
     function switchTab(tabNum) {
         triggerVibrate(); 
         
-        // 1. 隱藏所有頁籤內容
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        
-        // 2. 取消所有頁籤按鈕的高亮
         document.querySelectorAll('.tab-bar .tab-btn').forEach(b => b.classList.remove('active'));
         
-        // 3. 顯示指定的頁籤內容並高亮按鈕
         document.getElementById('tab' + tabNum).classList.add('active');
         document.querySelector(`.tab-bar .tab-btn:nth-child(${tabNum})`).classList.add('active');
 
-        // --- ★ 智慧響應：根據頁籤顯示/隱藏 Header 控制項 ★ ---
+        // 智慧隱藏 Header 控制項
         const headerControls = document.getElementById('headerControls');
         const mainHeaderSection = document.getElementById('mainHeaderSection');
 
-        if (tabNum === 3) { // 切換到「系統設定」
-            headerControls.style.opacity = '0'; // 淡出控制項
+        if (tabNum === 3) {
+            headerControls.style.opacity = '0'; 
             setTimeout(() => {
-                headerControls.style.display = 'none'; // 完全隱藏
-                mainHeaderSection.style.paddingBottom = '5px'; // 收合頂部區域
-            }, 150); // 對應淡出時間
-        } else { // 切換到「今日班表」或「班表總覽」
-            headerControls.style.display = 'block'; // 先顯示以獲取高度
+                headerControls.style.display = 'none'; 
+                mainHeaderSection.style.paddingBottom = '5px'; 
+            }, 150); 
+        } else {
+            headerControls.style.display = 'block'; 
             setTimeout(() => {
-                headerControls.style.opacity = '1'; // 淡入
-                mainHeaderSection.style.paddingBottom = '10px'; // 恢復原本空間
-            }, 10); // 確保在 display:block 後執行
+                headerControls.style.opacity = '1'; 
+                mainHeaderSection.style.paddingBottom = '10px'; 
+            }, 10); 
         }
-        // ------------------------------------------------
 
-        // 切換頁籤時滾動到最上方
         document.getElementById('tab' + tabNum).scrollTop = 0;
     }
 
-    // --- 核心班表邏輯 (完全保留) ---
     function setMode(mode) {
         triggerVibrate();
         isActualMode = mode;
@@ -687,7 +690,6 @@
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     }
 
-    // --- 設定區塊與管理邏輯 (完全保留) ---
     function loadSettingsToForm() {
         document.getElementById("setBaseDate").value = appSettings.baseDate;
         document.getElementById("setMyTeam").value = appSettings.myTeam;
@@ -715,7 +717,7 @@
         else if (rule === 'yearly_range') document.getElementById("inputWrap_monthRange").style.display = 'flex';
     }
 
-    function getRuleLabel(rule, val) { const weeks = ["日","一","二","三","四","五","六"]; switch(rule) { case 'every_shift': return "每次当班"; case 'specific_date': return val; case 'weekly': return `每週${weeks[val]}`; case 'monthly_day': return `每月${val}日`; case 'monthly_last': return "每月底"; case 'last_monday': return "月底週一"; case 'yearly_range': return `${val}月區間`; case 'odd_months': return "單數月"; case 'even_months': return "雙數月"; default: return "自訂"; } }
+    function getRuleLabel(rule, val) { const weeks = ["日","一","二","三","四","五","六"]; switch(rule) { case 'every_shift': return "每次當班"; case 'specific_date': return val; case 'weekly': return `每週${weeks[val]}`; case 'monthly_day': return `每月${val}日`; case 'monthly_last': return "每月底"; case 'last_monday': return "月底週一"; case 'yearly_range': return `${val}月區間`; case 'odd_months': return "單數月"; case 'even_months': return "雙數月"; default: return "自訂"; } }
 
     function renderTaskList() {
         let html = "";
@@ -738,7 +740,7 @@
         appSettings.holidays = JSON.parse(JSON.stringify(tempHolidays)); appSettings.tasks = JSON.parse(JSON.stringify(tempTasks));
         localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
         alert("設定已儲存！系統將重新計算。");
-        renderApp(); switchTab(1); // 儲存後跳回第一頁
+        renderApp(); switchTab(1); 
     }
 
     function restoreDefaults() {
