@@ -146,38 +146,22 @@
             font-size: 0.75rem; color: #374151; margin-right: 5px;
         }
 
-        /* ⭐ 新增：專屬啟動過場畫面 CSS */
+        /* 專屬啟動過場畫面 CSS */
         .splash-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             z-index: 9999;
-            transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+            transition: opacity 0.4s ease-out;
         }
-        .splash-screen.hidden {
-            opacity: 0;
-            visibility: hidden;
-        }
-        /* 讓圖示稍微呼吸跳動的小動畫 */
         @keyframes pulseIcon {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
         .splash-icon {
-            width: 90px;
-            height: 90px;
-            margin-bottom: 20px;
-            border-radius: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            animation: pulseIcon 1.5s infinite;
+            width: 90px; height: 90px; margin-bottom: 20px; border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); animation: pulseIcon 1.5s infinite;
         }
 
         @media screen and (max-width: 480px) {
@@ -204,9 +188,19 @@
 
 <div id="splashScreen" class="splash-screen">
     <img src="icon.png" alt="App Icon" class="splash-icon" onerror="this.style.display='none'">
-    <h2 style="color: var(--primary); margin: 0; font-size: 1.5rem;">班表與工作查詢系統</h2>
-    <div style="margin-top: 15px; font-size: 0.95rem; color: var(--text-muted); font-weight: bold;">系統載入中...</div>
+    <h2 style="color: #4F46E5; margin: 0; font-size: 1.5rem;">班表與工作查詢系統</h2>
+    <div style="margin-top: 15px; font-size: 0.95rem; color: #6B7280; font-weight: bold;">系統載入中...</div>
 </div>
+
+<script>
+    setTimeout(function() {
+        var splash = document.getElementById('splashScreen');
+        if (splash) {
+            splash.style.opacity = '0';
+            setTimeout(function() { splash.style.display = 'none'; }, 400);
+        }
+    }, 1500);
+</script>
 
 <div class="container">
     <h1>
@@ -405,17 +399,24 @@
             "2026-02-18": "初二", "2026-02-19": "初三", "2026-02-28": "和平紀念日",
             "2026-04-03": "兒童節", "2026-04-04": "清明節", "2026-05-01": "勞動節",
             "2026-06-19": "端午節", "2026-09-25": "中秋節", "2026-10-10": "國慶日"
-        },
-        tasksVersion: 1,
-        tasks: defaultTasks
+        }
     };
 
-    let appSettings = JSON.parse(localStorage.getItem("shiftSettings")) || JSON.parse(JSON.stringify(defaultSettings));
+    // ⭐ 保護機制 1：如果 localStorage 資料損毀，能安全重置，不會白畫面崩潰
+    let appSettings;
+    try {
+        let savedData = localStorage.getItem("shiftSettings");
+        appSettings = savedData ? JSON.parse(savedData) : null;
+        if (!appSettings || typeof appSettings !== 'object') throw new Error("Invalid data");
+    } catch(e) {
+        appSettings = JSON.parse(JSON.stringify(defaultSettings));
+    }
     
     if (!appSettings.holidays) appSettings.holidays = JSON.parse(JSON.stringify(defaultSettings.holidays));
-    if (!appSettings.tasksVersion) {
+    
+    // ⭐ 保護機制 2：確保任務陣列存在
+    if (!appSettings.tasks || !Array.isArray(appSettings.tasks)) {
         appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks));
-        appSettings.tasksVersion = 1;
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -425,12 +426,6 @@
         toggleTaskInputs(); 
         loadSettingsToForm();
         renderApp();
-
-        // ⭐ 控制客製化啟動過場動畫 (延遲 1.5 秒後淡出消失)
-        setTimeout(() => {
-            const splash = document.getElementById('splashScreen');
-            if(splash) splash.classList.add('hidden');
-        }, 1500);
     });
 
     function setMode(mode) {
@@ -541,44 +536,38 @@
             if (!shiftMatch) return; 
 
             let ruleMatch = false;
+            // ⭐ 保護機制 3：嚴格修正變數宣告，避免舊版手機瀏覽器產生語法錯誤
             switch(task.rule) {
                 case 'every_shift': 
-                    ruleMatch = true; 
-                    break;
+                    ruleMatch = true; break;
                 case 'specific_date': 
-                    if (task.ruleValue === targetDateStr) ruleMatch = true; 
-                    break;
+                    if (task.ruleValue === targetDateStr) ruleMatch = true; break;
                 case 'weekly': 
-                    if (currentDayOfWeek === parseInt(task.ruleValue)) ruleMatch = true; 
-                    break;
+                    if (currentDayOfWeek === parseInt(task.ruleValue)) ruleMatch = true; break;
                 case 'monthly_day': 
-                    if (currentDay === parseInt(task.ruleValue)) ruleMatch = true; 
-                    break;
+                    if (currentDay === parseInt(task.ruleValue)) ruleMatch = true; break;
                 case 'monthly_last': 
-                    if (currentDay === daysInMonth) ruleMatch = true; 
-                    break;
-                case 'last_monday':
+                    if (currentDay === daysInMonth) ruleMatch = true; break;
+                case 'last_monday': {
                     if (currentDayOfWeek === 1) {
-                        let nextWeek = new Date(date);
+                        var nextWeek = new Date(date);
                         nextWeek.setDate(date.getDate() + 7);
                         if (nextWeek.getMonth() !== currentMonthIdx) ruleMatch = true;
                     }
                     break;
-                case 'yearly_range':
-                    let parts = task.ruleValue.split('-');
+                }
+                case 'yearly_range': {
+                    var parts = task.ruleValue.split('-');
                     if (currentMonthNum >= parseInt(parts[0]) && currentMonthNum <= parseInt(parts[1])) ruleMatch = true;
                     break;
+                }
                 case 'odd_months':
-                    if (currentMonthNum % 2 !== 0) ruleMatch = true;
-                    break;
+                    if (currentMonthNum % 2 !== 0) ruleMatch = true; break;
                 case 'even_months':
-                    if (currentMonthNum % 2 === 0) ruleMatch = true;
-                    break;
+                    if (currentMonthNum % 2 === 0) ruleMatch = true; break;
             }
 
-            if (ruleMatch) {
-                todayTasks.push(task.text);
-            }
+            if (ruleMatch) todayTasks.push(task.text);
         });
 
         const monthsElapsed = (currentYear - 2026) * 12 + currentMonthIdx;
@@ -803,8 +792,9 @@
     function restoreDefaults() {
         triggerVibrate(); 
         if (confirm("🚨 警告：這將會清除您設定的所有班別、領班名稱、自訂假日，以及所有【工作提醒清單】並恢復成原廠預設！\n\n確定要繼續嗎？")) {
-            appSettings = JSON.parse(JSON.stringify(defaultSettings));
             localStorage.removeItem("shiftSettings");
+            appSettings = JSON.parse(JSON.stringify(defaultSettings));
+            appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks));
             loadSettingsToForm();
             renderApp();
             alert("已成功恢復預設值！");
