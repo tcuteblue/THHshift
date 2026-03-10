@@ -48,7 +48,7 @@
             justify-content: flex-start;
         }
 
-        /* ★ 標題 LOGO 樣式 ★ */
+        /* 標題 LOGO 樣式 */
         .title-icon {
             width: 1.6rem;
             height: 1.6rem;
@@ -56,6 +56,41 @@
             margin-right: 8px;
             border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* ★ 新增安裝按鈕樣式 ★ */
+        .install-button-container {
+            display: none; /* 智慧顯示：默認隱藏 */
+            text-align: center;
+            margin: 20px 0;
+        }
+        .btn-install {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 100%;
+            max-width: 400px;
+            font-weight: bold;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+            transition: transform 0.05s;
+        }
+        .btn-install:active {
+            transform: scale(0.97);
+        }
+        .install-explanation {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+            font-weight: bold;
         }
 
         /* 智慧響應 Header 區塊 */
@@ -285,6 +320,13 @@
         <div class="card">
             <div class="card-title">🛠️ 工作提醒</div>
             <ul class="task-list" id="taskList"></ul>
+        </div>
+
+        <div id="installButtonContainer" class="install-button-container">
+            <button id="btnInstall" class="btn-install">
+                📥 安裝為手機 APP
+            </button>
+            <div class="install-explanation">以便離線使用和更快載入</div>
         </div>
     </div>
 
@@ -827,7 +869,7 @@
     function addCustomTask() {
         triggerVibrate(); const shift = document.getElementById("addTaskShift").value, rule = document.getElementById("addTaskRule").value, text = document.getElementById("addTaskText").value; let ruleVal = ""; if (!text) return alert("請輸入工作內容！");
         if (rule === 'specific_date') { ruleVal = document.getElementById("addTaskDate").value; if(!ruleVal) return alert("請選擇特定日期！"); } 
-        else if (rule === 'weekly') ruleVal = document.getElementById("addTaskWeek").value; 
+        else if (rule === 'weekly) ruleVal = document.getElementById("addTaskWeek").value; 
         else if (rule === 'monthly_day') { ruleVal = document.getElementById("addTaskMonthDay").value; if(!ruleVal || ruleVal < 1 || ruleVal > 31) return alert("請輸入正確日期！"); } 
         else if (rule === 'yearly_range') { const s = document.getElementById("addTaskRangeStart").value, e = document.getElementById("addTaskRangeEnd").value; if(!s || !e || s<1 || s>12 || e<1 || e>12) return alert("請輸入正確區間！"); ruleVal = `${s}-${e}`; }
         if (editingTaskId) { const index = tempTasks.findIndex(t => t.id === editingTaskId); if (index !== -1) { tempTasks[index] = { id: editingTaskId, shift: shift, rule: rule, ruleValue: ruleVal, text: text }; alert("工作提醒已更新！"); } } 
@@ -851,6 +893,51 @@
     function restoreDefaults() {
         triggerVibrate(); if (confirm("🚨 警告：這將會清除您手動修改的所有自訂設定(基準日、領班、假日、工作提醒管理)！\n\n確定要繼續嗎？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); loadSettingsToForm(); renderApp(); alert("已成功恢復預設值！"); switchTab(1); }
     }
+
+    // --- ★ 新增：PWA 安裝邏輯 ★ ---
+    let deferredPrompt;
+    const installBtn = document.getElementById('btnInstall');
+    const installBtnContainer = document.getElementById('installButtonContainer');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // 防止瀏覽器顯示預設的安裝提示
+      e.preventDefault();
+      // 存儲事件以便稍後觸發
+      deferredPrompt = e;
+      // 智慧顯示：只有當可以安裝時，才顯示安裝按鈕區塊
+      installBtnContainer.style.display = 'block';
+    });
+
+    installBtn.addEventListener('click', (e) => {
+      // 觸覺回饋
+      if (navigator.vibrate) navigator.vibrate(50);
+      
+      if (!deferredPrompt) return;
+      // 顯示安裝提示
+      deferredPrompt.prompt();
+      // 等待使用者做出選擇
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('使用者接受安裝');
+          triggerVibrate();
+          // 安裝成功後隱藏按鈕
+          installBtnContainer.style.display = 'none';
+        } else {
+          console.log('使用者拒絕安裝');
+        }
+        // 清除 deferredPrompt
+        deferredPrompt = null;
+      });
+    });
+
+    // 監聽 appinstalled 事件，在應用程式成功安裝後提供反饋
+    window.addEventListener('appinstalled', (event) => {
+      console.log('應用程式已成功安裝');
+      deferredPrompt = null;
+      // 確保按鈕隱藏
+      installBtnContainer.style.display = 'none';
+    });
+    // ---------------------------------
 
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW註冊失敗', err)); }); }
 </script>
