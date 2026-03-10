@@ -181,7 +181,7 @@
             background: #EFF6FF !important;
         }
 
-        /* 底部頁籤導覽列 (完整重組) */
+        /* ★ 頁籤功能的專屬 CSS (完整重組) ★ */
         .tab-content {
             display: none;
             flex: 1;
@@ -248,11 +248,12 @@
 </div>
 
 <script>
+    // 正常圖示顯示 2 秒後再載入
     setTimeout(function() {
         var splash = document.getElementById('splashScreen');
         if (splash) {
-            splash.style.opacity = '0';
-            setTimeout(function() { splash.style.display = 'none'; }, 400);
+            splash.style.opacity = '0'; // 淡出
+            setTimeout(function() { splash.style.display = 'none'; }, 400); // 延遲隱藏
         }
     }, 2000);
 </script>
@@ -424,7 +425,7 @@
 
             <div class="action-buttons">
                 <button class="btn btn-danger" onclick="restoreDefaults()" style="flex: 1; margin-top: 0;">🔄 恢復預設</button>
-                <button class="btn" onclick="saveSettings()" style="flex: 2; margin-top: 0;">💾 儲存並重新計算</button>
+                <button class="btn" onclick="saveSettings()" style="flex: 2; margin-top: 0;">💾 儲存設定</button>
             </div>
         </div>
     </div>
@@ -446,8 +447,9 @@
 </div>
 
 <script>
+    // --- 系統常數與核心邏輯 (完全保留) ---
     const SHIFT_CYCLE = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
-    let isActualMode = true;
+    let isActualMode = true; // 預設為實際出勤模式
     
     // 設定區塊用的暫存變數
     let tempHolidays = {}; 
@@ -457,11 +459,12 @@
     let editingHolidayDate = null; // 正在編輯的假日日期
     let editingTaskId = null;      // 正在編輯的工作 ID
 
+    // 手機震動回饋功能
     function triggerVibrate() {
-        if (navigator.vibrate) navigator.vibrate(50);
+        if (navigator.vibrate) navigator.vibrate(50); // 震動 50 毫秒
     }
     
-    // 預設工作清單 (已修正錯字的版本)
+    // 原始系統預設工作清單
     const defaultTasks = [
         { id: "t1", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：登錄MI系統的各型泵浦運轉前暨啟動時檢點表" },
         { id: "t2", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：填寫CPI放水閥操作記錄表等7份檢查表" },
@@ -473,13 +476,14 @@
         { id: "t8", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫一般重質輕質液泵浦軸封設備元件每週目視檢查表" },
         { id: "t9", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫漏油偵測警報系統檢查表" },
         { id: "t10", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫緊急洗眼沖淋設備檢查表" },
-        { id: "t11", shift: "早班", rule: "last_monday", ruleValue: "", text: "月底週一早班：登錄平板的緊急洗眼沖淋設備檢查表" },
-        { id: "t12", shift: "早班", rule: "last_monday", ruleValue: "", text: "月底週一早班：登錄平板的漏油偵測警報系統檢查表" },
+        { id: "t11", shift: "早班", rule: "last_monday", ruleValue: "", text: "年底週一早班：登錄平板的緊急洗眼沖淋設備檢查表" },
+        { id: "t12", shift: "早班", rule: "last_monday", ruleValue: "", text: "年底週一早班：登錄平板的漏油偵測警報系統檢查表" },
         { id: "t13", shift: "晚班", rule: "every_shift", ruleValue: "", text: "晚班：填寫結帳量油記錄表" },
         { id: "t14", shift: "晚班", rule: "every_shift", ruleValue: "", text: "晚班：填寫油槽放水記錄表" },
         { id: "t15", shift: "中班", rule: "monthly_last", ruleValue: "", text: "每月底中班：填寫機車行駛記錄表" }
     ];
 
+    // 系統原始預設資料 (恢復預設用)
     const defaultSettings = {
         baseDate: "2026-01-01",
         myTeam: "C",
@@ -495,16 +499,21 @@
         }
     };
 
+    // --- 初始化執行與資料載入 (完全保留) ---
     let appSettings;
     try {
         let savedData = localStorage.getItem("shiftSettings");
         appSettings = savedData ? JSON.parse(savedData) : null;
         if (!appSettings || typeof appSettings !== 'object') throw new Error("Invalid data");
     } catch(e) {
+        // 如果無資料或格式錯誤，使用預設值
         appSettings = JSON.parse(JSON.stringify(defaultSettings));
     }
     
+    // 資料結構升級防呆 (防止舊版本無假日或任務設定)
     if (!appSettings.holidays) appSettings.holidays = JSON.parse(JSON.stringify(defaultSettings.holidays));
+    
+    // 如果沒有工作清單，則載入預設工作清單
     if (!appSettings.tasks || !Array.isArray(appSettings.tasks)) {
         appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks));
     }
@@ -513,41 +522,55 @@
         const today = new Date();
         document.getElementById("queryDate").value = formatDateToYYYYMMDD(today);
         document.getElementById("queryDate").addEventListener("change", renderApp);
-        toggleTaskInputs(); 
-        loadSettingsToForm();
+        toggleTaskInputs(); // 初始化新增工作的輸入框顯示
+        loadSettingsToForm(); // 先載入資料到設定表單(隱藏中)
         renderApp();
     });
 
-    // 頁籤切換邏輯
+    // ==============================
+    // ★ 頁籤切換邏輯 (完整優化) ★
+    // ==============================
     function switchTab(tabNum) {
-        triggerVibrate(); 
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.tab-bar .tab-btn').forEach(b => b.classList.remove('active'));
+        triggerVibrate(); // 觸覺回饋
+        
+        // 1. 隱藏所有頁籤內容
+        const contents = document.querySelectorAll('.tab-content');
+        contents.forEach(content => content.classList.remove('active'));
+        
+        // 2. 取消所有頁籤按鈕的高亮
+        const btns = document.querySelectorAll('.tab-bar .tab-btn');
+        btns.forEach(btn => btn.classList.remove('active'));
+        
+        // 3. 顯示指定的頁籤內容並高亮按鈕
         document.getElementById('tab' + tabNum).classList.add('active');
         document.querySelector(`.tab-bar .tab-btn:nth-child(${tabNum})`).classList.add('active');
 
+        // --- ★ 智慧響應：根據頁籤顯示/隱藏 Header 控制項 ★ ---
         const headerControls = document.getElementById('headerControls');
         const mainHeaderSection = document.getElementById('mainHeaderSection');
 
-        if (tabNum === 3) {
-            headerControls.style.opacity = '0'; 
+        if (tabNum === 3) { // 切換到「系統設定」
+            headerControls.style.opacity = '0'; // 淡出控制項
             setTimeout(() => {
-                headerControls.style.display = 'none'; 
-                mainHeaderSection.style.paddingBottom = '5px'; 
-            }, 150); 
-        } else {
-            headerControls.style.display = 'block'; 
+                headerControls.style.display = 'none'; // 完全隱藏
+                mainHeaderSection.style.paddingBottom = '5px'; // 收合頂部區域
+            }, 150); // 對應淡出時間
+        } else { // 切換到「今日班表」或「班表總覽」
+            headerControls.style.display = 'block'; // 先顯示以獲取高度
             setTimeout(() => {
-                headerControls.style.opacity = '1'; 
-                mainHeaderSection.style.paddingBottom = '10px'; 
-            }, 10); 
+                headerControls.style.opacity = '1'; // 淡入
+                mainHeaderSection.style.paddingBottom = '10px'; // 恢復原本空間
+            }, 10); // 確保在 display:block 後執行
         }
+        // ------------------------------------------------
+
+        // 切換頁籤時滾動到最上方
         document.getElementById('tab' + tabNum).scrollTop = 0;
     }
 
     // --- 核心班表邏輯 (完全保留) ---
     function setMode(mode) {
-        triggerVibrate();
+        triggerVibrate(); // 觸覺回饋
         isActualMode = mode;
         document.getElementById('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
         document.getElementById('btnActual').className = isActualMode ? 'btn-mode active' : 'btn-mode';
@@ -555,33 +578,39 @@
     }
 
     function applyShiftMapping(shiftText) {
-        if (!isActualMode) return shiftText; 
+        if (!isActualMode) return shiftText; // 標準模式不轉換
         if (shiftText === "小休") return "晚班1";
         if (shiftText === "晚班1") return "晚班2";
         if (shiftText === "晚班2") return "小休";
-        return shiftText;
+        return shiftText; // 其他班別(早/中/大休)不變
     }
 
     function changeDate(days) {
-        triggerVibrate();
+        triggerVibrate(); // 觸覺回饋
         const dateInput = document.getElementById("queryDate");
+        // iOS 需要處理日期格式相容性
         const safeDateString = dateInput.value.replace(/-/g, '/');
         let currentDate = new Date(safeDateString);
+        
         currentDate.setDate(currentDate.getDate() + days);
         dateInput.value = formatDateToYYYYMMDD(currentDate);
         renderApp();
     }
 
+    // 主渲染函式：更新畫面所有資訊
     function renderApp() {
         const queryDateStr = document.getElementById("queryDate").value;
         if (!queryDateStr) return;
         
+        // 使用 '/' 格式提高跨平台相容性 (尤其 iOS)
         const targetDate = new Date(queryDateStr.replace(/-/g, '/')); 
         const baseDate = new Date(appSettings.baseDate.replace(/-/g, '/')); 
         
+        // 1. 更新星期與國定假日顯示
         const weekDaysFull = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
         let dayText = weekDaysFull[targetDate.getDay()];
         
+        // 檢查是否為自訂節日
         const dateKey = formatDateToYYYYMMDD(targetDate);
         if (appSettings.holidays && appSettings.holidays[dateKey]) {
             dayText += ` <span style="color: #DC2626; font-size: 1rem; margin-left: 8px;">🎈 ${appSettings.holidays[dateKey]}</span>`;
@@ -589,6 +618,7 @@
         
         document.getElementById("dayOfWeekDisplay").innerHTML = dayText;
         
+        // 2. 計算天數差
         const diffTime = targetDate - baseDate;
         const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
@@ -596,113 +626,212 @@
         let myShiftText = "";
         let allTeamsHTML = "";
 
-        ["A", "B", "C", "D"].forEach(id => {
+        // 3. 計算並更新四班班別
+        const teamIds = ["A", "B", "C", "D"];
+        teamIds.forEach(id => {
             const team = appSettings.teams[id];
+            // 計算在 8 天循環中的位置 (offset 是基準日當天的班別索引)
             let shiftIndex = (team.offset + diffDays) % 8;
-            if (shiftIndex < 0) shiftIndex = (shiftIndex % 8 + 8) % 8; 
+            if (shiftIndex < 0) shiftIndex = (shiftIndex % 8 + 8) % 8; // 處理負數
             
-            let shifts = applyShiftMapping(SHIFT_CYCLE[shiftIndex]);
-            const badgeClass = getBadgeClass(shifts);
+            // 取得原始班別名稱，並套用「實際出勤」切換
+            let logicalShiftText = SHIFT_CYCLE[shiftIndex];
+            let shiftText = applyShiftMapping(logicalShiftText);
+            const badgeClass = getBadgeClass(shiftText);
 
+            // 更新「你的今日班表」區塊
             if (id === myTeamId) {
-                myShiftText = shifts;
+                myShiftText = shiftText;
                 document.getElementById("myTeamName").innerText = `${id}班 (${team.name})`;
                 const badge = document.getElementById("myShiftBadge");
-                badge.innerText = shifts;
+                badge.innerText = shiftText;
                 badge.className = `shift-badge ${badgeClass}`;
             }
 
-            allTeamsHTML += `<div class="team-row"><span class="team-name">${id}班 (${team.name})</span><span class="shift-badge ${badgeClass}">${shifts}</span></div>`;
+            // 更新「四班今日班別」區塊
+            allTeamsHTML += `
+                <div class="team-row">
+                    <span class="team-name">${id}班 (${team.name})</span>
+                    <span class="shift-badge ${badgeClass}">${shiftText}</span>
+                </div>
+            `;
         });
         
         document.getElementById("allTeamsContainer").innerHTML = allTeamsHTML;
+
+        // 4. 更新「工作提醒」區塊
         renderTasks(targetDate, myTeamId, myShiftText);
+
+        // 5. 更新「本月班表總覽」表格
         renderMonthTable(targetDate, baseDate);
     }
 
+    // 渲染工作提醒的核心函式 (包含系統預設與自訂工作)
     function renderTasks(date, myTeamId, myShiftText) {
-        let todayTasks = [];
-        let monthTasks = []; 
+        let todayTasks = []; // 當班需要做的工作
+        let monthTasks = []; // 整個月份的輪值專案
         
-        const isMorning = (myShiftText === "早班1" || myShiftText === "早班2"),
-              isMid = (myShiftText === "中班1" || myShiftText === "中班2"), 
-              isNight = (myShiftText === "晚班1" || myShiftText === "晚班2"); 
+        // 判斷當前是早/中/晚哪一種班型，以套用提醒規則
+        const isMorning = (myShiftText === "早班1" || myShiftText === "早班2");
+        const isMid = (myShiftText === "中班1" || myShiftText === "中班2"); 
+        const isNight = (myShiftText === "晚班1" || myShiftText === "晚班2"); 
         
-        const currentYear = date.getFullYear(),
-              currentMonthIdx = date.getMonth(),
-              currentMonthNum = currentMonthIdx + 1, 
-              currentDay = date.getDate(),
-              currentDayOfWeek = date.getDay(),
-              daysInMonth = new Date(currentYear, currentMonthIdx + 1, 0).getDate(),
-              targetDateStr = formatDateToYYYYMMDD(date);
+        // 取得今日日期的各項數值
+        const currentYear = date.getFullYear();
+        const currentMonthIdx = date.getMonth(); // 0-11
+        const currentMonthNum = currentMonthIdx + 1; // 1-12
+        const currentDay = date.getDate();
+        const currentDayOfWeek = date.getDay(); // 0(日)-6(六)
+        const daysInMonth = new Date(currentYear, currentMonthIdx + 1, 0).getDate(); // 當月總天數
+        const targetDateStr = formatDateToYYYYMMDD(date);
 
+        // --- 處理當班工作清單 (依據使用者選擇的日期) ---
         appSettings.tasks.forEach(task => {
+            // 1. 檢查班型是否符合
             let shiftMatch = false;
             if (task.shift === "全天") shiftMatch = true;
             else if (task.shift === "早班" && isMorning) shiftMatch = true;
             else if (task.shift === "中班" && isMid) shiftMatch = true;
             else if (task.shift === "晚班" && isNight) shiftMatch = true;
-            if (!shiftMatch) return; 
 
+            if (!shiftMatch) return; // 班型不符，跳過
+
+            // 2. 檢查日期規則是否符合
             let ruleMatch = false;
             switch(task.rule) {
-                case 'every_shift': ruleMatch = true; break;
-                case 'specific_date': if (task.ruleValue === targetDateStr) ruleMatch = true; break;
-                case 'weekly': if (currentDayOfWeek === parseInt(task.ruleValue)) ruleMatch = true; break;
-                case 'monthly_day': if (currentDay === parseInt(task.ruleValue)) ruleMatch = true; break;
-                case 'monthly_last': if (currentDay === daysInMonth) ruleMatch = true; break;
-                case 'last_monday': { if (currentDayOfWeek === 1) { var nextWeek = new Date(date); nextWeek.setDate(date.getDate() + 7); if (nextWeek.getMonth() !== currentMonthIdx) ruleMatch = true; } break; }
-                case 'yearly_range': { var parts = task.ruleValue.split('-'); if (currentMonthNum >= parseInt(parts[0]) && currentMonthNum <= parseInt(parts[1])) ruleMatch = true; break; }
-                case 'odd_months': if (currentMonthNum % 2 !== 0) ruleMatch = true; break;
-                case 'even_months': if (currentMonthNum % 2 === 0) ruleMatch = true; break;
+                case 'every_shift': // 每次當班
+                    ruleMatch = true; break;
+                case 'specific_date': // 特定日期 (YYYY-MM-DD)
+                    if (task.ruleValue === targetDateStr) ruleMatch = true; break;
+                case 'weekly': // 每週特定星期
+                    if (currentDayOfWeek === parseInt(task.ruleValue)) ruleMatch = true; break;
+                case 'monthly_day': // 每月幾號
+                    if (currentDay === parseInt(task.ruleValue)) ruleMatch = true; break;
+                case 'monthly_last': // 每月最後一天
+                    if (currentDay === daysInMonth) ruleMatch = true; break;
+                case 'last_monday': { // 每月最後一個週一
+                    if (currentDayOfWeek === 1) { // 如果今天是週一
+                        var nextWeek = new Date(date);
+                        nextWeek.setDate(date.getDate() + 7);
+                        // 檢查下週是否還在同一個月
+                        if (nextWeek.getMonth() !== currentMonthIdx) ruleMatch = true;
+                    }
+                    break;
+                }
+                case 'yearly_range': { // 每年固定月份區間 (如: 3-11月)
+                    var parts = task.ruleValue.split('-');
+                    if (currentMonthNum >= parseInt(parts[0]) && currentMonthNum <= parseInt(parts[1])) ruleMatch = true;
+                    break;
+                }
+                case 'odd_months': // 單數月 (1,3,5,7,9,11月)
+                    if (currentMonthNum % 2 !== 0) ruleMatch = true; break;
+                case 'even_months': // 雙數月 (2,4,6,8,10,12月)
+                    if (currentMonthNum % 2 === 0) ruleMatch = true; break;
             }
+
             if (ruleMatch) todayTasks.push(task.text);
         });
 
+        // --- 處理整個月份的【輪值專案】 (本月輪到哪一班) ---
+        // 計算從 2026年1月(基準點) 開始算起的月份差
         const monthsElapsed = (currentYear - 2026) * 12 + currentMonthIdx;
-        const invTeams = ["D", "A", "B", "C"], specTeams = ["B", "C", "D", "A"];
-        if (invTeams[((Math.floor(monthsElapsed / 2) % 4) + 4) % 4] === myTeamId) monthTasks.push(`輪值月份：本月要做月盤查量油取樣 (營業油槽，20日附近)`);
-        if (currentMonthNum % 2 !== 0 && specTeams[((Math.floor(monthsElapsed / 2) % 4) + 4) % 4] === myTeamId) monthTasks.push(`輪值月份：本月要做全規範取樣 (每月10日前)`);
+        
+        // 1. 月盤查與量油取樣 (每兩個月輪一次，D->A->B->C 順序)
+        const invCycle = Math.floor(monthsElapsed / 2);
+        const invTeams = ["D", "A", "B", "C"];
+        const assignedInvTeam = invTeams[((invCycle % 4) + 4) % 4];
+        if (assignedInvTeam === myTeamId) {
+            monthTasks.push(`輪值月份：本月要做月盤查量油取樣 (營業油槽，20日附近)`);
+        }
 
+        // 2. 全規範取樣 (單數月由各班輪值，雙數月休息)
+        if ((currentMonthIdx + 1) % 2 !== 0) {
+            // 計算這是第幾個「取樣月」，以決定輪值班別 (B->C->D->A 順序)
+            const specCycle = Math.floor(monthsElapsed / 2);
+            const specTeams = ["B", "C", "D", "A"];
+            const assignedSpecTeam = specTeams[((specCycle % 4) + 4) % 4];
+            if (assignedSpecTeam === myTeamId) {
+                monthTasks.push(`輪值月份：本月要做全規範取樣 (每月10號前)`);
+            }
+        }
+
+        // --- 渲染工作提醒介面 ---
         const taskListEl = document.getElementById("taskList");
-        let html = `<li style="background:transparent; border:none; padding:0 0 5px 0; margin:0 0 8px 0; font-weight:bold; color:var(--primary); border-bottom:2px solid var(--border-color); border-radius:0; font-size:1.05rem;">📅 今日當班工作</li>`;
-        if (todayTasks.length === 0) html += `<li class="no-task">🎉 今日無排程工作。</li>`;
-        else todayTasks.forEach(task => html += `<li>📍 ${task}</li>`);
-        html += `<li style="background:transparent; border:none; padding:0 0 5px 0; margin:15px 0 8px 0; font-weight:bold; color:#D97706; border-bottom:2px solid var(--border-color); border-radius:0; font-size:1.05rem;">🗓️ 本月輪值專案</li>`;
-        if (monthTasks.length === 0) html += `<li class="no-task" style="background:#FFFBEB; color:#B45309; border-left-color:#F59E0B;">本月無輪值工作。</li>`;
-        else monthTasks.forEach(task => html += `<li style="background:#FFFBEB; color:#B45309; border-left-color:#F59E0B;">📌 ${task}</li>`);
-        taskListEl.innerHTML = html;
+        
+        // 组合今日工作與本月專案的 HTML
+        let htmlContent = `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 0 0 8px 0; font-weight: bold; color: var(--primary); border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">📅 今日當班工作</li>`;
+        
+        if (todayTasks.length === 0) htmlContent += `<li class="no-task">🎉 今日無排程工作。</li>`;
+        else todayTasks.forEach(task => htmlContent += `<li>📍 ${task}</li>`);
+
+        htmlContent += `<li style="background: transparent; border: none; padding: 0 0 5px 0; margin: 15px 0 8px 0; font-weight: bold; color: #D97706; border-bottom: 2px solid var(--border-color); border-radius: 0; font-size: 1.05rem;">🗓️ 本月輪值專案</li>`;
+        
+        if (monthTasks.length === 0) htmlContent += `<li class="no-task" style="background: #FFFBEB; color: #B45309; border-left-color: #F59E0B;">本月無輪值工作。</li>`;
+        else monthTasks.forEach(task => htmlContent += `<li style="background: #FFFBEB; color: #B45309; border-left-color: #F59E0B;">📌 ${task}</li>`);
+
+        taskListEl.innerHTML = htmlContent;
     }
 
+    // 渲染本月總覽表格的核心函式
     function renderMonthTable(targetDate, baseDate) {
-        const year = targetDate.getFullYear(), month = targetDate.getMonth(), daysInMonth = new Date(year, month + 1, 0).getDate();
-        let html = `<tr><th>日期</th><th>A班</th><th>B班</th><th>C班</th><th>D班</th></tr>`;
+        const year = targetDate.getFullYear();
+        const month = targetDate.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        // 表頭
+        let tableHTML = `<tr><th>日期</th><th>A班</th><th>B班</th><th>C班</th><th>D班</th></tr>`;
+        
         const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
 
         for (let day = 1; day <= daysInMonth; day++) {
-            let iterDate = new Date(year, month, day), diffDays = Math.round((iterDate - baseDate) / (1000 * 60 * 60 * 24));
-            let holidayMonth = appSettings.holidays ? appSettings.holidays[formatDateToYYYYMMDD(iterDate)] : undefined;
+            let iterDate = new Date(year, month, day);
+            let diffDays = Math.round((iterDate - baseDate) / (1000 * 60 * 60 * 24));
+            let isTargetDay = (day === targetDate.getDate()) ? "calendar-today-row" : "";
+            
+            // 處理表格內的日期與假日顯示
+            let holidayNameMonth = appSettings.holidays ? appSettings.holidays[formatDateToYYYYMMDD(iterDate)] : undefined;
             let dateStr = `${month + 1}/${day}(${weekDays[iterDate.getDay()]})`;
-            if (holidayMonth) dateStr = `<span style="color:#DC2626; font-weight:bold;">${dateStr}<br><span style="font-size:0.7rem;">🎈${holidayMonth}</span></span>`;
-            html += `<tr class="${day === targetDate.getDate() ? "calendar-today-row" : ""}"><td>${dateStr}</td>`;
+            if (holidayNameMonth) dateStr = `<span style="color: #DC2626; font-weight: bold;">${dateStr}<br><span style="font-size: 0.7rem;">🎈${holidayNameMonth}</span></span>`;
+
+            tableHTML += `<tr class="${isTargetDay}"><td>${dateStr}</td>`;
+
+            // 計算當天四班的班別
             ["A", "B", "C", "D"].forEach(id => {
-                let shiftIdx = (appSettings.teams[id].offset + diffDays) % 8;
-                if (shiftIdx < 0) shiftIdx = (shiftIdx % 8 + 8) % 8;
-                let shiftT = applyShiftMapping(SHIFT_CYCLE[shiftIdx]);
-                let shortT = shiftT.replace("班", ""), cellStyle = shiftT.includes("早") ? `var(--morn-text)` : shiftT.includes("中") ? `var(--mid-text)` : shiftT.includes("晚") ? `var(--night-text)` : `var(--rest-text)`;
-                html += `<td style="color:${cellStyle}; font-weight:bold;">${shortT}</td>`;
+                let shiftIndex = (appSettings.teams[id].offset + diffDays) % 8;
+                if (shiftIndex < 0) shiftIndex = (shiftIndex % 8 + 8) % 8;
+                
+                let logicalShiftText = SHIFT_CYCLE[shiftIndex];
+                let shiftText = applyShiftMapping(logicalShiftText);
+                let shortText = shiftText.replace("班", ""); // 表格內簡寫
+                
+                // 設定表格文字顏色
+                let cellStyle = "";
+                if (shiftText.includes("早")) cellStyle = `color: var(--morn-text); font-weight:bold;`;
+                else if (shiftText.includes("中")) cellStyle = `color: var(--mid-text); font-weight:bold;`;
+                else if (shiftText.includes("晚")) cellStyle = `color: var(--night-text); font-weight:bold;`;
+                else cellStyle = `color: var(--rest-text);`;
+
+                tableHTML += `<td style="${cellStyle}">${shortText}</td>`;
             });
-            html += `</tr>`;
+            tableHTML += `</tr>`;
         }
-        document.getElementById("monthTable").innerHTML = html;
+        document.getElementById("monthTable").innerHTML = tableHTML;
     }
 
+    // 輔助函式：取得班別對應的 CSS 樣式
     function getBadgeClass(shiftText) {
-        return shiftText.includes("早") ? "shift-morn" : shiftText.includes("中") ? "shift-mid" : shiftText.includes("晚") ? "shift-night" : "shift-rest";
+        if (shiftText.includes("早")) return "shift-morn";
+        if (shiftText.includes("中")) return "shift-mid";
+        if (shiftText.includes("晚")) return "shift-night";
+        return "shift-rest";
     }
 
+    // 輔助函式：將 Date 物件轉為 YYYY-MM-DD 格式
     function formatDateToYYYYMMDD(date) {
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
     }
 
     // --- ★ 設定區塊與管理邏輯 (升級編輯功能) ★ ---
