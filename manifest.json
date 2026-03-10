@@ -1,0 +1,16 @@
+{
+  "name": "班表與工作提醒系統",
+  "short_name": "供油班表",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F3F4F6", 
+  "theme_color": "#F3F4F6",
+  "icons": [
+    {
+      "src": "./icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
