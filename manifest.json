@@ -1,6 +1,6 @@
 {
   "name": "班表與工作提醒系統",
-  "short_name": "供油班表",
+  "short_name": "班表與工作提醒系統",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F3F4F6", 
