@@ -24,7 +24,7 @@
     <link rel="apple-touch-icon" href="icon.jpg">
     
     <style>
-        /* ★ 核心修復： un-comment 所有關鍵 CSS (解決破圖與方形 LOGO跳動) ★ */
+        /* 移除 iOS 點擊高亮色與所有預設樣式 */
         * { -webkit-tap-highlight-color: transparent; outline: none; }
    
         :root {
@@ -53,7 +53,7 @@
             display: flex; flex-direction: column;
             min-height: 100vh;
             justify-content: flex-start;
-            padding-top: env(safe-area-inset-top); /* iOS 滿版優化 */
+            padding-top: env(safe-area-inset-top);
         }
 
         /* 標題 LOGO 樣式 */
@@ -66,9 +66,9 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* ★ 安裝按鈕樣式 (完整保留) ★ */
+        /* 安裝按鈕樣式 */
         .install-button-container {
-            display: none; /* 智慧顯示：默認隱藏，符合條件才會被 JS 打開 */
+            display: none; 
             text-align: center;
             margin: 20px 0;
             animation: slideInUp 0.5s ease-out forwards;
@@ -93,15 +93,8 @@
             transition: transform 0.05s;
             margin: 0 auto;
         }
-        .btn-install:active {
-            transform: scale(0.97);
-        }
-        .install-explanation {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 8px;
-            font-weight: bold;
-        }
+        .btn-install:active { transform: scale(0.97); }
+        .install-explanation { font-size: 0.8rem; color: var(--text-muted); margin-top: 8px; font-weight: bold; }
 
         /* 智慧響應 Header 區塊 */
         .header-section {
@@ -118,12 +111,7 @@
             color: var(--primary); line-height: 1.3;
         }
 
-        /* 可隱藏的控制容器 */
-        .header-controls-container {
-            transition: opacity 0.15s ease, height 0.15s ease;
-            overflow: hidden;
-        }
-
+        .header-controls-container { transition: opacity 0.15s ease, height 0.15s ease; overflow: hidden; }
         .date-picker-container { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 5px; }
 
         input[type="date"], select, input[type="text"], input[type="number"] {
@@ -140,45 +128,18 @@
         }
 
         .toggle-group { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; max-width: 400px; margin-left: auto; margin-right: auto; }
-
-        .btn-mode {
-            flex: 1; padding: 10px 0; border: 1px solid var(--primary); border-radius: 8px;
-            background: transparent; color: var(--primary); font-weight: bold; font-size: 1rem;
-            cursor: pointer; text-align: center; transition: all 0.15s;
-        }
-
+        .btn-mode { flex: 1; padding: 10px 0; border: 1px solid var(--primary); border-radius: 8px; background: transparent; color: var(--primary); font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; transition: all 0.15s; }
         .btn-mode.active { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2); }
 
         /* 卡片與內容樣式 */
-        .card {
-            background: var(--card-bg); border-radius: 12px; padding: 15px;
-            margin-bottom: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
-            animation: slideInUp 0.3s ease-out forwards;
-        }
-
-        .card-title {
-            font-size: 1.1rem; font-weight: bold; margin-top: 0; margin-bottom: 12px;
-            border-bottom: 2px solid var(--border-color); padding-bottom: 6px;
-            display: flex; justify-content: center; align-items: center; color: var(--text-main);
-        }
-
-        .btn {
-            background: var(--primary); color: white; border: none; padding: 12px 15px;
-            border-radius: 8px; font-size: 1.05rem; cursor: pointer; width: 100%;
-            font-weight: bold; text-align: center; transition: all 0.1s;
-        }
-
+        .card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08); animation: slideInUp 0.3s ease-out forwards; }
+        .card-title { font-size: 1.1rem; font-weight: bold; margin-top: 0; margin-bottom: 12px; border-bottom: 2px solid var(--border-color); padding-bottom: 6px; display: flex; justify-content: center; align-items: center; color: var(--text-main); }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 15px; border-radius: 8px; font-size: 1.05rem; cursor: pointer; width: 100%; font-weight: bold; text-align: center; transition: all 0.1s; }
         .btn-icon { width: auto; flex-grow: 0; padding: 10px 15px; font-size: 1.2rem; background: var(--card-bg); color: var(--primary); border-radius: 8px; border:none; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .btn-danger { background: transparent; color: #DC2626; border: 1px solid #DC2626; margin-top: 10px; }
-
-        /* 按鈕點擊效果 */
         .btn:active, .btn-icon:active, .btn-mode:active, .tab-btn:active, .list-action-btn:active { transform: scale(0.97); transition: transform 0.05s; }
 
-        /* 滑入動畫 */
-        @keyframes slideInUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
         /* 班別狀態樣式 */
         .shift-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; }
@@ -186,18 +147,15 @@
         .shift-mid { background: var(--mid-color); color: var(--mid-text); }
         .shift-night { background: var(--night-color); color: var(--night-text); }
         .shift-rest { background: var(--rest-color); color: var(--rest-text); }
+        .shift-override { background: #FEF2F2; color: #991B1B; border: 1px dashed #FCA5A5; } /* 手動改班樣式 */
 
         .team-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
         .team-row:last-child { border-bottom: none; }
         .team-name { font-size: 1.05rem; }
 
-        /* 工作提醒與設定清單樣式 */
+        /* 工作提醒清單樣式 */
         .task-list { list-style-type: none; padding: 0; margin: 0; }
-        .task-list li {
-            background: #FEF2F2; color: #DC2626; padding: 12px; border-radius: 8px;
-            margin-bottom: 10px; font-size: 0.95rem; border-left: 4px solid #EF4444;
-            animation: slideInUp 0.3s ease-out forwards;
-        }
+        .task-list li { background: #FEF2F2; color: #DC2626; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.95rem; border-left: 4px solid #EF4444; animation: slideInUp 0.3s ease-out forwards; }
         .task-list li.no-task { background: #ECFCCB; color: #4D7C0F; border-left: 4px solid #84CC16; }
 
         .calendar-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center; }
@@ -209,62 +167,22 @@
         .setting-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .setting-grid label { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 4px; display: block; }
         .action-buttons { display: flex; gap: 10px; margin-top: 15px; }
-        .list-item {
-            display: flex; justify-content: space-between; padding: 8px; 
-            border-bottom: 1px solid #eee; align-items: center; font-size: 0.9rem;
-            background: #fff; border-radius: 6px; margin-bottom: 6px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
-        }
-        .task-badge {
-            background: #E5E7EB; padding: 2px 6px; border-radius: 4px; 
-            font-size: 0.75rem; color: #374151; margin-right: 5px; font-weight: bold;
-        }
+        .list-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; align-items: center; font-size: 0.9rem; background: #fff; border-radius: 6px; margin-bottom: 6px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03); }
+        .task-badge { background: #E5E7EB; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; color: #374151; margin-right: 5px; font-weight: bold; }
 
-        /* 清單內的小按鈕樣式 */
-        .list-action-btn {
-            font-size: 0.8rem; cursor: pointer; padding: 4px 8px; margin-left: 5px;
-            border-radius: 4px; font-weight: bold; text-decoration: none; display: inline-block;
-        }
+        .list-action-btn { font-size: 0.8rem; cursor: pointer; padding: 4px 8px; margin-left: 5px; border-radius: 4px; font-weight: bold; text-decoration: none; display: inline-block; }
         .btn-edit { background: #DBEAFE; color: #1E40AF; }
         .btn-delete { background: #FEE2E2; color: #B91C1C; }
+        .editing-item { border: 2px solid #60A5FA !important; background: #EFF6FF !important; }
 
-        .editing-item {
-            border: 2px solid #60A5FA !important;
-            background: #EFF6FF !important;
-        }
-
-        /* 頁籤功能的專屬 CSS */
-        .tab-content {
-            display: none;
-            flex: 1;
-            padding: 15px;
-            padding-bottom: 80px;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .tab-bar {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 65px;
-            background: #FFFFFF; border-top: 1px solid var(--border-color);
-            display: flex; justify-content: space-around; align-items: center;
-            z-index: 1000; box-shadow: 0 -3px 10px rgba(0,0,0,0.05);
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-
-        .tab-btn {
-            flex: 1; height: 100%; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; border: none;
-            background: transparent; cursor: pointer; color: var(--text-muted);
-        }
-
+        .tab-content { display: none; flex: 1; padding: 15px; padding-bottom: 80px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .tab-content.active { display: block; }
+        .tab-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: #FFFFFF; border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; z-index: 1000; box-shadow: 0 -3px 10px rgba(0,0,0,0.05); padding-bottom: env(safe-area-inset-bottom); }
+        .tab-btn { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; border: none; background: transparent; cursor: pointer; color: var(--text-muted); }
         .tab-icon { font-size: 1.4rem; margin-bottom: 4px; }
         .tab-text { font-size: 0.8rem; font-weight: bold; }
         .tab-btn.active { color: var(--primary); }
 
-        /* RWD 手機版優化 */
         @media screen and (max-width: 480px) {
             html { font-size: 16px; }
             .header-section { padding: 10px 10px 0 10px; }
@@ -272,19 +190,14 @@
             #dayOfWeekDisplay { font-size: 1rem; margin-bottom: 8px; }
             .toggle-group { margin-bottom: 10px; gap: 5px; }
             .btn-mode { padding: 6px 0; font-size: 0.9rem; }
-            
             .tab-content { padding: 10px; padding-bottom: 75px; }
             .card { padding: 12px; margin-bottom: 8px; border-radius: 10px; }
             .card-title { font-size: 1rem; margin-bottom: 8px; }
             .team-row { padding: 8px 0; }
             .task-list li { padding: 8px 10px; margin-bottom: 6px; font-size: 0.9rem; }
-            
             .calendar-table { font-size: 0.9rem; }
             .calendar-table th, .calendar-table td { padding: 6px 1px; white-space: nowrap; }
-            .calendar-table th:first-child, .calendar-table td:first-child { 
-                position: sticky; left: 0; background-color: #F9FAFB; 
-                z-index: 1; border-right: 2px solid #D1D5DB; box-shadow: 2px 0 4px rgba(0,0,0,0.05);
-            }
+            .calendar-table th:first-child, .calendar-table td:first-child { position: sticky; left: 0; background-color: #F9FAFB; z-index: 1; border-right: 2px solid #D1D5DB; box-shadow: 2px 0 4px rgba(0,0,0,0.05); }
             .calendar-table th:first-child { z-index: 2; background-color: #F3F4F6; }
             .calendar-today-row td:first-child { background-color: #FEF9C3; }
         }
@@ -309,8 +222,8 @@
             <div id="dayOfWeekDisplay">載入中...</div>
 
             <div class="toggle-group">
-                <button id="btnLogical" class="btn-mode" onclick="setMode(false)">📅 標準班表</button>
-                <button id="btnActual" class="btn-mode active" onclick="setMode(true)">🏃 實際出勤</button>
+                <button id="btnLogical" class="btn-mode active" onclick="setMode(false)">📅 標準班表</button>
+                <button id="btnActual" class="btn-mode" onclick="setMode(true)">🏃 實際出勤</button>
             </div>
         </div>
     </div>
@@ -324,6 +237,8 @@
             <div class="team-row" style="border: none; padding-bottom: 0; justify-content: space-around;">
                 <span class="team-name" id="myTeamName" style="font-weight: bold; font-size: 1.2rem;">載入中...</span>
                 <span id="myShiftBadge" class="shift-badge">載入中...</span>
+            </div>
+            <div id="restDayReminderContainer" style="display: none; margin-top: 15px; padding: 10px; background: #FEF2F2; border-radius: 8px; border: 1px dashed #FCA5A5; color: #B91C1C; font-size: 0.95rem;">
             </div>
         </div>
 
@@ -368,6 +283,14 @@
 
             <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
 
+            <label style="font-weight:bold; color: var(--primary);">預設顯示模式：</label>
+            <select id="setDefaultMode">
+                <option value="false">📅 標準班表</option>
+                <option value="true">🏃 實際出勤</option>
+            </select>
+
+            <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
+
             <label style="font-weight:bold;">基準日設定：</label>
             <input type="date" id="setBaseDate">
 
@@ -387,6 +310,46 @@
                 <div><label>B班 領班</label><input type="text" id="setTeamB"></div>
                 <div><label>C班 領班</label><input type="text" id="setTeamC"></div>
                 <div><label>D班 領班</label><input type="text" id="setTeamD"></div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
+            <label style="font-weight:bold; display:block; margin-bottom: 5px; color: #DC2626;">✏️ 手動改班 / 請假設定：</label>
+            <div style="font-size: 0.8rem; color: #6B7280; margin-bottom: 10px;">優先覆蓋原班表，可用於設定公假、病假、事假、特休或調班。</div>
+            
+            <div id="manualShiftList" style="margin-bottom: 15px; max-height: 150px; overflow-y: auto; background: #F9FAFB; border: 1px solid var(--border-color); border-radius: 8px; padding: 5px;"></div>
+            
+            <div style="display: flex; gap: 8px; align-items: flex-end; margin-bottom: 15px; background: #FEF2F2; padding: 10px; border-radius: 8px; border: 1px solid #FECACA;">
+                <div style="flex: 1.5;">
+                    <label style="font-size:0.85rem; font-weight:bold; color:#B91C1C; margin-bottom:4px; display:block;">➕ 新增改班</label>
+                    <input type="date" id="addManualDate" style="margin-bottom: 0; padding: 8px;">
+                </div>
+                <div style="flex: 1;">
+                    <select id="addManualTeam" style="margin-bottom: 0; padding: 8px;">
+                        <option value="A">A班</option>
+                        <option value="B">B班</option>
+                        <option value="C">C班</option>
+                        <option value="D">D班</option>
+                    </select>
+                </div>
+                <div style="flex: 1.5;">
+                    <select id="addManualShift" style="margin-bottom: 0; padding: 8px;">
+                        <option value="特休">特休</option>
+                        <option value="病假">病假</option>
+                        <option value="事假">事假</option>
+                        <option value="公假">公假</option>
+                        <option value="調:早班1">調:早班1</option>
+                        <option value="調:早班2">調:早班2</option>
+                        <option value="調:中班1">調:中班1</option>
+                        <option value="調:中班2">調:中班2</option>
+                        <option value="調:晚班1">調:晚班1</option>
+                        <option value="調:晚班2">調:晚班2</option>
+                        <option value="調:小休">調:小休</option>
+                        <option value="調:大休">調:大休</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <button class="btn" onclick="addManualShift()" style="margin-bottom: 0; padding: 8px 5px; font-size: 0.9rem; background: #DC2626;">新增</button>
+                </div>
             </div>
 
             <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
@@ -420,15 +383,21 @@
                 
                 <div style="display: flex; gap: 8px; margin-bottom: 8px;">
                     <select id="addTaskShift" style="flex: 1; margin-bottom: 0; padding: 8px;">
-                        <option value="早班">早班 (早1, 早2)</option>
-                        <option value="中班">中班 (中1, 中2)</option>
-                        <option value="晚班">晚班 (晚1, 晚2)</option>
+                        <option value="早班">早班 (兩天皆提醒)</option>
+                        <option value="早班1">早班1 (僅第一天)</option>
+                        <option value="早班2">早班2 (僅第二天)</option>
+                        <option value="中班">中班 (兩天皆提醒)</option>
+                        <option value="中班1">中班1 (僅第一天)</option>
+                        <option value="中班2">中班2 (僅第二天)</option>
+                        <option value="晚班">晚班 (兩天皆提醒)</option>
+                        <option value="晚班1">晚班1 (僅第一天)</option>
+                        <option value="晚班2">晚班2 (僅第二天)</option>
                         <option value="全天">全天皆提醒</option>
                     </select>
                     
                     <select id="addTaskRule" style="flex: 2; margin-bottom: 0; padding: 8px;" onchange="toggleTaskInputs()">
                         <option value="every_shift">每次當班</option>
-                        <option value="specific_date">單次特定日期</option>
+                        <option value="specific_date">單次特定日期(年月日)</option>
                         <option value="weekly">每週特定星期</option>
                         <option value="monthly_day">每月幾號</option>
                         <option value="monthly_last">每月最後一天</option>
@@ -493,11 +462,12 @@
 <script>
     // --- 核心班表常數與資料邏輯 ---
     const SHIFT_CYCLE = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
-    let isActualMode = true;
+    let isActualMode = false; // 預設改為 false (標準班表)
     
     // 設定區塊用的暫存變數
     let tempHolidays = {}; 
     let tempTasks = [];
+    let tempManualShifts = {}; // 手動改班暫存
 
     // 紀錄正在編輯中的項目 ID
     let editingHolidayDate = null;
@@ -531,6 +501,7 @@
     const defaultSettings = {
         baseDate: "2026-01-01",
         myTeam: "C",
+        defaultMode: false, // false = 標準班表, true = 實際出勤
         teams: {
             "A": { name: "蘇明理", offset: 5 }, "B": { name: "林致漢", offset: 7 }, 
             "C": { name: "蔡宏和", offset: 1 }, "D": { name: "林明宗", offset: 3 }  
@@ -540,7 +511,8 @@
             "2026-02-18": "初二", "2026-02-19": "初三", "2026-02-28": "和平紀念日",
             "2026-04-03": "兒童節", "2026-04-04": "清明節", "2026-05-01": "勞動節",
             "2026-06-19": "端午節", "2026-09-25": "中秋節", "2026-10-10": "國慶日"
-        }
+        },
+        manualShifts: {} // 手動改班/請假設定
     };
 
     // --- 初始化執行與資料載入 ---
@@ -553,13 +525,19 @@
         appSettings = JSON.parse(JSON.stringify(defaultSettings));
     }
     
+    if (appSettings.defaultMode === undefined) appSettings.defaultMode = false;
     if (!appSettings.holidays) appSettings.holidays = JSON.parse(JSON.stringify(defaultSettings.holidays));
-    
+    if (!appSettings.manualShifts) appSettings.manualShifts = {};
     if (!appSettings.tasks || !Array.isArray(appSettings.tasks)) {
         appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks));
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+        // 設定初始模式 (從設定載入)
+        isActualMode = appSettings.defaultMode;
+        document.getElementById('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
+        document.getElementById('btnActual').className = isActualMode ? 'btn-mode active' : 'btn-mode';
+
         const today = new Date();
         document.getElementById("queryDate").value = formatDateToYYYYMMDD(today);
         document.getElementById("queryDate").addEventListener("change", renderApp);
@@ -571,10 +549,8 @@
     // 頁籤切換邏輯
     function switchTab(tabNum) {
         triggerVibrate();
-        
         const contents = document.querySelectorAll('.tab-content');
         contents.forEach(content => content.classList.remove('active'));
-        
         const btns = document.querySelectorAll('.tab-bar .tab-btn');
         btns.forEach(btn => btn.classList.remove('active'));
         
@@ -586,22 +562,14 @@
 
         if (tabNum === 3) {
             headerControls.style.opacity = '0';
-            setTimeout(() => {
-                headerControls.style.display = 'none';
-                mainHeaderSection.style.paddingBottom = '5px';
-            }, 150);
+            setTimeout(() => { headerControls.style.display = 'none'; mainHeaderSection.style.paddingBottom = '5px'; }, 150);
         } else {
             headerControls.style.display = 'block';
-            setTimeout(() => {
-                headerControls.style.opacity = '1';
-                mainHeaderSection.style.paddingBottom = '10px';
-            }, 10);
+            setTimeout(() => { headerControls.style.opacity = '1'; mainHeaderSection.style.paddingBottom = '10px'; }, 10);
         }
-
         document.getElementById('tab' + tabNum).scrollTop = 0;
     }
 
-    // 班表邏輯
     function setMode(mode) {
         triggerVibrate();
         isActualMode = mode;
@@ -610,12 +578,78 @@
         renderApp();
     }
 
-    function applyShiftMapping(shiftText) {
-        if (!isActualMode) return shiftText;
-        if (shiftText === "小休") return "晚班1";
-        if (shiftText === "晚班1") return "晚班2";
-        if (shiftText === "晚班2") return "小休";
-        return shiftText;
+    // ★ 核心邏輯：取得標準出勤 (包含 $休息日出勤 與 手動請假) ★
+    function getLogicalShift(teamId, targetDateStr) {
+        // 1. 優先檢查手動改班/請假 (不受休息日出勤影響)
+        if (appSettings.manualShifts && appSettings.manualShifts[`${targetDateStr}_${teamId}`]) {
+            return appSettings.manualShifts[`${targetDateStr}_${teamId}`];
+        }
+        
+        const targetDate = new Date(targetDateStr.replace(/-/g, '/'));
+        const baseDate = new Date(appSettings.baseDate.replace(/-/g, '/'));
+        const diffTime = targetDate - baseDate;
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+        const team = appSettings.teams[teamId];
+        let shiftIndex = (team.offset + diffDays) % 8;
+        if (shiftIndex < 0) shiftIndex = (shiftIndex % 8 + 8) % 8;
+        let logicalShiftText = SHIFT_CYCLE[shiftIndex];
+
+        // 2. 判斷是否為 $晚班1 (休息日出勤)
+        // 條件：如果當天排到"晚班1"，且該週(一至日)只有一天小休或大休
+        if (logicalShiftText === "晚班1") {
+            let dayOfWeek = targetDate.getDay(); // 0(日) ~ 6(六)
+            let diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            let monDate = new Date(targetDate);
+            monDate.setDate(targetDate.getDate() + diffToMon);
+            
+            let restCount = 0;
+            // 檢查該週一至日
+            for (let i = 0; i < 7; i++) {
+                let curDate = new Date(monDate);
+                curDate.setDate(monDate.getDate() + i);
+                
+                let curDiffTime = curDate - baseDate;
+                let curDiffDays = Math.round(curDiffTime / (1000 * 60 * 60 * 24));
+                let curShiftIndex = (team.offset + curDiffDays) % 8;
+                if (curShiftIndex < 0) curShiftIndex = (curShiftIndex % 8 + 8) % 8;
+                let curShift = SHIFT_CYCLE[curShiftIndex];
+                if (curShift === "小休" || curShift === "大休") {
+                    restCount++;
+                }
+            }
+            if (restCount === 1) {
+                logicalShiftText = "$" + logicalShiftText; // 加上$標記
+            }
+        }
+        return logicalShiftText;
+    }
+
+    // ★ 核心邏輯：實際出勤轉換 (若為實際出勤，去除 $ 標記) ★
+    function getActualShift(logicalShift) {
+        if (!isActualMode) return logicalShift; // 標準班表保留所有標記 (包括 $)
+        
+        let core = logicalShift;
+        // 如果是實際出勤，不顯示也不提醒休息日出勤，去除 $
+        if (core.startsWith("$")) { core = core.substring(1); } 
+        
+        // 處理手動調班的轉換 (移除 '調:' 進行比對)
+        let isOverride = core.startsWith("調:");
+        let compareCore = isOverride ? core.replace("調:", "") : core;
+
+        if (compareCore === "小休") core = (isOverride ? "調:" : "") + "晚班1";
+        else if (compareCore === "晚班1") core = (isOverride ? "調:" : "") + "晚班2";
+        else if (compareCore === "晚班2") core = (isOverride ? "調:" : "") + "小休";
+
+        return core;
+    }
+
+    function getBadgeClass(shiftText) {
+        if (!shiftText) return "shift-rest";
+        if (shiftText.includes("調:") || shiftText.includes("假") || shiftText.includes("特休")) return "shift-override";
+        if (shiftText.includes("早")) return "shift-morn";
+        if (shiftText.includes("中")) return "shift-mid";
+        if (shiftText.includes("晚")) return "shift-night";
+        return "shift-rest";
     }
 
     function changeDate(days) {
@@ -623,7 +657,6 @@
         const dateInput = document.getElementById("queryDate");
         const safeDateString = dateInput.value.replace(/-/g, '/');
         let currentDate = new Date(safeDateString);
-        
         currentDate.setDate(currentDate.getDate() + days);
         dateInput.value = formatDateToYYYYMMDD(currentDate);
         renderApp();
@@ -645,9 +678,6 @@
         }
         
         document.getElementById("dayOfWeekDisplay").innerHTML = dayText;
-        
-        const diffTime = targetDate - baseDate;
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
         let myTeamId = appSettings.myTeam;
         let myShiftText = "";
@@ -656,30 +686,74 @@
         const teamIds = ["A", "B", "C", "D"];
         teamIds.forEach(id => {
             const team = appSettings.teams[id];
-            let shiftIndex = (team.offset + diffDays) % 8;
-            if (shiftIndex < 0) shiftIndex = (shiftIndex % 8 + 8) % 8;
             
-            let logicalShiftText = SHIFT_CYCLE[shiftIndex];
-            let shiftText = applyShiftMapping(logicalShiftText);
-            const badgeClass = getBadgeClass(shiftText);
+            // 使用新版邏輯取得班別
+            let logicalShiftText = getLogicalShift(id, dateKey);
+            let shiftText = getActualShift(logicalShiftText);
 
             if (id === myTeamId) {
                 myShiftText = shiftText;
                 document.getElementById("myTeamName").innerText = `${id}班 (${team.name})`;
                 const badge = document.getElementById("myShiftBadge");
-                badge.innerText = shiftText;
-                badge.className = `shift-badge ${badgeClass}`;
+                // 畫面上隱藏 "調:" 以保持美觀
+                badge.innerText = shiftText.replace("調:", ""); 
+                badge.className = `shift-badge ${getBadgeClass(shiftText)}`;
             }
 
             allTeamsHTML += `
                 <div class="team-row">
                     <span class="team-name">${id}班 (${team.name})</span>
-                    <span class="shift-badge ${badgeClass}">${shiftText}</span>
+                    <span class="shift-badge ${getBadgeClass(shiftText)}">${shiftText.replace("調:", "")}</span>
                 </div>
             `;
         });
         
         document.getElementById("allTeamsContainer").innerHTML = allTeamsHTML;
+
+        // ★ 獨立區塊計算：休息日出勤提醒 (僅在標準班表顯示，週期 16日~次月15日) ★
+        let cycleStart, cycleEnd;
+        let cYear = targetDate.getFullYear();
+        let cMonth = targetDate.getMonth();
+        if (targetDate.getDate() >= 16) {
+            cycleStart = new Date(cYear, cMonth, 16);
+            cycleEnd = new Date(cYear, cMonth + 1, 15);
+        } else {
+            cycleStart = new Date(cYear, cMonth - 1, 16);
+            cycleEnd = new Date(cYear, cMonth, 15);
+        }
+
+        let restDayOvertimes = [];
+        let isTodayRestDayOvertime = false;
+        
+        if (!isActualMode) { // 僅在標準班表計算
+            let iterDate = new Date(cycleStart);
+            while (iterDate <= cycleEnd) {
+                let iterDateStr = formatDateToYYYYMMDD(iterDate);
+                let lShift = getLogicalShift(myTeamId, iterDateStr);
+                if (lShift.startsWith("$")) {
+                    let mdStr = `${iterDate.getMonth() + 1}/${iterDate.getDate()}`;
+                    restDayOvertimes.push(mdStr);
+                    if (iterDateStr === dateKey) {
+                        isTodayRestDayOvertime = true;
+                    }
+                }
+                iterDate.setDate(iterDate.getDate() + 1);
+            }
+        }
+
+        const reminderEl = document.getElementById("restDayReminderContainer");
+        if (!isActualMode && restDayOvertimes.length > 0) {
+            let reminderHtml = `<div style="margin-bottom: 5px;"><strong>⚠️ 休息日出勤提醒</strong><br><span style="font-size: 0.85rem; color: #DC2626;">(結算週期: ${cycleStart.getMonth()+1}/16 ~ ${cycleEnd.getMonth()+1}/15)</span></div>`;
+            reminderHtml += `本週期休息日出勤：${restDayOvertimes.join(", ")}`;
+            if (isTodayRestDayOvertime) {
+                reminderHtml = `<div style="font-size:1.05rem; font-weight:bold; margin-bottom:8px; border-bottom:1px solid #FCA5A5; padding-bottom:5px;">🚨 今日為休息日出勤！</div>` + reminderHtml;
+            }
+            reminderEl.innerHTML = reminderHtml;
+            reminderEl.style.display = "block";
+        } else {
+            reminderEl.style.display = "none";
+        }
+
         renderTasks(targetDate, myTeamId, myShiftText);
         renderMonthTable(targetDate, baseDate);
     }
@@ -688,9 +762,19 @@
         let todayTasks = [];
         let monthTasks = [];
         
-        const isMorning = (myShiftText === "早班1" || myShiftText === "早班2");
-        const isMid = (myShiftText === "中班1" || myShiftText === "中班2"); 
-        const isNight = (myShiftText === "晚班1" || myShiftText === "晚班2"); 
+        // 解析並清理我的當前班別 (移除 $, 調: 以方便判斷早中晚)
+        const cleanMyShift = myShiftText.replace("$", "").replace("調:", "");
+
+        const isMorn1 = (cleanMyShift === "早班1");
+        const isMorn2 = (cleanMyShift === "早班2");
+        const isMid1  = (cleanMyShift === "中班1");
+        const isMid2  = (cleanMyShift === "中班2");
+        const isNight1= (cleanMyShift === "晚班1");
+        const isNight2= (cleanMyShift === "晚班2");
+        
+        const isMorn = isMorn1 || isMorn2;
+        const isMid = isMid1 || isMid2; 
+        const isNight = isNight1 || isNight2; 
         
         const currentYear = date.getFullYear();
         const currentMonthIdx = date.getMonth();
@@ -703,9 +787,16 @@
         appSettings.tasks.forEach(task => {
             let shiftMatch = false;
             if (task.shift === "全天") shiftMatch = true;
-            else if (task.shift === "早班" && isMorning) shiftMatch = true;
+            else if (task.shift === "早班" && isMorn) shiftMatch = true;
             else if (task.shift === "中班" && isMid) shiftMatch = true;
             else if (task.shift === "晚班" && isNight) shiftMatch = true;
+            // 單日設定
+            else if (task.shift === "早班1" && isMorn1) shiftMatch = true;
+            else if (task.shift === "早班2" && isMorn2) shiftMatch = true;
+            else if (task.shift === "中班1" && isMid1) shiftMatch = true;
+            else if (task.shift === "中班2" && isMid2) shiftMatch = true;
+            else if (task.shift === "晚班1" && isNight1) shiftMatch = true;
+            else if (task.shift === "晚班2" && isNight2) shiftMatch = true;
 
             if (!shiftMatch) return;
 
@@ -724,18 +815,18 @@
             if (ruleMatch) todayTasks.push(task.text);
         });
 
+        // 輪值月份任務
         const monthsElapsed = (currentYear - 2026) * 12 + currentMonthIdx;
-        
         const invCycle = Math.floor(monthsElapsed / 2);
         const invTeams = ["D", "A", "B", "C"];
         const assignedInvTeam = invTeams[((invCycle % 4) + 4) % 4];
-        if (assignedInvTeam === myTeamId) monthTasks.push(`輪值月份：本月要做月盤查量油取樣 (營業油槽，20日附近)`);
+        if (assignedInvTeam === myTeamId) monthTasks.push(`輪值：本月做月盤查量油取樣 (營業油槽，20日附近)`);
 
         if ((currentMonthIdx + 1) % 2 !== 0) {
             const specCycle = Math.floor(monthsElapsed / 2);
             const specTeams = ["B", "C", "D", "A"];
             const assignedSpecTeam = specTeams[((specCycle % 4) + 4) % 4];
-            if (assignedSpecTeam === myTeamId) monthTasks.push(`輪值月份：本月要做全規範取樣 (每月10號前)`);
+            if (assignedSpecTeam === myTeamId) monthTasks.push(`輪值：本月做全規範取樣 (每月10號前)`);
         }
 
         const taskListEl = document.getElementById("taskList");
@@ -754,25 +845,33 @@
         const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
 
         for (let day = 1; day <= daysInMonth; day++) {
-            let iterDate = new Date(year, month, day), diffDays = Math.round((iterDate - baseDate) / (1000 * 60 * 60 * 24));
-            let holidayNameMonth = appSettings.holidays ? appSettings.holidays[formatDateToYYYYMMDD(iterDate)] : undefined;
+            let iterDate = new Date(year, month, day);
+            let iterDateStr = formatDateToYYYYMMDD(iterDate);
+            let holidayNameMonth = appSettings.holidays ? appSettings.holidays[iterDateStr] : undefined;
             let dateStr = `${month + 1}/${day}(${weekDays[iterDate.getDay()]})`;
             if (holidayNameMonth) dateStr = `<span style="color:#DC2626; font-weight:bold;">${dateStr}<br><span style="font-size:0.7rem;">🎈${holidayNameMonth}</span></span>`;
             tableHTML += `<tr class="${day === targetDate.getDate() ? "calendar-today-row" : ""}"><td>${dateStr}</td>`;
+            
             ["A", "B", "C", "D"].forEach(id => {
-                let shiftIdx = (appSettings.teams[id].offset + diffDays) % 8;
-                if (shiftIdx < 0) shiftIdx = (shiftIdx % 8 + 8) % 8;
-                let shiftText = applyShiftMapping(SHIFT_CYCLE[shiftIdx]);
-                let shortText = shiftText.replace("班", ""), cellStyle = shiftText.includes("早") ? `color:var(--morn-text);` : shiftText.includes("中") ? `color:var(--mid-text);` : shiftText.includes("晚") ? `color:var(--night-text);` : `color:var(--rest-text);`;
-                tableHTML += `<td style="${cellStyle} font-weight:bold;">${shortText}</td>`;
+                let logicalShift = getLogicalShift(id, iterDateStr);
+                let actualShift = getActualShift(logicalShift);
+                
+                // 顯示精簡文字 (把"班"拿掉，"調:"轉成"✏️")
+                let shortText = actualShift.replace("班", "").replace("調:", "✏️");
+                let badgeClass = getBadgeClass(actualShift);
+                
+                // 用 CSS 變數拿顏色
+                let fontColor = "var(--rest-text)";
+                if (badgeClass === "shift-morn") fontColor = "var(--morn-text)";
+                if (badgeClass === "shift-mid") fontColor = "var(--mid-text)";
+                if (badgeClass === "shift-night") fontColor = "var(--night-text)";
+                if (badgeClass === "shift-override") fontColor = "#991B1B"; // Override 顏色
+
+                tableHTML += `<td style="color:${fontColor}; font-weight:bold;">${shortText}</td>`;
             });
             tableHTML += `</tr>`;
         }
         document.getElementById("monthTable").innerHTML = tableHTML;
-    }
-
-    function getBadgeClass(shiftText) {
-        return shiftText.includes("早") ? "shift-morn" : shiftText.includes("中") ? "shift-mid" : shiftText.includes("晚") ? "shift-night" : "shift-rest";
     }
 
     function formatDateToYYYYMMDD(date) {
@@ -783,13 +882,48 @@
     function loadSettingsToForm() {
         document.getElementById("setBaseDate").value = appSettings.baseDate;
         document.getElementById("setMyTeam").value = appSettings.myTeam;
+        document.getElementById("setDefaultMode").value = appSettings.defaultMode ? "true" : "false"; // 載入預設顯示模式
         ["A", "B", "C", "D"].forEach(t => { document.getElementById(`setTeam${t}_Shift`).value = appSettings.teams[t].offset; document.getElementById(`setTeam${t}`).value = appSettings.teams[t].name; });
         tempHolidays = appSettings.holidays ? JSON.parse(JSON.stringify(appSettings.holidays)) : {};
         tempTasks = appSettings.tasks ? JSON.parse(JSON.stringify(appSettings.tasks)) : [];
+        tempManualShifts = appSettings.manualShifts ? JSON.parse(JSON.stringify(appSettings.manualShifts)) : {}; 
         cancelEditHoliday(); cancelEditCustomTask();
-        renderHolidayList(); renderTaskList();
+        renderHolidayList(); renderTaskList(); renderManualShiftList();
     }
 
+    // --- 新增：手動請假/調班列表渲染與操作 ---
+    function renderManualShiftList() {
+        let html = "";
+        const keys = Object.keys(tempManualShifts).sort();
+        if (keys.length === 0) html = "<div style='color:var(--text-muted); text-align:center; padding:10px;'>目前無手動改班紀錄</div>";
+        else keys.forEach(key => {
+            const parts = key.split("_");
+            const date = parts[0]; const team = parts[1];
+            html += `<div class="list-item"><span><strong>${date}</strong> (${team}班) - <span style="color:#DC2626; font-weight:bold;">${tempManualShifts[key]}</span></span><div><span class="list-action-btn btn-delete" onclick="removeManualShift('${key}')">✖</span></div></div>`;
+        });
+        document.getElementById("manualShiftList").innerHTML = html;
+    }
+
+    function addManualShift() {
+        triggerVibrate();
+        const date = document.getElementById("addManualDate").value;
+        const team = document.getElementById("addManualTeam").value;
+        const shift = document.getElementById("addManualShift").value;
+        if (!date) return alert("請先選擇要改班的日期！");
+        tempManualShifts[`${date}_${team}`] = shift;
+        renderManualShiftList();
+        document.getElementById("addManualDate").value = "";
+    }
+
+    function removeManualShift(key) {
+        triggerVibrate();
+        if(confirm(`確定刪除此改班紀錄嗎？`)) {
+            delete tempManualShifts[key];
+            renderManualShiftList();
+        }
+    }
+
+    // --- 假日管理 ---
     function renderHolidayList() {
         let html = "";
         const sortedDates = Object.keys(tempHolidays).sort();
@@ -803,26 +937,21 @@
 
     function startEditHoliday(date) {
         triggerVibrate(); editingHolidayDate = date; 
-        document.getElementById("addHolidayDate").value = date;
-        document.getElementById("addHolidayName").value = tempHolidays[date];
+        document.getElementById("addHolidayDate").value = date; document.getElementById("addHolidayName").value = tempHolidays[date];
         document.getElementById("holidayAddLabel").innerText = "✏️ 編輯假日"; document.getElementById("holidayAddLabel").style.color = "#1E40AF";
         document.getElementById("btnSubmitHoliday").innerText = "✅ 更新"; document.getElementById("btnSubmitHoliday").style.background = "#1E40AF";
-        document.getElementById("btnCancelHoliday").style.display = "inline-block";
-        renderHolidayList();
+        document.getElementById("btnCancelHoliday").style.display = "inline-block"; renderHolidayList();
     }
 
     function cancelEditHoliday() {
-        triggerVibrate(); editingHolidayDate = null;
-        document.getElementById("addHolidayDate").value = ""; document.getElementById("addHolidayName").value = "";
+        triggerVibrate(); editingHolidayDate = null; document.getElementById("addHolidayDate").value = ""; document.getElementById("addHolidayName").value = "";
         document.getElementById("holidayAddLabel").innerText = "➕ 新增假日"; document.getElementById("holidayAddLabel").style.color = "#B45309";
         document.getElementById("btnSubmitHoliday").innerText = "新增"; document.getElementById("btnSubmitHoliday").style.background = "#D97706";
-        document.getElementById("btnCancelHoliday").style.display = "none";
-        renderHolidayList();
+        document.getElementById("btnCancelHoliday").style.display = "none"; renderHolidayList();
     }
 
     function addHoliday() { 
-        triggerVibrate(); 
-        const date = document.getElementById("addHolidayDate").value, name = document.getElementById("addHolidayName").value;
+        triggerVibrate(); const date = document.getElementById("addHolidayDate").value, name = document.getElementById("addHolidayName").value;
         if (!date || !name) return alert("請選擇日期並填寫名稱！"); 
         if (editingHolidayDate) { if (date !== editingHolidayDate) delete tempHolidays[editingHolidayDate]; tempHolidays[date] = name; alert("假日已更新！"); } 
         else { if (tempHolidays[date] && !confirm(`日期 ${date} 已有假日，確定要覆蓋嗎？`)) return; tempHolidays[date] = name; }
@@ -831,6 +960,7 @@
 
     function removeHoliday(date) { triggerVibrate(); if(confirm(`確定刪除 ${date}嗎？`)) { if (date === editingHolidayDate) cancelEditHoliday(); delete tempHolidays[date]; renderHolidayList(); } }
 
+    // --- 任務管理 ---
     function toggleTaskInputs() {
         const rule = document.getElementById("addTaskRule").value;
         ['inputWrap_date', 'inputWrap_week', 'inputWrap_monthDay', 'inputWrap_monthRange'].forEach(id => document.getElementById(id).style.display = 'none');
@@ -855,16 +985,14 @@
 
     function startEditCustomTask(id) {
         triggerVibrate(); const task = tempTasks.find(t => t.id === id); if (!task) return; editingTaskId = id;
-        document.getElementById("addTaskShift").value = task.shift; document.getElementById("addTaskRule").value = task.rule; document.getElementById("addTaskText").value = task.text;
-        toggleTaskInputs();
+        document.getElementById("addTaskShift").value = task.shift; document.getElementById("addTaskRule").value = task.rule; document.getElementById("addTaskText").value = task.text; toggleTaskInputs();
         if (task.rule === 'specific_date') document.getElementById("addTaskDate").value = task.ruleValue;
         else if (task.rule === 'weekly') document.getElementById("addTaskWeek").value = task.ruleValue;
         else if (task.rule === 'monthly_day') document.getElementById("addTaskMonthDay").value = task.ruleValue;
         else if (task.rule === 'yearly_range') { const parts = task.ruleValue.split('-'); document.getElementById("addTaskRangeStart").value = parts[0]; document.getElementById("addTaskRangeEnd").value = parts[1]; }
         document.getElementById("taskAddLabel").innerText = "✏️ 編輯工作提醒"; document.getElementById("taskAddLabel").style.color = "#1E40AF";
         document.getElementById("btnSubmitTask").innerText = "✅ 更新"; document.getElementById("btnSubmitTask").style.background = "#1E40AF";
-        document.getElementById("btnCancelTask").style.display = "inline-block";
-        renderTaskList(); document.getElementById("taskAddLabel").scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById("btnCancelTask").style.display = "inline-block"; renderTaskList(); document.getElementById("taskAddLabel").scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     function cancelEditCustomTask() {
@@ -872,14 +1000,12 @@
         document.getElementById("addTaskShift").value = "早班"; document.getElementById("addTaskRule").value = "every_shift"; document.getElementById("addTaskText").value = ""; document.getElementById("addTaskDate").value = ""; document.getElementById("addTaskWeek").value = "1"; document.getElementById("addTaskMonthDay").value = ""; document.getElementById("addTaskRangeStart").value = ""; document.getElementById("addTaskRangeEnd").value = ""; toggleTaskInputs();
         document.getElementById("taskAddLabel").innerText = "➕ 新增自訂工作"; document.getElementById("taskAddLabel").style.color = "#1E3A8A";
         document.getElementById("btnSubmitTask").innerText = "新增"; document.getElementById("btnSubmitTask").style.background = "#2563EB";
-        document.getElementById("btnCancelTask").style.display = "none";
-        renderTaskList();
+        document.getElementById("btnCancelTask").style.display = "none"; renderTaskList();
     }
 
     function addCustomTask() {
         triggerVibrate(); const shift = document.getElementById("addTaskShift").value, rule = document.getElementById("addTaskRule").value, text = document.getElementById("addTaskText").value; let ruleVal = ""; if (!text) return alert("請輸入工作內容！");
         if (rule === 'specific_date') { ruleVal = document.getElementById("addTaskDate").value; if(!ruleVal) return alert("請選擇特定日期！"); } 
-        // ★ 這裡已經修復了之前的語法錯誤 (補上了單引號) ★
         else if (rule === 'weekly') ruleVal = document.getElementById("addTaskWeek").value; 
         else if (rule === 'monthly_day') { ruleVal = document.getElementById("addTaskMonthDay").value; if(!ruleVal || ruleVal < 1 || ruleVal > 31) return alert("請輸入正確日期！"); } 
         else if (rule === 'yearly_range') { const s = document.getElementById("addTaskRangeStart").value, e = document.getElementById("addTaskRangeEnd").value; if(!s || !e || s<1 || s>12 || e<1 || e>12) return alert("請輸入正確區間！"); ruleVal = `${s}-${e}`; }
@@ -895,15 +1021,18 @@
         triggerVibrate();
         appSettings.baseDate = document.getElementById("setBaseDate").value;
         appSettings.myTeam = document.getElementById("setMyTeam").value;
+        appSettings.defaultMode = document.getElementById("setDefaultMode").value === "true"; // 儲存預設顯示模式
         ["A", "B", "C", "D"].forEach(t => { appSettings.teams[t].offset = parseInt(document.getElementById(`setTeam${t}_Shift`).value); appSettings.teams[t].name = document.getElementById(`setTeam${t}`).value; });
-        appSettings.holidays = JSON.parse(JSON.stringify(tempHolidays)); appSettings.tasks = JSON.parse(JSON.stringify(tempTasks));
+        appSettings.holidays = JSON.parse(JSON.stringify(tempHolidays)); 
+        appSettings.tasks = JSON.parse(JSON.stringify(tempTasks));
+        appSettings.manualShifts = JSON.parse(JSON.stringify(tempManualShifts)); 
         localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
         alert("設定已儲存！系統將重新計算。");
         renderApp(); switchTab(1); 
     }
 
     function restoreDefaults() {
-        triggerVibrate(); if (confirm("🚨 警告：這將會清除您手動修改的所有自訂設定(基準日、領班、假日、工作提醒管理)！\n\n確定要繼續嗎？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); loadSettingsToForm(); renderApp(); alert("已成功恢復預設值！"); switchTab(1); }
+        triggerVibrate(); if (confirm("🚨 警告：這將會清除您手動修改的所有自訂設定(基準日、請假、假日、工作提醒管理、顯示模式)！\n\n確定要繼續嗎？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); loadSettingsToForm(); renderApp(); alert("已成功恢復預設值！"); switchTab(1); }
     }
 
     // --- ★ 新增：PWA 安裝邏輯 (完整保留) ★ ---
@@ -912,49 +1041,30 @@
     const installBtnContainer = document.getElementById('installButtonContainer');
 
     window.addEventListener('beforeinstallprompt', (e) => {
-      // 防止瀏覽器顯示預設的安裝提示 (如畫面底部的迷你資訊列)
       e.preventDefault();
-      // 存儲事件以便稍後觸發
       deferredPrompt = e;
-      // 智慧顯示：只有當瀏覽器判斷可安裝時，才把我們的按鈕顯示出來
       installBtnContainer.style.display = 'block';
     });
 
     installBtn.addEventListener('click', (e) => {
       triggerVibrate();
       if (!deferredPrompt) return;
-      
-      // 顯示原生的安裝提示視窗
       deferredPrompt.prompt();
-      
-      // 等待使用者做出選擇
       deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('使用者接受安裝');
-          // 安裝開始後隱藏按鈕
-          installBtnContainer.style.display = 'none';
-        } else {
-          console.log('使用者拒絕安裝');
-        }
+        if (choiceResult.outcome === 'accepted') { installBtnContainer.style.display = 'none'; }
         deferredPrompt = null;
       });
     });
 
-    // 監聽應用程式成功安裝的事件
     window.addEventListener('appinstalled', (event) => {
-      console.log('應用程式已成功安裝');
       deferredPrompt = null;
-      // 確保按鈕被隱藏
       installBtnContainer.style.display = 'none';
     });
-    // ---------------------------------
 
-    // 註冊 Service Worker (完整保留)
+    // 註冊 Service Worker
     if ('serviceWorker' in navigator) { 
         window.addEventListener('load', () => { 
-            navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('SW註冊成功'))
-            .catch(err => console.log('SW註冊失敗', err)); 
+            navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW註冊失敗', err)); 
         }); 
     }
 </script>
