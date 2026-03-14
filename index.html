@@ -1,8 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-B6CYHLTWCH"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-B6CYHLTWCH');
+    </script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,26 +23,8 @@
     <link rel="icon" type="image/jpeg" href="icon.jpg">
     <link rel="apple-touch-icon" href="icon.jpg">
     
-    <head>
-    <title>班表查詢與工作提醒系統 蔡宏和製作20260308</title>
-    
-    <link rel="icon" type="image/jpeg" href="icon.jpg">
-    <link rel="apple-touch-icon" href="icon.jpg">
-
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-B6CYHLTWCH"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-B6CYHLTWCH');
-    </script>
     <style>
-        /* 移除 iOS 點擊高亮色與所有預設樣式 */
-        /* ... 後面的 CSS 樣式 ... */
-
-    <style>
-        /* 移除 iOS 點擊高亮色與所有預設樣式 */
+        /* ★ 核心修復： un-comment 所有關鍵 CSS (解決破圖與方形 LOGO跳動) ★ */
         * { -webkit-tap-highlight-color: transparent; outline: none; }
    
         :root {
@@ -64,6 +53,7 @@
             display: flex; flex-direction: column;
             min-height: 100vh;
             justify-content: flex-start;
+            padding-top: env(safe-area-inset-top); /* iOS 滿版優化 */
         }
 
         /* 標題 LOGO 樣式 */
@@ -76,7 +66,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* ★ 新增安裝按鈕樣式 ★ */
+        /* ★ 安裝按鈕樣式 (完整保留) ★ */
         .install-button-container {
             display: none; /* 智慧顯示：默認隱藏，符合條件才會被 JS 打開 */
             text-align: center;
@@ -916,7 +906,7 @@
         triggerVibrate(); if (confirm("🚨 警告：這將會清除您手動修改的所有自訂設定(基準日、領班、假日、工作提醒管理)！\n\n確定要繼續嗎？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); loadSettingsToForm(); renderApp(); alert("已成功恢復預設值！"); switchTab(1); }
     }
 
-    // --- ★ 新增：PWA 安裝邏輯 ★ ---
+    // --- ★ 新增：PWA 安裝邏輯 (完整保留) ★ ---
     let deferredPrompt;
     const installBtn = document.getElementById('btnInstall');
     const installBtnContainer = document.getElementById('installButtonContainer');
@@ -959,7 +949,7 @@
     });
     // ---------------------------------
 
-    // 註冊 Service Worker
+    // 註冊 Service Worker (完整保留)
     if ('serviceWorker' in navigator) { 
         window.addEventListener('load', () => { 
             navigator.serviceWorker.register('./sw.js')
