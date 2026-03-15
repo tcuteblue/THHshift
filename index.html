@@ -771,24 +771,24 @@
         let restDayOvertimes = [];
         let isTodayRestDayOvertime = false;
         
-        if (!isActualMode) {
-            let iterDate = new Date(cycleStart);
-            while (iterDate <= cycleEnd) {
-                let iterDateStr = formatDateToYYYYMMDD(iterDate);
-                let lShift = getLogicalShift(myTeamId, iterDateStr);
-                if (lShift && lShift.startsWith("$")) { 
-                    let mdStr = `${iterDate.getMonth() + 1}/${iterDate.getDate()}`;
-                    restDayOvertimes.push(mdStr);
-                    if (iterDateStr === dateKey) {
-                        isTodayRestDayOvertime = true;
-                    }
+        // ★ 核心修改：移除 if (!isActualMode) 的限制，不分模式皆計算清單
+        let iterDate = new Date(cycleStart);
+        while (iterDate <= cycleEnd) {
+            let iterDateStr = formatDateToYYYYMMDD(iterDate);
+            let lShift = getLogicalShift(myTeamId, iterDateStr);
+            if (lShift && lShift.startsWith("$")) { 
+                let mdStr = `${iterDate.getMonth() + 1}/${iterDate.getDate()}`;
+                restDayOvertimes.push(mdStr);
+                if (iterDateStr === dateKey) {
+                    isTodayRestDayOvertime = true;
                 }
-                iterDate.setDate(iterDate.getDate() + 1);
             }
+            iterDate.setDate(iterDate.getDate() + 1);
         }
 
         const reminderEl = document.getElementById("restDayReminderContainer");
-        if (!isActualMode && restDayOvertimes.length > 0) {
+        // ★ 核心修改：只要有休息日出勤，不管是標準還是實際模式都顯示方塊
+        if (restDayOvertimes.length > 0) {
             let reminderHtml = `<div style="margin-bottom: 5px;"><strong>⚠️ 休息日出勤提醒</strong><br><span style="font-size: 0.85rem; color: #DC2626;">(結算週期: ${cycleStart.getMonth()+1}/16 ~ ${cycleEnd.getMonth()+1}/15)</span></div>`;
             reminderHtml += `本週期休息日出勤：${restDayOvertimes.join(", ")}`;
             if (isTodayRestDayOvertime) {
@@ -1021,7 +1021,6 @@
         document.getElementById("holidayList").innerHTML = html;
     }
 
-    // ★ 加入安全防護 (if (lbl))，避免 HTML 標籤更動導致當機
     function startEditHoliday(date) {
         triggerVibrate(); editingHolidayDate = date; 
         document.getElementById("addHolidayDate").value = date; document.getElementById("addHolidayName").value = tempHolidays[date];
@@ -1031,7 +1030,6 @@
         document.getElementById("btnCancelHoliday").style.display = "inline-block"; renderHolidayList();
     }
 
-    // ★ 加入安全防護 (if (lbl))，避免 HTML 標籤更動導致當機
     function cancelEditHoliday() {
         triggerVibrate(); editingHolidayDate = null; document.getElementById("addHolidayDate").value = ""; document.getElementById("addHolidayName").value = "";
         const lbl = document.getElementById("holidayAddLabel");
@@ -1077,7 +1075,6 @@
         document.getElementById("customTaskList").innerHTML = html;
     }
 
-    // ★ 加入安全防護 (if (lbl))
     function startEditCustomTask(id) {
         triggerVibrate(); const task = tempTasks.find(t => t.id === id); if (!task) return; editingTaskId = id;
         document.getElementById("addTaskShift").value = task.shift; document.getElementById("addTaskRule").value = task.rule; document.getElementById("addTaskText").value = task.text; toggleTaskInputs();
@@ -1094,7 +1091,6 @@
         if (lbl) lbl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // ★ 加入安全防護 (if (lbl))
     function cancelEditCustomTask() {
         triggerVibrate(); editingTaskId = null;
         document.getElementById("addTaskShift").value = "早班"; document.getElementById("addTaskRule").value = "every_shift"; document.getElementById("addTaskText").value = ""; document.getElementById("addTaskDate").value = ""; document.getElementById("addTaskWeek").value = "1"; document.getElementById("addTaskMonthDay").value = ""; document.getElementById("addTaskRangeStart").value = ""; document.getElementById("addTaskRangeEnd").value = ""; toggleTaskInputs();
