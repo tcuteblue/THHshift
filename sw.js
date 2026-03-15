@@ -1,4 +1,4 @@
-const CACHE_NAME = 'v8'; // 目前的最佳版本號
+const CACHE_NAME = 'v9'; // 目前的最佳版本號
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
