@@ -213,13 +213,11 @@
         </h1>
 
         <div class="header-controls-container" id="headerControls">
-            <div class="date-picker-container" style="flex-wrap: wrap;">
-                <div style="display:flex; gap:8px; flex:1; min-width:200px; justify-content:center;">
-                    <button class="btn btn-icon" style="box-shadow: none; padding: 10px;" onclick="changeDate(-1)">◀</button>
-                    <input type="date" id="queryDate" style="max-width: 150px;">
-                    <button class="btn btn-icon" style="box-shadow: none; padding: 10px;" onclick="changeDate(1)">▶</button>
-                </div>
-                <button class="btn btn-icon" style="box-shadow: none; font-size: 0.9rem; padding: 10px; background: #E5E7EB; color: #374151; white-space: nowrap;" onclick="setToday('queryDate')">📅 今天日期</button>
+            <div class="date-picker-container" style="gap: 6px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn btn-icon" style="box-shadow: none; padding: 10px 12px;" onclick="changeDate(-1)">◀</button>
+                <input type="date" id="queryDate" style="flex: 1; min-width: 130px; max-width: 150px; margin-bottom: 0;">
+                <button class="btn btn-icon" style="box-shadow: none; padding: 10px 12px;" onclick="changeDate(1)">▶</button>
+                <button class="btn btn-icon" style="box-shadow: none; font-size: 0.9rem; padding: 10px 12px; background: #E5E7EB; color: #374151; white-space: nowrap;" onclick="setToday('queryDate')">📅 今天日期</button>
             </div>
 
             <div id="dayOfWeekDisplay">載入中...</div>
@@ -511,7 +509,6 @@
         const inputEl = document.getElementById(inputId);
         if (inputEl) {
             inputEl.value = todayStr;
-            // 手動觸發 change 事件，確保相依的推算或畫面更新能同步運作
             inputEl.dispatchEvent(new Event('change'));
         }
     }
@@ -544,7 +541,7 @@
     const defaultSettings = {
         baseDate: "2026-01-01",
         myTeam: "C",
-        defaultMode: false, // false = 標準班表, true = 實際出勤
+        defaultMode: false,
         teams: {
             "A": { name: "蘇明理", offset: 5 }, "B": { name: "林致漢", offset: 7 }, 
             "C": { name: "蔡宏和", offset: 1 }, "D": { name: "林明宗", offset: 3 }  
@@ -555,10 +552,9 @@
             "2026-04-03": "兒童節", "2026-04-04": "清明節", "2026-05-01": "勞動節",
             "2026-06-19": "端午節", "2026-09-25": "中秋節", "2026-10-10": "國慶日"
         },
-        manualShifts: {} // 手動改班/請假設定
+        manualShifts: {}
     };
 
-    // --- 初始化執行與資料載入 ---
     let appSettings;
     try {
         let savedData = localStorage.getItem("shiftSettings");
@@ -576,7 +572,6 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-        // 設定初始模式 (從設定載入)
         isActualMode = appSettings.defaultMode;
         document.getElementById('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
         document.getElementById('btnActual').className = isActualMode ? 'btn-mode active' : 'btn-mode';
@@ -589,7 +584,6 @@
         renderApp();
     });
 
-    // 頁籤切換邏輯
     function switchTab(tabNum) {
         triggerVibrate();
         const contents = document.querySelectorAll('.tab-content');
@@ -621,9 +615,7 @@
         renderApp();
     }
 
-    // ★ 核心邏輯：取得標準出勤 (包含 $休息日出勤 與 手動請假) ★
     function getLogicalShift(teamId, targetDateStr) {
-        // 1. 優先檢查手動改班/請假 (不受休息日出勤影響)
         if (appSettings.manualShifts && appSettings.manualShifts[`${targetDateStr}_${teamId}`]) {
             return appSettings.manualShifts[`${targetDateStr}_${teamId}`];
         }
@@ -637,15 +629,13 @@
         if (shiftIndex < 0) shiftIndex = (shiftIndex % 8 + 8) % 8;
         let logicalShiftText = SHIFT_CYCLE[shiftIndex];
 
-        // 2. 判斷是否為 $晚班1 (休息日出勤)
         if (logicalShiftText === "晚班1") {
-            let dayOfWeek = targetDate.getDay(); // 0(日) ~ 6(六)
+            let dayOfWeek = targetDate.getDay(); 
             let diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
             let monDate = new Date(targetDate);
             monDate.setDate(targetDate.getDate() + diffToMon);
             
             let restCount = 0;
-            // 檢查該週一至日
             for (let i = 0; i < 7; i++) {
                 let curDate = new Date(monDate);
                 curDate.setDate(monDate.getDate() + i);
@@ -660,20 +650,18 @@
                 }
             }
             if (restCount === 1) {
-                logicalShiftText = "$" + logicalShiftText; // 加上$標記
+                logicalShiftText = "$" + logicalShiftText; 
             }
         }
         return logicalShiftText;
     }
 
-    // ★ 核心邏輯：實際出勤轉換 (若為實際出勤，去除 $ 標記) ★
     function getActualShift(logicalShift) {
         if (!isActualMode) return logicalShift; 
         
         let core = logicalShift;
         if (core.startsWith("$")) { core = core.substring(1); } 
         
-        // 處理手動調班的轉換
         let isOverride = core.startsWith("調:");
         let compareCore = isOverride ? core.replace("調:", "") : core;
 
@@ -749,7 +737,6 @@
         
         document.getElementById("allTeamsContainer").innerHTML = allTeamsHTML;
 
-        // ★ 獨立區塊計算：休息日出勤提醒 (僅在標準班表顯示，週期 16日~次月15日)
         let cycleStart, cycleEnd;
         let cYear = targetDate.getFullYear();
         let cMonth = targetDate.getMonth();
@@ -828,7 +815,6 @@
             else if (task.shift === "早班" && isMorn) shiftMatch = true;
             else if (task.shift === "中班" && isMid) shiftMatch = true;
             else if (task.shift === "晚班" && isNight) shiftMatch = true;
-            // 單日設定
             else if (task.shift === "早班1" && isMorn1) shiftMatch = true;
             else if (task.shift === "早班2" && isMorn2) shiftMatch = true;
             else if (task.shift === "中班1" && isMid1) shiftMatch = true;
@@ -853,7 +839,6 @@
             if (ruleMatch) todayTasks.push(task.text);
         });
 
-        // 輪值月份任務
         const monthsElapsed = (currentYear - 2026) * 12 + currentMonthIdx;
         const invCycle = Math.floor(monthsElapsed / 2);
         const invTeams = ["D", "A", "B", "C"];
@@ -914,11 +899,9 @@
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     }
 
-    // --- ★ 設定區塊與管理邏輯 ★ ---
-    // 自動推算核心引擎 (利用數學模運算確保班別永遠完美相差兩天)
+    // --- ★ 設定區塊與管理邏輯 ---
     function calculateOffsets(refTeam, refShiftIndex) {
         const offsets = {};
-        // 定義四班在時間軸上的固定進度差距 (C=0, D=2, A=4, B=6)
         const teamPos = { 'C': 0, 'D': 2, 'A': 4, 'B': 6 };
         const basePos = teamPos[refTeam];
         
@@ -957,7 +940,6 @@
         document.getElementById("setMyTeam").value = appSettings.myTeam;
         document.getElementById("setDefaultMode").value = appSettings.defaultMode ? "true" : "false"; 
         
-        // 預設將推算的基準設為您專屬的班別與其當前狀態
         document.getElementById("setRefTeam").value = appSettings.myTeam;
         document.getElementById("setRefShift").value = appSettings.teams[appSettings.myTeam].offset;
         
@@ -969,12 +951,11 @@
         tempTasks = appSettings.tasks ? JSON.parse(JSON.stringify(appSettings.tasks)) : [];
         tempManualShifts = appSettings.manualShifts ? JSON.parse(JSON.stringify(appSettings.manualShifts)) : {}; 
         
-        updateBasePreview(); // 顯示預覽畫面
+        updateBasePreview(); 
         cancelEditHoliday(); cancelEditCustomTask();
         renderHolidayList(); renderTaskList(); renderManualShiftList();
     }
 
-    // --- 新增：手動請假/調班列表渲染與操作 ---
     function renderManualShiftList() {
         let html = "";
         const keys = Object.keys(tempManualShifts).sort();
@@ -1006,7 +987,6 @@
         }
     }
 
-    // --- 假日管理 ---
     function renderHolidayList() {
         let html = "";
         const sortedDates = Object.keys(tempHolidays).sort();
@@ -1043,15 +1023,14 @@
 
     function removeHoliday(date) { triggerVibrate(); if(confirm(`確定刪除 ${date}嗎？`)) { if (date === editingHolidayDate) cancelEditHoliday(); delete tempHolidays[date]; renderHolidayList(); } }
 
-    // --- 任務管理 ---
     function toggleTaskInputs() {
         const rule = document.getElementById("addTaskRule").value;
         ['inputWrap_date', 'inputWrap_week', 'inputWrap_monthDay', 'inputWrap_monthRange'].forEach(id => document.getElementById(id).style.display = 'none');
-        document.getElementById('btnTaskToday').style.display = 'none'; // 先隱藏按鈕
+        document.getElementById('btnTaskToday').style.display = 'none'; 
 
         if (rule === 'specific_date') {
             document.getElementById("inputWrap_date").style.display = 'block';
-            document.getElementById('btnTaskToday').style.display = 'inline-block'; // 僅在單次日期顯示今日按鈕
+            document.getElementById('btnTaskToday').style.display = 'inline-block'; 
         }
         else if (rule === 'weekly') document.getElementById("inputWrap_week").style.display = 'block';
         else if (rule === 'monthly_day') document.getElementById("inputWrap_monthDay").style.display = 'block';
@@ -1107,25 +1086,21 @@
 
     function saveSettings() {
         triggerVibrate();
-        // 1. 取得最新基準日與模式
         appSettings.baseDate = document.getElementById("setBaseDate").value;
         appSettings.myTeam = document.getElementById("setMyTeam").value;
         appSettings.defaultMode = document.getElementById("setDefaultMode").value === "true"; 
         
         if(!appSettings.baseDate) return alert("請先設定基準日！");
 
-        // 2. 自動推算所有班別的 Offset
         const refTeam = document.getElementById("setRefTeam").value;
         const refShift = parseInt(document.getElementById("setRefShift").value);
         const newOffsets = calculateOffsets(refTeam, refShift);
         
-        // 3. 寫入各班資料
         ["A", "B", "C", "D"].forEach(t => { 
             appSettings.teams[t].offset = newOffsets[t]; 
             appSettings.teams[t].name = document.getElementById(`setTeam${t}`).value; 
         });
 
-        // 4. 儲存其他資料
         appSettings.holidays = JSON.parse(JSON.stringify(tempHolidays)); 
         appSettings.tasks = JSON.parse(JSON.stringify(tempTasks));
         appSettings.manualShifts = JSON.parse(JSON.stringify(tempManualShifts)); 
@@ -1165,7 +1140,6 @@
       installBtnContainer.style.display = 'none';
     });
 
-    // 註冊 Service Worker
     if ('serviceWorker' in navigator) { 
         window.addEventListener('load', () => { 
             navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW註冊失敗', err)); 
