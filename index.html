@@ -147,7 +147,7 @@
         .shift-mid { background: var(--mid-color); color: var(--mid-text); }
         .shift-night { background: var(--night-color); color: var(--night-text); }
         .shift-rest { background: var(--rest-color); color: var(--rest-text); }
-        .shift-override { background: #FEF2F2; color: #991B1B; border: 1px dashed #FCA5A5; } /* 手動改班樣式 */
+        .shift-override { background: #FEF2F2; color: #991B1B; border: 1px dashed #FCA5A5; }
 
         .team-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
         .team-row:last-child { border-bottom: none; }
@@ -214,17 +214,17 @@
 
         <div class="header-controls-container" id="headerControls">
             <div class="date-picker-container" style="gap: 6px; justify-content: center; flex-wrap: wrap;">
-                <button class="btn btn-icon" style="box-shadow: none; padding: 10px 12px;" onclick="changeDate(-1)">◀</button>
+                <button type="button" class="btn btn-icon" style="box-shadow: none; padding: 10px 12px;" onclick="changeDate(-1)">◀</button>
                 <input type="date" id="queryDate" style="flex: 1; min-width: 130px; max-width: 150px; margin-bottom: 0;">
-                <button class="btn btn-icon" style="box-shadow: none; padding: 10px 12px;" onclick="changeDate(1)">▶</button>
-                <button class="btn btn-icon" style="box-shadow: none; font-size: 0.9rem; padding: 10px 12px; background: #E5E7EB; color: #374151; white-space: nowrap;" onclick="setToday('queryDate')">📅 今天日期</button>
+                <button type="button" class="btn btn-icon" style="box-shadow: none; padding: 10px 12px;" onclick="changeDate(1)">▶</button>
+                <button type="button" class="btn btn-icon" style="box-shadow: none; font-size: 0.9rem; padding: 10px 12px; background: #E5E7EB; color: #374151; white-space: nowrap;" onclick="setToday('queryDate')">📅 今天日期</button>
             </div>
 
             <div id="dayOfWeekDisplay">載入中...</div>
 
             <div class="toggle-group">
-                <button id="btnLogical" class="btn-mode active" onclick="setMode(false)">📅 標準班表</button>
-                <button id="btnActual" class="btn-mode" onclick="setMode(true)">🏃 實際出勤</button>
+                <button type="button" id="btnLogical" class="btn-mode active" onclick="setMode(false)">📅 標準班表</button>
+                <button type="button" id="btnActual" class="btn-mode" onclick="setMode(true)">🏃 實際出勤</button>
             </div>
         </div>
     </div>
@@ -249,7 +249,7 @@
         </div>
 
         <div id="installButtonContainer" class="install-button-container">
-            <button id="btnInstall" class="btn-install">
+            <button type="button" id="btnInstall" class="btn-install">
                 📥 安裝為手機 APP
             </button>
             <div class="install-explanation">以便離線使用和更快載入</div>
@@ -336,7 +336,7 @@
             <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <label style="font-weight:bold; color: #DC2626; margin-bottom: 0;">✏️ 手動改班 / 請假設定：</label>
-                <button class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; margin:0;" onclick="setToday('addManualDate')">📅 今天日期</button>
+                <button type="button" class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; margin:0;" onclick="setToday('addManualDate')">📅 今天日期</button>
             </div>
             <div style="font-size: 0.8rem; color: #6B7280; margin-bottom: 10px;">優先覆蓋原班表，可用於設定公假、病假、事假、特休或調班。</div>
             
@@ -371,15 +371,15 @@
                     </select>
                 </div>
                 <div style="flex: 1;">
-                    <button class="btn" onclick="addManualShift()" style="margin-bottom: 0; padding: 8px 5px; font-size: 0.9rem; background: #DC2626;">新增</button>
+                    <button type="button" class="btn" onclick="addManualShift()" style="margin-bottom: 0; padding: 8px 5px; font-size: 0.9rem; background: #DC2626;">新增</button>
                 </div>
             </div>
 
             <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <label style="font-weight:bold; margin-bottom: 0;">🎈 國定假日管理：</label>
-                <button class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; margin:0;" onclick="setToday('addHolidayDate')">📅 今天日期</button>
+                <label id="holidayAddLabel" style="font-weight:bold; margin-bottom: 0;">🎈 國定假日管理：</label>
+                <button type="button" class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; margin:0;" onclick="setToday('addHolidayDate')">📅 今天日期</button>
             </div>
             
             <div id="holidayList" style="margin-bottom: 10px; max-height: 150px; overflow-y: auto; background: #F9FAFB; border: 1px solid var(--border-color); border-radius: 8px; padding: 5px;"></div>
@@ -392,8 +392,8 @@
                     <input type="text" id="addHolidayName" placeholder="如: 中秋節" style="margin-bottom: 0; padding: 8px;">
                 </div>
                 <div style="flex: 1.5; display:flex; gap:5px;">
-                    <button id="btnSubmitHoliday" class="btn" onclick="addHoliday()" style="margin-bottom: 0; padding: 8px 5px; font-size: 0.9rem; background: #D97706;">新增</button>
-                    <button id="btnCancelHoliday" class="btn btn-delete" onclick="cancelEditHoliday()" style="margin-bottom: 0; padding: 8px 5px; font-size: 0.9rem; display:none; border:none;">取消</button>
+                    <button type="button" id="btnSubmitHoliday" class="btn" onclick="addHoliday()" style="margin-bottom: 0; padding: 8px 5px; font-size: 0.9rem; background: #D97706;">新增</button>
+                    <button type="button" id="btnCancelHoliday" class="btn btn-delete" onclick="cancelEditHoliday()" style="margin-bottom: 0; padding: 8px 5px; font-size: 0.9rem; display:none; border:none;">取消</button>
                 </div>
             </div>
 
@@ -401,7 +401,7 @@
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <label style="font-weight:bold; color: #2563EB; margin-bottom: 0;">📝 工作提醒管理：</label>
-                <button id="btnTaskToday" class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; margin:0; display:none;" onclick="setToday('addTaskDate')">📅 今天日期</button>
+                <button type="button" id="btnTaskToday" class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; margin:0; display:none;" onclick="setToday('addTaskDate')">📅 今天日期</button>
             </div>
             <div style="font-size: 0.8rem; color: #6B7280; margin-bottom: 10px;">系統預設與您自訂的工作皆在此管理 (可編輯或刪除)。</div>
             
@@ -460,29 +460,29 @@
 
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="addTaskText" placeholder="輸入工作內容" style="flex: 2; padding: 8px; margin-bottom: 0;">
-                    <button id="btnSubmitTask" class="btn" onclick="addCustomTask()" style="flex: 1.5; padding: 8px 5px; font-size: 0.9rem; background: #2563EB;">新增</button>
-                    <button id="btnCancelTask" class="btn btn-delete" onclick="cancelEditCustomTask()" style="flex: 1; padding: 8px 5px; font-size: 0.9rem; display:none; border:none;">取消</button>
+                    <button type="button" id="btnSubmitTask" class="btn" onclick="addCustomTask()" style="flex: 1.5; padding: 8px 5px; font-size: 0.9rem; background: #2563EB;">新增</button>
+                    <button type="button" id="btnCancelTask" class="btn btn-delete" onclick="cancelEditCustomTask()" style="flex: 1; padding: 8px 5px; font-size: 0.9rem; display:none; border:none;">取消</button>
                 </div>
             </div>
 
             <div class="action-buttons">
-                <button class="btn btn-danger" onclick="restoreDefaults()" style="flex: 1; margin-top: 0;">🔄 恢復預設</button>
-                <button class="btn" onclick="saveSettings()" style="flex: 2; margin-top: 0;">💾 儲存設定</button>
+                <button type="button" class="btn btn-danger" onclick="restoreDefaults()" style="flex: 1; margin-top: 0;">🔄 恢復預設</button>
+                <button type="button" class="btn" onclick="saveSettings()" style="flex: 2; margin-top: 0;">💾 儲存設定</button>
             </div>
         </div>
     </div>
 </div>
 
 <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab(1)">
+    <button type="button" class="tab-btn active" onclick="switchTab(1)">
         <div class="tab-icon">👤</div>
         <div class="tab-text">今日班表</div>
     </button>
-    <button class="tab-btn" onclick="switchTab(2)">
+    <button type="button" class="tab-btn" onclick="switchTab(2)">
         <div class="tab-icon">🗓️</div>
         <div class="tab-text">班表總覽</div>
     </button>
-    <button class="tab-btn" onclick="switchTab(3)">
+    <button type="button" class="tab-btn" onclick="switchTab(3)">
         <div class="tab-icon">⚙️</div>
         <div class="tab-text">系統設定</div>
     </button>
@@ -491,18 +491,15 @@
 <script>
     // --- 核心班表常數與資料邏輯 ---
     const SHIFT_CYCLE = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
-    let isActualMode = false; // 預設改為 false (標準班表)
+    let isActualMode = false; 
     
     // 設定區塊用的暫存變數
     let tempHolidays = {}; 
     let tempTasks = [];
-    let tempManualShifts = {}; // 手動改班暫存
-
-    // 紀錄正在編輯中的項目 ID
+    let tempManualShifts = {}; 
     let editingHolidayDate = null;
     let editingTaskId = null;
 
-    // ★ 全域共用：帶入今天日期功能
     function setToday(inputId) {
         triggerVibrate();
         const todayStr = formatDateToYYYYMMDD(new Date());
@@ -513,12 +510,10 @@
         }
     }
 
-    // 手機震動回饋功能
     function triggerVibrate() {
         if (navigator.vibrate) navigator.vibrate(50);
     }
     
-    // 原始系統預設工作清單
     const defaultTasks = [
         { id: "t1", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：登錄MI系統的各型泵浦運轉前暨啟動時檢點表" },
         { id: "t2", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：填寫CPI放水閥操作記錄表等7份檢查表" },
@@ -537,7 +532,6 @@
         { id: "t15", shift: "中班", rule: "monthly_last", ruleValue: "", text: "每月底中班：填寫機車行駛記錄表" }
     ];
 
-    // 系統原始預設資料
     const defaultSettings = {
         baseDate: "2026-01-01",
         myTeam: "C",
@@ -570,6 +564,18 @@
     if (!appSettings.tasks || !Array.isArray(appSettings.tasks)) {
         appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks));
     }
+    if (!appSettings.teams || !appSettings.teams["A"]) {
+        appSettings.teams = JSON.parse(JSON.stringify(defaultSettings.teams));
+    }
+    for (const t of ["A", "B", "C", "D"]) {
+        if (appSettings.teams[t].offset === undefined || isNaN(appSettings.teams[t].offset)) {
+            appSettings.teams[t].offset = defaultSettings.teams[t].offset;
+        }
+    }
+    if (!appSettings.baseDate || isNaN(new Date(appSettings.baseDate).getTime())) {
+        appSettings.baseDate = defaultSettings.baseDate;
+    }
+    if (!appSettings.myTeam) appSettings.myTeam = "C";
 
     document.addEventListener("DOMContentLoaded", () => {
         isActualMode = appSettings.defaultMode;
@@ -578,10 +584,10 @@
 
         const today = new Date();
         document.getElementById("queryDate").value = formatDateToYYYYMMDD(today);
-        document.getElementById("queryDate").addEventListener("change", renderApp);
+        document.getElementById("queryDate").addEventListener("change", renderAppSafe);
         toggleTaskInputs();
         loadSettingsToForm();
-        renderApp();
+        renderAppSafe();
     });
 
     function switchTab(tabNum) {
@@ -612,7 +618,7 @@
         isActualMode = mode;
         document.getElementById('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
         document.getElementById('btnActual').className = isActualMode ? 'btn-mode active' : 'btn-mode';
-        renderApp();
+        renderAppSafe();
     }
 
     function getLogicalShift(teamId, targetDateStr) {
@@ -623,11 +629,14 @@
         const targetDate = new Date(targetDateStr.replace(/-/g, '/'));
         const baseDate = new Date(appSettings.baseDate.replace(/-/g, '/'));
         const diffTime = targetDate - baseDate;
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-        const team = appSettings.teams[teamId];
-        let shiftIndex = (team.offset + diffDays) % 8;
+        
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) || 0; 
+        const team = appSettings.teams[teamId] || { offset: 0 };
+        
+        let shiftIndex = ((parseInt(team.offset) || 0) + diffDays) % 8;
         if (shiftIndex < 0) shiftIndex = (shiftIndex % 8 + 8) % 8;
-        let logicalShiftText = SHIFT_CYCLE[shiftIndex];
+        
+        let logicalShiftText = SHIFT_CYCLE[shiftIndex] || "早班1"; 
 
         if (logicalShiftText === "晚班1") {
             let dayOfWeek = targetDate.getDay(); 
@@ -641,10 +650,10 @@
                 curDate.setDate(monDate.getDate() + i);
                 
                 let curDiffTime = curDate - baseDate;
-                let curDiffDays = Math.round(curDiffTime / (1000 * 60 * 60 * 24));
-                let curShiftIndex = (team.offset + curDiffDays) % 8;
+                let curDiffDays = Math.round(curDiffTime / (1000 * 60 * 60 * 24)) || 0;
+                let curShiftIndex = ((parseInt(team.offset) || 0) + curDiffDays) % 8;
                 if (curShiftIndex < 0) curShiftIndex = (curShiftIndex % 8 + 8) % 8;
-                let curShift = SHIFT_CYCLE[curShiftIndex];
+                let curShift = SHIFT_CYCLE[curShiftIndex] || "早班1";
                 if (curShift === "小休" || curShift === "大休") {
                     restCount++;
                 }
@@ -657,6 +666,7 @@
     }
 
     function getActualShift(logicalShift) {
+        if (!logicalShift) return "早班1"; 
         if (!isActualMode) return logicalShift; 
         
         let core = logicalShift;
@@ -688,7 +698,17 @@
         let currentDate = new Date(safeDateString);
         currentDate.setDate(currentDate.getDate() + days);
         dateInput.value = formatDateToYYYYMMDD(currentDate);
-        renderApp();
+        renderAppSafe();
+    }
+
+    function renderAppSafe() {
+        try {
+            renderApp();
+        } catch (err) {
+            console.error("RenderApp 錯誤: ", err);
+            document.getElementById("myTeamName").innerText = "⚠️ 資料發生錯誤";
+            document.getElementById("myShiftBadge").innerText = "請恢復預設";
+        }
     }
 
     function renderApp() {
@@ -714,7 +734,7 @@
 
         const teamIds = ["A", "B", "C", "D"];
         teamIds.forEach(id => {
-            const team = appSettings.teams[id];
+            const team = appSettings.teams[id] || { name: "未知" };
             
             let logicalShiftText = getLogicalShift(id, dateKey);
             let shiftText = getActualShift(logicalShiftText);
@@ -756,7 +776,7 @@
             while (iterDate <= cycleEnd) {
                 let iterDateStr = formatDateToYYYYMMDD(iterDate);
                 let lShift = getLogicalShift(myTeamId, iterDateStr);
-                if (lShift.startsWith("$")) {
+                if (lShift && lShift.startsWith("$")) { 
                     let mdStr = `${iterDate.getMonth() + 1}/${iterDate.getDate()}`;
                     restDayOvertimes.push(mdStr);
                     if (iterDateStr === dateKey) {
@@ -788,7 +808,8 @@
         let todayTasks = [];
         let monthTasks = [];
         
-        const cleanMyShift = myShiftText.replace("$", "").replace("調:", "");
+        const safeShiftText = myShiftText || "";
+        const cleanMyShift = safeShiftText.replace("$", "").replace("調:", "");
 
         const isMorn1 = (cleanMyShift === "早班1");
         const isMorn2 = (cleanMyShift === "早班2");
@@ -915,7 +936,7 @@
     function updateBasePreview() {
         const dateVal = document.getElementById("setBaseDate").value;
         const refTeam = document.getElementById("setRefTeam").value;
-        const refShift = parseInt(document.getElementById("setRefShift").value);
+        const refShift = parseInt(document.getElementById("setRefShift").value) || 0; 
         
         if (!dateVal) {
             document.getElementById("basePreview").innerHTML = "請先選擇基準日。";
@@ -941,10 +962,12 @@
         document.getElementById("setDefaultMode").value = appSettings.defaultMode ? "true" : "false"; 
         
         document.getElementById("setRefTeam").value = appSettings.myTeam;
-        document.getElementById("setRefShift").value = appSettings.teams[appSettings.myTeam].offset;
+        
+        let currentOffset = appSettings.teams[appSettings.myTeam].offset;
+        document.getElementById("setRefShift").value = isNaN(currentOffset) ? 0 : currentOffset;
         
         ["A", "B", "C", "D"].forEach(t => { 
-            document.getElementById(`setTeam${t}`).value = appSettings.teams[t].name; 
+            document.getElementById(`setTeam${t}`).value = appSettings.teams[t].name || ""; 
         });
         
         tempHolidays = appSettings.holidays ? JSON.parse(JSON.stringify(appSettings.holidays)) : {};
@@ -998,17 +1021,21 @@
         document.getElementById("holidayList").innerHTML = html;
     }
 
+    // ★ 加入安全防護 (if (lbl))，避免 HTML 標籤更動導致當機
     function startEditHoliday(date) {
         triggerVibrate(); editingHolidayDate = date; 
         document.getElementById("addHolidayDate").value = date; document.getElementById("addHolidayName").value = tempHolidays[date];
-        document.getElementById("holidayAddLabel").innerText = "✏️ 編輯假日"; document.getElementById("holidayAddLabel").style.color = "#1E40AF";
+        const lbl = document.getElementById("holidayAddLabel");
+        if (lbl) { lbl.innerText = "✏️ 編輯假日"; lbl.style.color = "#1E40AF"; }
         document.getElementById("btnSubmitHoliday").innerText = "✅ 更新"; document.getElementById("btnSubmitHoliday").style.background = "#1E40AF";
         document.getElementById("btnCancelHoliday").style.display = "inline-block"; renderHolidayList();
     }
 
+    // ★ 加入安全防護 (if (lbl))，避免 HTML 標籤更動導致當機
     function cancelEditHoliday() {
         triggerVibrate(); editingHolidayDate = null; document.getElementById("addHolidayDate").value = ""; document.getElementById("addHolidayName").value = "";
-        document.getElementById("holidayAddLabel").innerText = "➕ 新增假日"; document.getElementById("holidayAddLabel").style.color = "#B45309";
+        const lbl = document.getElementById("holidayAddLabel");
+        if (lbl) { lbl.innerText = "🎈 國定假日管理："; lbl.style.color = "var(--text-main)"; }
         document.getElementById("btnSubmitHoliday").innerText = "新增"; document.getElementById("btnSubmitHoliday").style.background = "#D97706";
         document.getElementById("btnCancelHoliday").style.display = "none"; renderHolidayList();
     }
@@ -1050,6 +1077,7 @@
         document.getElementById("customTaskList").innerHTML = html;
     }
 
+    // ★ 加入安全防護 (if (lbl))
     function startEditCustomTask(id) {
         triggerVibrate(); const task = tempTasks.find(t => t.id === id); if (!task) return; editingTaskId = id;
         document.getElementById("addTaskShift").value = task.shift; document.getElementById("addTaskRule").value = task.rule; document.getElementById("addTaskText").value = task.text; toggleTaskInputs();
@@ -1057,15 +1085,23 @@
         else if (task.rule === 'weekly') document.getElementById("addTaskWeek").value = task.ruleValue;
         else if (task.rule === 'monthly_day') document.getElementById("addTaskMonthDay").value = task.ruleValue;
         else if (task.rule === 'yearly_range') { const parts = task.ruleValue.split('-'); document.getElementById("addTaskRangeStart").value = parts[0]; document.getElementById("addTaskRangeEnd").value = parts[1]; }
-        document.getElementById("taskAddLabel").innerText = "✏️ 編輯工作提醒"; document.getElementById("taskAddLabel").style.color = "#1E40AF";
+        
+        const lbl = document.getElementById("taskAddLabel");
+        if (lbl) { lbl.innerText = "✏️ 編輯工作提醒"; lbl.style.color = "#1E40AF"; }
+        
         document.getElementById("btnSubmitTask").innerText = "✅ 更新"; document.getElementById("btnSubmitTask").style.background = "#1E40AF";
-        document.getElementById("btnCancelTask").style.display = "inline-block"; renderTaskList(); document.getElementById("taskAddLabel").scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById("btnCancelTask").style.display = "inline-block"; renderTaskList(); 
+        if (lbl) lbl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
+    // ★ 加入安全防護 (if (lbl))
     function cancelEditCustomTask() {
         triggerVibrate(); editingTaskId = null;
         document.getElementById("addTaskShift").value = "早班"; document.getElementById("addTaskRule").value = "every_shift"; document.getElementById("addTaskText").value = ""; document.getElementById("addTaskDate").value = ""; document.getElementById("addTaskWeek").value = "1"; document.getElementById("addTaskMonthDay").value = ""; document.getElementById("addTaskRangeStart").value = ""; document.getElementById("addTaskRangeEnd").value = ""; toggleTaskInputs();
-        document.getElementById("taskAddLabel").innerText = "➕ 新增自訂工作"; document.getElementById("taskAddLabel").style.color = "#1E3A8A";
+        
+        const lbl = document.getElementById("taskAddLabel");
+        if (lbl) { lbl.innerText = "➕ 新增自訂工作"; lbl.style.color = "#1E3A8A"; }
+        
         document.getElementById("btnSubmitTask").innerText = "新增"; document.getElementById("btnSubmitTask").style.background = "#2563EB";
         document.getElementById("btnCancelTask").style.display = "none"; renderTaskList();
     }
@@ -1093,7 +1129,7 @@
         if(!appSettings.baseDate) return alert("請先設定基準日！");
 
         const refTeam = document.getElementById("setRefTeam").value;
-        const refShift = parseInt(document.getElementById("setRefShift").value);
+        const refShift = parseInt(document.getElementById("setRefShift").value) || 0;
         const newOffsets = calculateOffsets(refTeam, refShift);
         
         ["A", "B", "C", "D"].forEach(t => { 
@@ -1107,11 +1143,11 @@
         
         localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
         alert("設定已完美儲存！系統將為您重新計算所有班表。");
-        renderApp(); switchTab(1); 
+        renderAppSafe(); switchTab(1); 
     }
 
     function restoreDefaults() {
-        triggerVibrate(); if (confirm("🚨 警告：這將會清除您手動修改的所有自訂設定(基準日、請假、假日、工作提醒管理、顯示模式)！\n\n確定要繼續嗎？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); loadSettingsToForm(); renderApp(); alert("已成功恢復預設值！"); switchTab(1); }
+        triggerVibrate(); if (confirm("🚨 警告：這將會清除您手動修改的所有自訂設定(基準日、請假、假日、工作提醒管理、顯示模式)！\n\n確定要繼續嗎？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); loadSettingsToForm(); renderAppSafe(); alert("已成功恢復預設值！"); switchTab(1); }
     }
 
     // --- ★ PWA 安裝邏輯 ---
