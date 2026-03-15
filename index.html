@@ -213,10 +213,13 @@
         </h1>
 
         <div class="header-controls-container" id="headerControls">
-            <div class="date-picker-container">
-                <button class="btn btn-icon" style="box-shadow: none;" onclick="changeDate(-1)">◀</button>
-                <input type="date" id="queryDate">
-                <button class="btn btn-icon" style="box-shadow: none;" onclick="changeDate(1)">▶</button>
+            <div class="date-picker-container" style="flex-wrap: wrap;">
+                <div style="display:flex; gap:8px; flex:1; min-width:200px; justify-content:center;">
+                    <button class="btn btn-icon" style="box-shadow: none; padding: 10px;" onclick="changeDate(-1)">◀</button>
+                    <input type="date" id="queryDate" style="max-width: 150px;">
+                    <button class="btn btn-icon" style="box-shadow: none; padding: 10px;" onclick="changeDate(1)">▶</button>
+                </div>
+                <button class="btn btn-icon" style="box-shadow: none; font-size: 0.9rem; padding: 10px; background: #E5E7EB; color: #374151; white-space: nowrap;" onclick="setToday('queryDate')">📅 今天日期</button>
             </div>
 
             <div id="dayOfWeekDisplay">載入中...</div>
@@ -274,7 +277,7 @@
             <div class="card-title">系統設定 (自動儲存)</div>
             
             <label style="font-weight:bold;">我的專屬班別：</label>
-            <select id="setMyTeam">
+            <select id="setMyTeam" onchange="updateBasePreview()">
                 <option value="A">A班</option>
                 <option value="B">B班</option>
                 <option value="C" selected>C班</option>
@@ -292,14 +295,34 @@
             <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
 
             <label style="font-weight:bold;">基準日設定：</label>
-            <input type="date" id="setBaseDate">
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <input type="date" id="setBaseDate" style="margin-bottom: 0;" onchange="updateBasePreview()">
+                <button type="button" class="btn" onclick="setToday('setBaseDate')" style="width: auto; white-space: nowrap; background: #E5E7EB; color: #4B5563; padding: 8px 12px; font-size: 0.9rem;">📅 今天日期</button>
+            </div>
 
-            <label style="font-weight:bold; display:block; margin-top:10px;">基準日當天各班狀態：</label>
-            <div class="setting-grid">
-                <div><label>A班 基準班別</label><select id="setTeamA_Shift"><option value="0">早班1</option><option value="1">早班2</option><option value="2">中班1</option><option value="3">中班2</option><option value="4">小休</option><option value="5">晚班1</option><option value="6">晚班2</option><option value="7">大休</option></select></div>
-                <div><label>B班 基準班別</label><select id="setTeamB_Shift"><option value="0">早班1</option><option value="1">早班2</option><option value="2">中班1</option><option value="3">中班2</option><option value="4">小休</option><option value="5">晚班1</option><option value="6">晚班2</option><option value="7">大休</option></select></div>
-                <div><label>C班 基準班別</label><select id="setTeamC_Shift"><option value="0">早班1</option><option value="1">早班2</option><option value="2">中班1</option><option value="3">中班2</option><option value="4">小休</option><option value="5">晚班1</option><option value="6">晚班2</option><option value="7">大休</option></select></div>
-                <div><label>D班 基準班別</label><select id="setTeamD_Shift"><option value="0">早班1</option><option value="1">早班2</option><option value="2">中班1</option><option value="3">中班2</option><option value="4">小休</option><option value="5">晚班1</option><option value="6">晚班2</option><option value="7">大休</option></select></div>
+            <label style="font-weight:bold; display:block; margin-top:10px;">指定基準班別與當天班表：</label>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">系統將根據您設定的班別，自動精準推算其他三班狀態。</div>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <select id="setRefTeam" style="margin-bottom: 0; flex: 1;" onchange="updateBasePreview()">
+                    <option value="A">A班</option>
+                    <option value="B">B班</option>
+                    <option value="C" selected>C班</option>
+                    <option value="D">D班</option>
+                </select>
+                <select id="setRefShift" style="margin-bottom: 0; flex: 2;" onchange="updateBasePreview()">
+                    <option value="0">早班1</option>
+                    <option value="1">早班2</option>
+                    <option value="2">中班1</option>
+                    <option value="3">中班2</option>
+                    <option value="4">小休</option>
+                    <option value="5">晚班1</option>
+                    <option value="6">晚班2</option>
+                    <option value="7">大休</option>
+                </select>
+            </div>
+            
+            <div id="basePreview" style="background: #EFF6FF; border: 1px dashed #93C5FD; padding: 10px; border-radius: 8px; font-size: 0.9rem; color: #1E3A8A; margin-bottom: 15px;">
+                系統推算：請先選擇設定。
             </div>
 
             <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
@@ -313,14 +336,16 @@
             </div>
 
             <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
-            <label style="font-weight:bold; display:block; margin-bottom: 5px; color: #DC2626;">✏️ 手動改班 / 請假設定：</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label style="font-weight:bold; color: #DC2626; margin-bottom: 0;">✏️ 手動改班 / 請假設定：</label>
+                <button class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; margin:0;" onclick="setToday('addManualDate')">📅 今天日期</button>
+            </div>
             <div style="font-size: 0.8rem; color: #6B7280; margin-bottom: 10px;">優先覆蓋原班表，可用於設定公假、病假、事假、特休或調班。</div>
             
             <div id="manualShiftList" style="margin-bottom: 15px; max-height: 150px; overflow-y: auto; background: #F9FAFB; border: 1px solid var(--border-color); border-radius: 8px; padding: 5px;"></div>
             
-            <div style="display: flex; gap: 8px; align-items: flex-end; margin-bottom: 15px; background: #FEF2F2; padding: 10px; border-radius: 8px; border: 1px solid #FECACA;">
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 15px; background: #FEF2F2; padding: 10px; border-radius: 8px; border: 1px solid #FECACA;">
                 <div style="flex: 1.5;">
-                    <label style="font-size:0.85rem; font-weight:bold; color:#B91C1C; margin-bottom:4px; display:block;">➕ 新增改班</label>
                     <input type="date" id="addManualDate" style="margin-bottom: 0; padding: 8px;">
                 </div>
                 <div style="flex: 1;">
@@ -354,12 +379,15 @@
 
             <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
 
-            <label style="font-weight:bold; display:block; margin-bottom: 5px;">🎈 國定假日管理：</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label style="font-weight:bold; margin-bottom: 0;">🎈 國定假日管理：</label>
+                <button class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; margin:0;" onclick="setToday('addHolidayDate')">📅 今天日期</button>
+            </div>
+            
             <div id="holidayList" style="margin-bottom: 10px; max-height: 150px; overflow-y: auto; background: #F9FAFB; border: 1px solid var(--border-color); border-radius: 8px; padding: 5px;"></div>
             
-            <div style="display: flex; gap: 8px; align-items: flex-end; margin-bottom: 15px; background: #FFFBF0; padding: 10px; border-radius: 8px; border: 1px solid #FDE68A;">
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 15px; background: #FFFBF0; padding: 10px; border-radius: 8px; border: 1px solid #FDE68A;">
                 <div style="flex: 2;">
-                    <label id="holidayAddLabel" style="font-size:0.85rem; font-weight:bold; color:#B45309; margin-bottom:4px; display:block;">➕ 新增假日</label>
                     <input type="date" id="addHolidayDate" style="margin-bottom: 0; padding: 8px;">
                 </div>
                 <div style="flex: 2;">
@@ -373,7 +401,10 @@
 
             <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
 
-            <label style="font-weight:bold; display:block; margin-bottom: 5px; color: #2563EB;">📝 工作提醒管理：</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label style="font-weight:bold; color: #2563EB; margin-bottom: 0;">📝 工作提醒管理：</label>
+                <button id="btnTaskToday" class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; margin:0; display:none;" onclick="setToday('addTaskDate')">📅 今天日期</button>
+            </div>
             <div style="font-size: 0.8rem; color: #6B7280; margin-bottom: 10px;">系統預設與您自訂的工作皆在此管理 (可編輯或刪除)。</div>
             
             <div id="customTaskList" style="margin-bottom: 15px; max-height: 250px; overflow-y: auto; background: #F9FAFB; border: 1px solid var(--border-color); border-radius: 8px; padding: 5px;"></div>
@@ -472,6 +503,18 @@
     // 紀錄正在編輯中的項目 ID
     let editingHolidayDate = null;
     let editingTaskId = null;
+
+    // ★ 全域共用：帶入今天日期功能
+    function setToday(inputId) {
+        triggerVibrate();
+        const todayStr = formatDateToYYYYMMDD(new Date());
+        const inputEl = document.getElementById(inputId);
+        if (inputEl) {
+            inputEl.value = todayStr;
+            // 手動觸發 change 事件，確保相依的推算或畫面更新能同步運作
+            inputEl.dispatchEvent(new Event('change'));
+        }
+    }
 
     // 手機震動回饋功能
     function triggerVibrate() {
@@ -595,7 +638,6 @@
         let logicalShiftText = SHIFT_CYCLE[shiftIndex];
 
         // 2. 判斷是否為 $晚班1 (休息日出勤)
-        // 條件：如果當天排到"晚班1"，且該週(一至日)只有一天小休或大休
         if (logicalShiftText === "晚班1") {
             let dayOfWeek = targetDate.getDay(); // 0(日) ~ 6(六)
             let diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
@@ -626,13 +668,12 @@
 
     // ★ 核心邏輯：實際出勤轉換 (若為實際出勤，去除 $ 標記) ★
     function getActualShift(logicalShift) {
-        if (!isActualMode) return logicalShift; // 標準班表保留所有標記 (包括 $)
+        if (!isActualMode) return logicalShift; 
         
         let core = logicalShift;
-        // 如果是實際出勤，不顯示也不提醒休息日出勤，去除 $
         if (core.startsWith("$")) { core = core.substring(1); } 
         
-        // 處理手動調班的轉換 (移除 '調:' 進行比對)
+        // 處理手動調班的轉換
         let isOverride = core.startsWith("調:");
         let compareCore = isOverride ? core.replace("調:", "") : core;
 
@@ -687,7 +728,6 @@
         teamIds.forEach(id => {
             const team = appSettings.teams[id];
             
-            // 使用新版邏輯取得班別
             let logicalShiftText = getLogicalShift(id, dateKey);
             let shiftText = getActualShift(logicalShiftText);
 
@@ -695,7 +735,6 @@
                 myShiftText = shiftText;
                 document.getElementById("myTeamName").innerText = `${id}班 (${team.name})`;
                 const badge = document.getElementById("myShiftBadge");
-                // 畫面上隱藏 "調:" 以保持美觀
                 badge.innerText = shiftText.replace("調:", ""); 
                 badge.className = `shift-badge ${getBadgeClass(shiftText)}`;
             }
@@ -710,7 +749,7 @@
         
         document.getElementById("allTeamsContainer").innerHTML = allTeamsHTML;
 
-        // ★ 獨立區塊計算：休息日出勤提醒 (僅在標準班表顯示，週期 16日~次月15日) ★
+        // ★ 獨立區塊計算：休息日出勤提醒 (僅在標準班表顯示，週期 16日~次月15日)
         let cycleStart, cycleEnd;
         let cYear = targetDate.getFullYear();
         let cMonth = targetDate.getMonth();
@@ -725,7 +764,7 @@
         let restDayOvertimes = [];
         let isTodayRestDayOvertime = false;
         
-        if (!isActualMode) { // 僅在標準班表計算
+        if (!isActualMode) {
             let iterDate = new Date(cycleStart);
             while (iterDate <= cycleEnd) {
                 let iterDateStr = formatDateToYYYYMMDD(iterDate);
@@ -762,7 +801,6 @@
         let todayTasks = [];
         let monthTasks = [];
         
-        // 解析並清理我的當前班別 (移除 $, 調: 以方便判斷早中晚)
         const cleanMyShift = myShiftText.replace("$", "").replace("調:", "");
 
         const isMorn1 = (cleanMyShift === "早班1");
@@ -856,16 +894,14 @@
                 let logicalShift = getLogicalShift(id, iterDateStr);
                 let actualShift = getActualShift(logicalShift);
                 
-                // 顯示精簡文字 (把"班"拿掉，"調:"轉成"✏️")
                 let shortText = actualShift.replace("班", "").replace("調:", "✏️");
                 let badgeClass = getBadgeClass(actualShift);
                 
-                // 用 CSS 變數拿顏色
                 let fontColor = "var(--rest-text)";
                 if (badgeClass === "shift-morn") fontColor = "var(--morn-text)";
                 if (badgeClass === "shift-mid") fontColor = "var(--mid-text)";
                 if (badgeClass === "shift-night") fontColor = "var(--night-text)";
-                if (badgeClass === "shift-override") fontColor = "#991B1B"; // Override 顏色
+                if (badgeClass === "shift-override") fontColor = "#991B1B";
 
                 tableHTML += `<td style="color:${fontColor}; font-weight:bold;">${shortText}</td>`;
             });
@@ -879,14 +915,61 @@
     }
 
     // --- ★ 設定區塊與管理邏輯 ★ ---
+    // 自動推算核心引擎 (利用數學模運算確保班別永遠完美相差兩天)
+    function calculateOffsets(refTeam, refShiftIndex) {
+        const offsets = {};
+        // 定義四班在時間軸上的固定進度差距 (C=0, D=2, A=4, B=6)
+        const teamPos = { 'C': 0, 'D': 2, 'A': 4, 'B': 6 };
+        const basePos = teamPos[refTeam];
+        
+        for (const team of ['A', 'B', 'C', 'D']) {
+            const dist = (teamPos[team] - basePos + 8) % 8;
+            offsets[team] = (refShiftIndex + dist) % 8;
+        }
+        return offsets;
+    }
+
+    function updateBasePreview() {
+        const dateVal = document.getElementById("setBaseDate").value;
+        const refTeam = document.getElementById("setRefTeam").value;
+        const refShift = parseInt(document.getElementById("setRefShift").value);
+        
+        if (!dateVal) {
+            document.getElementById("basePreview").innerHTML = "請先選擇基準日。";
+            return;
+        }
+        
+        const offsets = calculateOffsets(refTeam, refShift);
+        const shiftNames = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
+        
+        let previewText = `<strong style="display:block; margin-bottom:4px;">✨ 系統推算：${dateVal} 當天</strong>`;
+        previewText += `<span style="color:#DC2626; font-weight:bold;">${refTeam}班</span> 為「${shiftNames[refShift]}」 ➜<br>`;
+        
+        const otherTeams = ["A", "B", "C", "D"].filter(t => t !== refTeam);
+        const teamTexts = otherTeams.map(t => `${t}班「${shiftNames[offsets[t]]}」`);
+        previewText += `<span style="color:#4B5563;">${teamTexts.join(" / ")}</span>`;
+        
+        document.getElementById("basePreview").innerHTML = previewText;
+    }
+
     function loadSettingsToForm() {
         document.getElementById("setBaseDate").value = appSettings.baseDate;
         document.getElementById("setMyTeam").value = appSettings.myTeam;
-        document.getElementById("setDefaultMode").value = appSettings.defaultMode ? "true" : "false"; // 載入預設顯示模式
-        ["A", "B", "C", "D"].forEach(t => { document.getElementById(`setTeam${t}_Shift`).value = appSettings.teams[t].offset; document.getElementById(`setTeam${t}`).value = appSettings.teams[t].name; });
+        document.getElementById("setDefaultMode").value = appSettings.defaultMode ? "true" : "false"; 
+        
+        // 預設將推算的基準設為您專屬的班別與其當前狀態
+        document.getElementById("setRefTeam").value = appSettings.myTeam;
+        document.getElementById("setRefShift").value = appSettings.teams[appSettings.myTeam].offset;
+        
+        ["A", "B", "C", "D"].forEach(t => { 
+            document.getElementById(`setTeam${t}`).value = appSettings.teams[t].name; 
+        });
+        
         tempHolidays = appSettings.holidays ? JSON.parse(JSON.stringify(appSettings.holidays)) : {};
         tempTasks = appSettings.tasks ? JSON.parse(JSON.stringify(appSettings.tasks)) : [];
         tempManualShifts = appSettings.manualShifts ? JSON.parse(JSON.stringify(appSettings.manualShifts)) : {}; 
+        
+        updateBasePreview(); // 顯示預覽畫面
         cancelEditHoliday(); cancelEditCustomTask();
         renderHolidayList(); renderTaskList(); renderManualShiftList();
     }
@@ -964,7 +1047,12 @@
     function toggleTaskInputs() {
         const rule = document.getElementById("addTaskRule").value;
         ['inputWrap_date', 'inputWrap_week', 'inputWrap_monthDay', 'inputWrap_monthRange'].forEach(id => document.getElementById(id).style.display = 'none');
-        if (rule === 'specific_date') document.getElementById("inputWrap_date").style.display = 'block';
+        document.getElementById('btnTaskToday').style.display = 'none'; // 先隱藏按鈕
+
+        if (rule === 'specific_date') {
+            document.getElementById("inputWrap_date").style.display = 'block';
+            document.getElementById('btnTaskToday').style.display = 'inline-block'; // 僅在單次日期顯示今日按鈕
+        }
         else if (rule === 'weekly') document.getElementById("inputWrap_week").style.display = 'block';
         else if (rule === 'monthly_day') document.getElementById("inputWrap_monthDay").style.display = 'block';
         else if (rule === 'yearly_range') document.getElementById("inputWrap_monthRange").style.display = 'flex';
@@ -1019,15 +1107,31 @@
 
     function saveSettings() {
         triggerVibrate();
+        // 1. 取得最新基準日與模式
         appSettings.baseDate = document.getElementById("setBaseDate").value;
         appSettings.myTeam = document.getElementById("setMyTeam").value;
-        appSettings.defaultMode = document.getElementById("setDefaultMode").value === "true"; // 儲存預設顯示模式
-        ["A", "B", "C", "D"].forEach(t => { appSettings.teams[t].offset = parseInt(document.getElementById(`setTeam${t}_Shift`).value); appSettings.teams[t].name = document.getElementById(`setTeam${t}`).value; });
+        appSettings.defaultMode = document.getElementById("setDefaultMode").value === "true"; 
+        
+        if(!appSettings.baseDate) return alert("請先設定基準日！");
+
+        // 2. 自動推算所有班別的 Offset
+        const refTeam = document.getElementById("setRefTeam").value;
+        const refShift = parseInt(document.getElementById("setRefShift").value);
+        const newOffsets = calculateOffsets(refTeam, refShift);
+        
+        // 3. 寫入各班資料
+        ["A", "B", "C", "D"].forEach(t => { 
+            appSettings.teams[t].offset = newOffsets[t]; 
+            appSettings.teams[t].name = document.getElementById(`setTeam${t}`).value; 
+        });
+
+        // 4. 儲存其他資料
         appSettings.holidays = JSON.parse(JSON.stringify(tempHolidays)); 
         appSettings.tasks = JSON.parse(JSON.stringify(tempTasks));
         appSettings.manualShifts = JSON.parse(JSON.stringify(tempManualShifts)); 
+        
         localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
-        alert("設定已儲存！系統將重新計算。");
+        alert("設定已完美儲存！系統將為您重新計算所有班表。");
         renderApp(); switchTab(1); 
     }
 
@@ -1035,7 +1139,7 @@
         triggerVibrate(); if (confirm("🚨 警告：這將會清除您手動修改的所有自訂設定(基準日、請假、假日、工作提醒管理、顯示模式)！\n\n確定要繼續嗎？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); loadSettingsToForm(); renderApp(); alert("已成功恢復預設值！"); switchTab(1); }
     }
 
-    // --- ★ 新增：PWA 安裝邏輯 (完整保留) ★ ---
+    // --- ★ PWA 安裝邏輯 ---
     let deferredPrompt;
     const installBtn = document.getElementById('btnInstall');
     const installBtnContainer = document.getElementById('installButtonContainer');
