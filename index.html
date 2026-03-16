@@ -771,20 +771,24 @@
         
         document.getElementById("allTeamsContainer").innerHTML = allTeamsHTML;
 
-        // --- 1. 處理「休息日出勤遇國定假日」換班提醒 (前一個月及當月) ---
+        // --- 1. 處理「休息日出勤遇國定假日」換班提醒 ---
+        // 邏輯：掃描當月與次月，但只顯示「大於或等於」當前查詢日期的撞期
         let conflictReminders = [];
         let scanStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
-        let scanEnd = new Date(targetDate.getFullYear(), targetDate.getMonth() + 2, 0); // 掃描到下個月月底
+        let scanEnd = new Date(targetDate.getFullYear(), targetDate.getMonth() + 2, 0); 
 
         let iterConflict = new Date(scanStart);
         while (iterConflict <= scanEnd) {
             let iterStr = formatDateToYYYYMMDD(iterConflict);
             let lShift = getLogicalShift(myTeamId, iterStr);
-            if (lShift && lShift.startsWith("$")) { // 是休息日出勤
-                if (appSettings.holidays && appSettings.holidays[iterStr]) { // 且是國定假日
-                    let holidayName = appSettings.holidays[iterStr];
-                    let mdStr = `${iterConflict.getMonth() + 1}/${iterConflict.getDate()}`;
-                    conflictReminders.push(`${mdStr} (${holidayName})`);
+            if (lShift && lShift.startsWith("$")) { 
+                if (appSettings.holidays && appSettings.holidays[iterStr]) { 
+                    // ★ 新增過濾機制：只提醒「未來或今天」的撞期
+                    if (iterConflict >= targetDate) {
+                        let holidayName = appSettings.holidays[iterStr];
+                        let mdStr = `${iterConflict.getMonth() + 1}/${iterConflict.getDate()}`;
+                        conflictReminders.push(`${mdStr} (${holidayName})`);
+                    }
                 }
             }
             iterConflict.setDate(iterConflict.getDate() + 1);
@@ -837,6 +841,8 @@
         if (restDayOvertimes.length > 0) {
             let reminderHtml = `<div style="margin-bottom: 5px;"><strong>⚠️ 休息日出勤提醒</strong><br><span style="font-size: 0.85rem; color: #DC2626;">(結算週期: ${cycleStart.getMonth()+1}/16 ~ ${cycleEnd.getMonth()+1}/15)</span></div>`;
             reminderHtml += `本週期休息日出勤：${restDayOvertimes.join(", ")}`;
+            // ★ 新增：提示文字
+            reminderHtml += `<div style="margin-top: 8px; font-size: 0.9rem; font-weight: bold; color: #991B1B;">💡 休息日出勤若請假，請記得調整休息日出勤。</div>`;
             if (isTodayRestDayOvertime) {
                 reminderHtml = `<div style="font-size:1.05rem; font-weight:bold; margin-bottom:8px; border-bottom:1px solid #FCA5A5; padding-bottom:5px;">🚨 今日為休息日出勤！</div>` + reminderHtml;
             }
