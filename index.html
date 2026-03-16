@@ -248,9 +248,11 @@
                 <span id="myShiftBadge" class="shift-badge">載入中...</span>
             </div>
             
+            <!-- 國定假日撞期換班提醒區塊 -->
             <div id="holidayConflictContainer" class="conflict-warning" style="display: none; margin-top: 15px; padding: 12px; background: #FEF2F2; border-radius: 8px; border: 2px solid #EF4444; color: #991B1B; font-size: 0.95rem;">
             </div>
 
+            <!-- 一般休息日出勤提醒區塊 -->
             <div id="restDayReminderContainer" style="display: none; margin-top: 15px; padding: 10px; background: #FEF2F2; border-radius: 8px; border: 1px dashed #FCA5A5; color: #B91C1C; font-size: 0.95rem;">
             </div>
         </div>
@@ -769,17 +771,17 @@
         
         document.getElementById("allTeamsContainer").innerHTML = allTeamsHTML;
 
-        // 掃描當前查看月份與下個月，檢查休息日出勤是否撞期國定假日
+        // --- 1. 處理「休息日出勤遇國定假日」換班提醒 (前一個月及當月) ---
         let conflictReminders = [];
         let scanStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
-        let scanEnd = new Date(targetDate.getFullYear(), targetDate.getMonth() + 2, 0); // 到下個月月底
+        let scanEnd = new Date(targetDate.getFullYear(), targetDate.getMonth() + 2, 0); // 掃描到下個月月底
 
         let iterConflict = new Date(scanStart);
         while (iterConflict <= scanEnd) {
             let iterStr = formatDateToYYYYMMDD(iterConflict);
             let lShift = getLogicalShift(myTeamId, iterStr);
-            if (lShift && lShift.startsWith("$")) { // 若是休息日出勤
-                if (appSettings.holidays && appSettings.holidays[iterStr]) { // 且存在於國定假日中
+            if (lShift && lShift.startsWith("$")) { // 是休息日出勤
+                if (appSettings.holidays && appSettings.holidays[iterStr]) { // 且是國定假日
                     let holidayName = appSettings.holidays[iterStr];
                     let mdStr = `${iterConflict.getMonth() + 1}/${iterConflict.getDate()}`;
                     conflictReminders.push(`${mdStr} (${holidayName})`);
@@ -802,11 +804,17 @@
             conflictEl.style.display = "none";
         }
 
-        // 修改：休息日出勤改以「每月 1 日到當月底」計算
+        // --- 2. 處理「一般休息日出勤」提醒 (依週期: 16日到次月15日) ---
+        let cycleStart, cycleEnd;
         let cYear = targetDate.getFullYear();
         let cMonth = targetDate.getMonth();
-        let cycleStart = new Date(cYear, cMonth, 1);
-        let cycleEnd = new Date(cYear, cMonth + 1, 0); // 取當月最後一天
+        if (targetDate.getDate() >= 16) {
+            cycleStart = new Date(cYear, cMonth, 16);
+            cycleEnd = new Date(cYear, cMonth + 1, 15);
+        } else {
+            cycleStart = new Date(cYear, cMonth - 1, 16);
+            cycleEnd = new Date(cYear, cMonth, 15);
+        }
 
         let restDayOvertimes = [];
         let isTodayRestDayOvertime = false;
@@ -827,9 +835,8 @@
 
         const reminderEl = document.getElementById("restDayReminderContainer");
         if (restDayOvertimes.length > 0) {
-            // 修改：文字也改為「結算月份」
-            let reminderHtml = `<div style="margin-bottom: 5px;"><strong>⚠️ 休息日出勤提醒</strong><br><span style="font-size: 0.85rem; color: #DC2626;">(結算月份: ${cycleStart.getMonth()+1}月)</span></div>`;
-            reminderHtml += `本月休息日出勤：${restDayOvertimes.join(", ")}`;
+            let reminderHtml = `<div style="margin-bottom: 5px;"><strong>⚠️ 休息日出勤提醒</strong><br><span style="font-size: 0.85rem; color: #DC2626;">(結算週期: ${cycleStart.getMonth()+1}/16 ~ ${cycleEnd.getMonth()+1}/15)</span></div>`;
+            reminderHtml += `本週期休息日出勤：${restDayOvertimes.join(", ")}`;
             if (isTodayRestDayOvertime) {
                 reminderHtml = `<div style="font-size:1.05rem; font-weight:bold; margin-bottom:8px; border-bottom:1px solid #FCA5A5; padding-bottom:5px;">🚨 今日為休息日出勤！</div>` + reminderHtml;
             }
@@ -1220,3 +1227,5 @@
 
 </body>
 </html>
+
+
