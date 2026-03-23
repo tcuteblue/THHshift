@@ -1224,14 +1224,24 @@
       installBtnContainer.style.display = 'none';
     });
 
+    // --- ★ PWA 輕量化虛擬 Service Worker 自動更新機制 ---
     if ('serviceWorker' in navigator) { 
         window.addEventListener('load', () => { 
-            navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW註冊失敗', err)); 
+            navigator.serviceWorker.register('./sw.js').then(reg => {
+                reg.update(); // 每次開啟強制向伺服器檢查更新
+            }).catch(err => console.log('SW註冊失敗', err)); 
         }); 
+        
+        // 監聽 Service Worker 控制權轉移 (新版本接管時觸發)
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                window.location.reload(); // 自動重整頁面以載入最新畫面
+            }
+        });
     }
 </script>
 
 </body>
 </html>
-
-
