@@ -537,8 +537,8 @@
         { id: "t8", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫一般重質輕質液泵浦軸封設備元件每週目視檢查表" },
         { id: "t9", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫漏油偵測警報系統檢查表" },
         { id: "t10", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫緊急洗眼沖淋設備檢查表" },
-        { id: "t11", shift: "早班", rule: "last_monday", ruleValue: "", text: "年底週一早班：登錄平板的緊急洗眼沖淋設備檢查表" },
-        { id: "t12", shift: "早班", rule: "last_monday", ruleValue: "", text: "年底週一早班：登錄平板的漏油偵測警報系統檢查表" },
+        { id: "t11", shift: "早班", rule: "last_monday", ruleValue: "", text: "月底週一早班：登錄平板的緊急洗眼沖淋設備檢查表" },
+        { id: "t12", shift: "早班", rule: "last_monday", ruleValue: "", text: "月底週一早班：登錄平板的漏油偵測警報系統檢查表" },
         { id: "t13", shift: "晚班", rule: "every_shift", ruleValue: "", text: "晚班：填寫結帳量油記錄表" },
         { id: "t14", shift: "晚班", rule: "every_shift", ruleValue: "", text: "晚班：填寫油槽放水記錄表" },
         { id: "t15", shift: "中班", rule: "monthly_last", ruleValue: "", text: "每月底中班：填寫機車行駛記錄表" }
@@ -1219,7 +1219,7 @@
       installBtnContainer.style.display = 'none';
     });
 
-    // --- ★ 這裡換成了「自動檢查更新機制」 ---
+    // --- ★ 自動檢查更新機制 ---
     if ('serviceWorker' in navigator) { 
         window.addEventListener('load', () => { 
             navigator.serviceWorker.register('./sw.js').then(reg => {
