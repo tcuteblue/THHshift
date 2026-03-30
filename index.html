@@ -852,7 +852,6 @@
     }
 
     function renderTasks(date, myTeamId, myShiftText) {
-        // ★ 在這裡加入兩組陣列：常規任務與週期任務
         let regularTasks = [];
         let periodicTasks = [];
         let monthTasks = [];
@@ -907,7 +906,6 @@
                 case 'even_months': if (currentMonthNum % 2 === 0) ruleMatch = true; break;
             }
             
-            // ★ 將符合當班的任務，依據「是否為常態任務」分別存入對應陣列
             if (ruleMatch) {
                 if (task.rule === 'every_shift') {
                     regularTasks.push(task.text);
@@ -917,7 +915,6 @@
             }
         });
 
-        // ★ 合併陣列，將週期性任務排在前面
         let todayTasks = periodicTasks.concat(regularTasks);
 
         const monthsElapsed = (currentYear - 2026) * 12 + currentMonthIdx;
@@ -1255,3 +1252,5 @@
 
 </body>
 </html>
+
+
