@@ -504,6 +504,7 @@
     // --- 核心班表常數與資料邏輯 ---
     const SHIFT_CYCLE = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
     let isActualMode = false; 
+    let currentViewTeam = null; // ★ 新增：記錄首頁臨時檢視的班別
     
     // 設定區塊用的暫存變數
     let tempHolidays = {}; 
@@ -589,8 +590,19 @@
     }
     if (!appSettings.myTeam) appSettings.myTeam = "C";
 
+    // ★ 新增切換檢視函數
+    function changeViewTeam() {
+        triggerVibrate();
+        currentViewTeam = document.getElementById("viewTeamSelect").value;
+        renderAppSafe();
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         isActualMode = appSettings.defaultMode;
+        currentViewTeam = appSettings.myTeam; // ★ 初始化為使用者的專屬班別
+        const viewSelect = document.getElementById("viewTeamSelect");
+        if(viewSelect) viewSelect.value = currentViewTeam; // ★ 同步下拉選單
+
         document.getElementById('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
         document.getElementById('btnActual').className = isActualMode ? 'btn-mode active' : 'btn-mode';
 
@@ -740,7 +752,7 @@
         
         document.getElementById("dayOfWeekDisplay").innerHTML = dayText;
 
-        let myTeamId = appSettings.myTeam;
+        let myTeamId = currentViewTeam || appSettings.myTeam; // ★ 讓首頁隨下拉選單臨時變更
         let myShiftText = "";
         let allTeamsHTML = "";
 
@@ -1194,13 +1206,33 @@
         appSettings.tasks = JSON.parse(JSON.stringify(tempTasks));
         appSettings.manualShifts = JSON.parse(JSON.stringify(tempManualShifts)); 
         
+        // ★ 當儲存設定時，把臨時檢視同步回新的專屬班別
+        currentViewTeam = appSettings.myTeam;
+        const viewSelect = document.getElementById("viewTeamSelect");
+        if(viewSelect) viewSelect.value = currentViewTeam;
+
         localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
         alert("設定已完美儲存！系統將為您重新計算所有班表。");
         renderAppSafe(); switchTab(1); 
     }
 
     function restoreDefaults() {
-        triggerVibrate(); if (confirm("🚨 警告：這將會清除您手動修改的所有自訂設定(基準日、請假、假日、工作提醒管理、顯示模式)！\n\n確定要繼續嗎？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); loadSettingsToForm(); renderAppSafe(); alert("已成功恢復預設值！"); switchTab(1); }
+        triggerVibrate(); 
+        if (confirm("🚨 警告：這將會清除您手動修改的所有自訂設定(基準日、請假、假日、工作提醒管理、顯示模式)！\n\n確定要繼續嗎？")) { 
+            localStorage.removeItem("shiftSettings"); 
+            appSettings = JSON.parse(JSON.stringify(defaultSettings)); 
+            appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); 
+            
+            // ★ 恢復預設時，同步重設檢視班別
+            currentViewTeam = appSettings.myTeam;
+            const viewSelect = document.getElementById("viewTeamSelect");
+            if(viewSelect) viewSelect.value = currentViewTeam;
+
+            loadSettingsToForm(); 
+            renderAppSafe(); 
+            alert("已成功恢復預設值！"); 
+            switchTab(1); 
+        }
     }
 
     // --- ★ PWA 安裝與更新邏輯 ---
