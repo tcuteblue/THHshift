@@ -86,7 +86,11 @@
         .cal-day-num { font-size: 1.05rem; font-weight: bold; margin-bottom: 4px; display: flex; justify-content: space-between; color: var(--text-main); }
         .cal-shift-single { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; border-radius: 6px; margin-top: 2px; }
         .cal-shift-all { display: flex; flex-direction: column; gap: 2px; margin-top: 1px; }
-        .cal-shift-all span { font-size: 0.75rem; font-weight: bold; padding: 1px 0; border-radius: 4px; line-height: 1.15; white-space: nowrap; letter-spacing: -0.5px; text-align: center; overflow: hidden; }
+        
+        /* ★ 更新：讓「全部」的四班顯示支援雙欄垂直切齊 */
+        .cal-shift-all > span { display: flex; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; padding: 1px 0; border-radius: 4px; line-height: 1.15; white-space: nowrap; letter-spacing: -0.5px; overflow: hidden; }
+        .shift-prefix { flex: 0 0 14px; text-align: right; }
+        .shift-name { flex: 0 0 24px; text-align: left; padding-left: 2px; }
         
         .toast { visibility: hidden; min-width: 220px; margin-left: -110px; background-color: rgba(31,41,55,0.95); color: #fff; text-align: center; border-radius: 12px; padding: 12px 15px; position: fixed; z-index: 2000; left: 50%; bottom: 85px; font-size: 1.1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(20px); pointer-events: none; line-height: 1.4;}
         .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
@@ -118,7 +122,10 @@
             .tab-content { padding: 10px 10px 75px; }
             .card { padding: 12px; margin-bottom: 8px; border-radius: 10px; }
             .task-list li { font-size: 1rem; }
-            .cal-shift-all span { font-size: 0.65rem; letter-spacing: -0.8px; border-left-width: 2px !important; }
+            /* ★ 更新：適應手機窄螢幕的垂直切齊 */
+            .cal-shift-all > span { font-size: 0.65rem; letter-spacing: -0.8px; border-left-width: 2px !important; }
+            .shift-prefix { flex: 0 0 11px; }
+            .shift-name { flex: 0 0 21px; }
         }
     </style>
 </head>
@@ -675,7 +682,10 @@
             if (viewMode === "ALL") {
                 cellHtml += `<div class="cal-shift-all">` + TEAMS.map(id => {
                     let sTxt = getActualShift(getLogicalShift(id, iterStr)), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
-                    return `<span style="background:${s.bg}; color:${s.fg}; border-left:3px solid ${s.fg};">${id}:${sTxt.replace("班","").replace("調:","✏️")}</span>`;
+                    let shiftStr = sTxt.replace("班","").replace("調:","✏️");
+                    
+                    // ★ 核心變更：加入了專屬的 prefix 和 name 區域類別，確保不論中文字數多少，前面的 D: 永遠對齊
+                    return `<span style="background:${s.bg}; color:${s.fg}; border-left:3px solid ${s.fg};"><span class="shift-prefix">${id}:</span><span class="shift-name">${shiftStr}</span></span>`;
                 }).join("") + `</div>`;
             } else {
                 let sTxt = getActualShift(getLogicalShift(viewMode, iterStr)), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
