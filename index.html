@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-B6CYHLTWCH"></script>
@@ -14,14 +14,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="供油班表">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#F3F4F6">
+    <meta name="theme-color" content="#F3F4F6"> 
     <link rel="manifest" href="manifest.json">
-
 
     <title>班表查詢與工作提醒系統 蔡宏和製作20260308</title>
     <link rel="icon" type="image/jpeg" href="icon.jpg">
     <link rel="apple-touch-icon" href="icon.jpg">
-   
+    
     <style>
         * { -webkit-tap-highlight-color: transparent; outline: none; }
         :root {
@@ -33,120 +32,106 @@
             --rest-color: #F3F4F6; --rest-text: #4B5563;
         }
 
-
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; display: flex; flex-direction: column; min-height: 100vh; padding-top: env(safe-area-inset-top); }
-        .title-icon { width: 1.6rem; height: 1.6rem; vertical-align: text-bottom; margin-right: 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .title-icon { width: 1.8rem; height: 1.8rem; vertical-align: text-bottom; margin-right: 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .install-button-container { display: none; text-align: center; margin: 20px 0; animation: slideInUp 0.5s ease-out forwards; }
-        .btn-install { background: var(--primary); color: white; border: none; padding: 15px 25px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; width: 100%; max-width: 400px; font-weight: bold; margin: 0 auto; display: flex; justify-content: center; gap: 10px; box-shadow: 0 4px 6px -1px rgba(79,70,229,0.2); }
+        .btn-install { background: var(--primary); color: white; border: none; padding: 15px 25px; border-radius: 8px; font-size: 1.2rem; cursor: pointer; width: 100%; max-width: 400px; font-weight: bold; margin: 0 auto; display: flex; justify-content: center; gap: 10px; box-shadow: 0 4px 6px -1px rgba(79,70,229,0.2); }
         .btn-install:active { transform: scale(0.97); }
-        .install-explanation { font-size: 0.8rem; color: var(--text-muted); margin-top: 8px; font-weight: bold; }
-
+        .install-explanation { font-size: 0.9rem; color: var(--text-muted); margin-top: 8px; font-weight: bold; }
 
         .header-section { padding: 15px 15px 0 15px; background: var(--bg-color); border-bottom: 1px solid var(--border-color); transition: padding 0.15s; }
         .container { width: 100%; max-width: 500px; margin: 0 auto; }
-        h1 { text-align: center; font-size: 1.6rem; margin: 0 0 10px 0; color: var(--primary); line-height: 1.3; }
+        h1 { text-align: center; font-size: 1.8rem; margin: 0 0 10px 0; color: var(--primary); line-height: 1.3; }
         .header-controls-container { transition: opacity 0.15s, height 0.15s; overflow: hidden; }
         .date-picker-container { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
 
-
-        input[type="date"], select, input[type="text"], input[type="number"] { padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; width: 100%; box-sizing: border-box; margin-bottom: 8px; background: #fff; }
+        input[type="date"], select, input[type="text"], input[type="number"] { padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.1rem; width: 100%; box-sizing: border-box; margin-bottom: 8px; background: #fff; }
         input[type="date"] { margin-bottom: 0; flex-grow: 1; text-align: center; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        #dayOfWeekDisplay { text-align: center; font-weight: bold; font-size: 1.1rem; color: var(--primary); margin-bottom: 12px; letter-spacing: 1px; }
-
+        #dayOfWeekDisplay { text-align: center; font-weight: bold; font-size: 1.25rem; color: var(--primary); margin-bottom: 12px; letter-spacing: 1px; }
 
         .toggle-group { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; max-width: 400px; margin: 0 auto; }
-        .btn-mode { flex: 1; padding: 10px 0; border: 1px solid var(--primary); border-radius: 8px; background: transparent; color: var(--primary); font-weight: bold; font-size: 1rem; cursor: pointer; transition: all 0.15s; }
+        .btn-mode { flex: 1; padding: 10px 0; border: 1px solid var(--primary); border-radius: 8px; background: transparent; color: var(--primary); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: all 0.15s; }
         .btn-mode.active { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(79,70,229,0.2); }
 
-
         .card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08); animation: slideInUp 0.3s ease-out forwards; }
-        .card-title { font-size: 1.1rem; font-weight: bold; margin: 0 0 12px 0; border-bottom: 2px solid var(--border-color); padding-bottom: 6px; display: flex; justify-content: center; align-items: center; color: var(--text-main); position: relative; }
-        .btn { background: var(--primary); color: white; border: none; padding: 12px 15px; border-radius: 8px; font-size: 1.05rem; cursor: pointer; width: 100%; font-weight: bold; text-align: center; }
+        .card-title { font-size: 1.25rem; font-weight: bold; margin: 0 0 12px 0; border-bottom: 2px solid var(--border-color); padding-bottom: 6px; display: flex; justify-content: center; align-items: center; color: var(--text-main); position: relative; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 15px; border-radius: 8px; font-size: 1.15rem; cursor: pointer; width: 100%; font-weight: bold; text-align: center; }
         .btn-icon { width: auto; flex-grow: 0; padding: 10px 15px; font-size: 1.2rem; background: var(--card-bg); color: var(--primary); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .btn-danger { background: transparent; color: #DC2626; border: 1px solid #DC2626; margin-top: 10px; }
         .btn:active, .btn-icon:active, .btn-mode:active, .tab-btn:active, .list-action-btn:active { transform: scale(0.97); }
-
 
         @keyframes slideInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes flashWarning { 0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); } 70% { box-shadow: 0 0 0 6px rgba(220,38,38,0); } }
         .conflict-warning { animation: flashWarning 2s infinite; }
 
-
-        .shift-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; }
+        .shift-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 1.05rem; }
         .shift-morn { background: var(--morn-color); color: var(--morn-text); }
         .shift-mid { background: var(--mid-color); color: var(--mid-text); }
         .shift-night { background: var(--night-color); color: var(--night-text); }
         .shift-rest { background: var(--rest-color); color: var(--rest-text); }
         .shift-override { background: #FEF2F2; color: #991B1B; border: 1px dashed #FCA5A5; }
 
-
         .team-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
         .team-row:last-child { border-bottom: none; }
-        .team-name { font-size: 1.05rem; }
-
+        .team-name { font-size: 1.15rem; }
 
         .task-list { list-style-type: none; padding: 0; margin: 0; }
-        .task-list li { background: #FEF2F2; color: #DC2626; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.95rem; border-left: 4px solid #EF4444; animation: slideInUp 0.3s forwards; }
+        .task-list li { background: #FEF2F2; color: #DC2626; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 1.05rem; border-left: 4px solid #EF4444; animation: slideInUp 0.3s forwards; line-height: 1.4; }
         .task-list li.no-task { background: #ECFCCB; color: #4D7C0F; border-left-color: #84CC16; }
 
-
-        /* 月曆與 Toast */
-        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: var(--border-color); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
-        .cal-header { background: #F3F4F6; text-align: center; font-weight: bold; font-size: 0.8rem; padding: 6px 0; color: var(--text-muted); }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: var(--border-color); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; touch-action: pan-y; }
+        .cal-header { background: #F3F4F6; text-align: center; font-weight: bold; font-size: 0.95rem; padding: 6px 0; color: var(--text-muted); }
         .cal-cell { background: #FFFFFF; min-height: 80px; padding: 4px; display: flex; flex-direction: column; position: relative; }
         .cal-cell.today { background: #FEF9C3; }
-        .cal-day-num { font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; display: flex; justify-content: space-between; color: var(--text-main); }
-        .cal-shift-single { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: bold; border-radius: 6px; margin-top: 2px; }
+        .cal-day-num { font-size: 1.05rem; font-weight: bold; margin-bottom: 4px; display: flex; justify-content: space-between; color: var(--text-main); }
+        .cal-shift-single { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; border-radius: 6px; margin-top: 2px; }
         .cal-shift-all { display: flex; flex-direction: column; gap: 2px; margin-top: 1px; }
-        .cal-shift-all span { font-size: 0.75rem; font-weight: bold; padding: 1px 4px; border-radius: 4px; line-height: 1.2; white-space: nowrap; }
-       
-        .toast { visibility: hidden; min-width: 200px; margin-left: -100px; background-color: rgba(31,41,55,0.95); color: #fff; text-align: center; border-radius: 12px; padding: 12px 15px; position: fixed; z-index: 2000; left: 50%; bottom: 85px; font-size: 1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(20px); pointer-events: none; }
+        .cal-shift-all span { font-size: 0.85rem; font-weight: bold; padding: 1px 2px; border-radius: 4px; line-height: 1.2; white-space: nowrap; letter-spacing: -0.5px; text-align: center; }
+        
+        .toast { visibility: hidden; min-width: 220px; margin-left: -110px; background-color: rgba(31,41,55,0.95); color: #fff; text-align: center; border-radius: 12px; padding: 12px 15px; position: fixed; z-index: 2000; left: 50%; bottom: 85px; font-size: 1.1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(20px); pointer-events: none; line-height: 1.4;}
         .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
 
-
         .setting-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .setting-grid label { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 4px; display: block; }
-        .list-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; align-items: center; font-size: 0.9rem; background: #fff; border-radius: 6px; margin-bottom: 6px; }
-        .task-badge { background: #E5E7EB; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; color: #374151; margin-right: 5px; font-weight: bold; }
-        .list-action-btn { font-size: 0.8rem; cursor: pointer; padding: 4px 8px; margin-left: 5px; border-radius: 4px; font-weight: bold; display: inline-block; }
+        .setting-grid label { font-size: 1rem; color: var(--text-muted); margin-bottom: 4px; display: block; }
+        .list-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; align-items: center; font-size: 1rem; background: #fff; border-radius: 6px; margin-bottom: 6px; }
+        .task-badge { background: #E5E7EB; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; color: #374151; margin-right: 5px; font-weight: bold; }
+        .list-action-btn { font-size: 0.9rem; cursor: pointer; padding: 4px 8px; margin-left: 5px; border-radius: 4px; font-weight: bold; display: inline-block; }
         .btn-edit { background: #DBEAFE; color: #1E40AF; }
         .btn-delete { background: #FEE2E2; color: #B91C1C; }
         .editing-item { border: 2px solid #60A5FA !important; background: #EFF6FF !important; }
-
 
         .tab-content { display: none; flex: 1; padding: 15px; padding-bottom: 80px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .tab-content.active { display: block; }
         .tab-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: #FFFFFF; border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
         .tab-btn { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; border: none; background: transparent; cursor: pointer; color: var(--text-muted); }
-        .tab-icon { font-size: 1.4rem; margin-bottom: 4px; }
-        .tab-text { font-size: 0.8rem; font-weight: bold; }
+        .tab-icon { font-size: 1.5rem; margin-bottom: 4px; }
+        .tab-text { font-size: 0.9rem; font-weight: bold; }
         .tab-btn.active { color: var(--primary); }
 
-
         @media screen and (max-width: 480px) {
-            html { font-size: 16px; }
+            html { font-size: 17px; } 
             .header-section { padding: 10px 10px 0; }
-            h1 { font-size: 1.35rem; margin-bottom: 8px; }
-            #dayOfWeekDisplay { font-size: 1rem; margin-bottom: 8px; }
+            h1 { font-size: 1.5rem; margin-bottom: 8px; }
+            #dayOfWeekDisplay { font-size: 1.15rem; margin-bottom: 8px; }
             .toggle-group { margin-bottom: 10px; gap: 5px; }
-            .btn-mode { padding: 6px 0; font-size: 0.9rem; }
+            .btn-mode { padding: 6px 0; font-size: 1.05rem; }
             .tab-content { padding: 10px 10px 75px; }
             .card { padding: 12px; margin-bottom: 8px; border-radius: 10px; }
+            .task-list li { font-size: 1rem; }
         }
     </style>
 </head>
 <body>
 
-
 <div class="header-section" id="mainHeaderSection">
     <div class="container">
-        <h1><img src="icon.jpg" alt="Logo" class="title-icon">班表與工作提醒系統<br><span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">蔡宏和製作20260308</span></h1>
+        <h1><img src="icon.jpg" alt="Logo" class="title-icon">班表與工作提醒系統<br><span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">蔡宏和製作20260308</span></h1>
         <div class="header-controls-container" id="headerControls">
             <div class="date-picker-container">
                 <button type="button" class="btn btn-icon" onclick="changeDate(-1)">◀</button>
                 <input type="date" id="queryDate">
                 <button type="button" class="btn btn-icon" onclick="changeDate(1)">▶</button>
-                <button type="button" class="btn btn-icon" style="font-size: 0.9rem; background: #E5E7EB; color: #374151; white-space: nowrap;" onclick="setToday('queryDate')">📅 今天日期</button>
+                <button type="button" class="btn btn-icon" style="font-size: 1rem; background: #E5E7EB; color: #374151; white-space: nowrap;" onclick="setToday('queryDate')">📅 今天</button>
             </div>
             <div id="dayOfWeekDisplay">載入中...</div>
             <div class="toggle-group">
@@ -157,111 +142,108 @@
     </div>
 </div>
 
-
 <div class="container" style="flex: 1; display: flex; flex-direction: column;">
     <div id="tab1" class="tab-content active">
         <div class="card">
             <div class="card-title">
                 <span>👨‍💻 今日班表</span>
-                <select id="viewTeamSelect" onchange="changeViewTeam()" style="position: absolute; right: 0; width: auto; padding: 2px 8px; font-size: 0.9rem; margin: 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; color: #1E3A8A; font-weight: bold;">
+                <select id="viewTeamSelect" onchange="changeViewTeam()" style="position: absolute; right: 0; width: auto; padding: 2px 8px; font-size: 1rem; margin: 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; color: #1E3A8A; font-weight: bold;">
                     <option value="A">A班</option><option value="B">B班</option><option value="C">C班</option><option value="D">D班</option>
                 </select>
             </div>
             <div class="team-row" style="border: none; padding-bottom: 0; justify-content: space-around;">
-                <span class="team-name" id="myTeamName" style="font-weight: bold; font-size: 1.2rem;">載入中...</span>
-                <span id="myShiftBadge" class="shift-badge">載入中...</span>
+                <span class="team-name" id="myTeamName" style="font-weight: bold; font-size: 1.3rem;">載入中...</span>
+                <span id="myShiftBadge" class="shift-badge" style="font-size: 1.1rem;">載入中...</span>
             </div>
-            <div id="holidayConflictContainer" class="conflict-warning" style="display: none; margin-top: 15px; padding: 12px; background: #FEF2F2; border-radius: 8px; border: 2px solid #EF4444; color: #991B1B; font-size: 0.95rem;"></div>
-            <div id="restDayReminderContainer" style="display: none; margin-top: 15px; padding: 10px; background: #FEF2F2; border-radius: 8px; border: 1px dashed #FCA5A5; color: #B91C1C; font-size: 0.95rem;"></div>
+            <div id="holidayConflictContainer" class="conflict-warning" style="display: none; margin-top: 15px; padding: 12px; background: #FEF2F2; border-radius: 8px; border: 2px solid #EF4444; color: #991B1B; font-size: 1.05rem;"></div>
+            <div id="restDayReminderContainer" style="display: none; margin-top: 15px; padding: 10px; background: #FEF2F2; border-radius: 8px; border: 1px dashed #FCA5A5; color: #B91C1C; font-size: 1.05rem;"></div>
         </div>
         <div class="card"><div class="card-title">🛠️ 工作提醒</div><ul class="task-list" id="taskList"></ul></div>
         <div id="installButtonContainer" class="install-button-container"><button id="btnInstall" class="btn-install">📥 安裝為手機 APP</button><div class="install-explanation">以便離線使用和更快載入</div></div>
     </div>
 
-
     <div id="tab2" class="tab-content">
         <div class="card"><div class="card-title">📊 四班今日班別</div><div id="allTeamsContainer"></div></div>
         <div class="card">
-            <div class="card-title">
-                <span>🗓️ 本月班表總覽</span>
-                <select id="monthViewSelect" onchange="changeMonthViewTeam()" style="position: absolute; right: 0; width: auto; padding: 2px 8px; font-size: 0.9rem; margin: 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; color: #1E3A8A; font-weight: bold;">
-                    <option value="A">A班</option><option value="B">B班</option><option value="C">C班</option><option value="D">D班</option><option value="ALL">全部顯示</option>
+            <div class="card-title" style="justify-content: flex-start; gap: 8px;">
+                <button type="button" class="btn-icon" style="padding: 2px 10px; font-size: 1rem; box-shadow: none; border: 1px solid var(--border-color); cursor: pointer;" onclick="changeCalendarMonth(-1)">◀</button>
+                <span id="calendarTitle" style="font-size: 1.15rem;">🗓️ 載入中...</span>
+                <button type="button" class="btn-icon" style="padding: 2px 10px; font-size: 1rem; box-shadow: none; border: 1px solid var(--border-color); cursor: pointer;" onclick="changeCalendarMonth(1)">▶</button>
+                <select id="monthViewSelect" onchange="changeMonthViewTeam()" style="position: absolute; right: 0; width: auto; padding: 2px 8px; font-size: 1rem; margin: 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; color: #1E3A8A; font-weight: bold;">
+                    <option value="A">A班</option><option value="B">B班</option><option value="C">C班</option><option value="D">D班</option><option value="ALL">全部</option>
                 </select>
             </div>
             <div id="monthCalendar" class="cal-grid"></div>
         </div>
     </div>
 
-
     <div id="tab3" class="tab-content">
         <div class="card">
             <div class="card-title">系統設定 (自動儲存)</div>
-            <label style="font-weight:bold;">我的專屬班別：</label>
+            <label style="font-weight:bold; font-size:1.05rem;">我的專屬班別：</label>
             <select id="setMyTeam" onchange="updateBasePreview()">
                 <option value="A">A班</option><option value="B">B班</option><option value="C" selected>C班</option><option value="D">D班</option>
             </select>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
-            <label style="font-weight:bold; color: var(--primary);">預設顯示模式：</label>
+            <label style="font-weight:bold; color: var(--primary); font-size:1.05rem;">預設顯示模式：</label>
             <select id="setDefaultMode"><option value="false">📅 標準班表</option><option value="true">🏃 實際出勤</option></select>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
-           
-            <label style="font-weight:bold;">基準日設定：</label>
+            
+            <label style="font-weight:bold; font-size:1.05rem;">基準日設定：</label>
             <div style="display: flex; gap: 8px; margin-bottom: 10px;">
                 <input type="date" id="setBaseDate" onchange="updateBasePreview()">
-                <button type="button" class="btn" onclick="setToday('setBaseDate')" style="width:auto; white-space:nowrap; background:#E5E7EB; color:#4B5563; padding:8px 12px; font-size:0.9rem;">📅 今天日期</button>
+                <button type="button" class="btn" onclick="setToday('setBaseDate')" style="width:auto; white-space:nowrap; background:#E5E7EB; color:#4B5563; padding:8px 12px; font-size:1rem;">📅 今天</button>
             </div>
-            <label style="font-weight:bold; display:block; margin-top:10px;">指定基準班別與當天班表：</label>
-            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">系統將自動精準推算其他三班狀態。</div>
+            <label style="font-weight:bold; display:block; margin-top:10px; font-size:1.05rem;">指定基準班別與當天班表：</label>
+            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px;">系統將自動精準推算其他三班狀態。</div>
             <div style="display: flex; gap: 8px; margin-bottom: 10px;">
                 <select id="setRefTeam" style="flex:1;" onchange="updateBasePreview()"><option value="A">A班</option><option value="B">B班</option><option value="C" selected>C班</option><option value="D">D班</option></select>
                 <select id="setRefShift" style="flex:2;" onchange="updateBasePreview()"><option value="0">早班1</option><option value="1">早班2</option><option value="2">中班1</option><option value="3">中班2</option><option value="4">小休</option><option value="5">晚班1</option><option value="6">晚班2</option><option value="7">大休</option></select>
             </div>
-            <div id="basePreview" style="background: #EFF6FF; border: 1px dashed #93C5FD; padding: 10px; border-radius: 8px; font-size: 0.9rem; color: #1E3A8A; margin-bottom: 15px;">系統推算：請先選擇設定。</div>
+            <div id="basePreview" style="background: #EFF6FF; border: 1px dashed #93C5FD; padding: 10px; border-radius: 8px; font-size: 1rem; color: #1E3A8A; margin-bottom: 15px; line-height:1.4;">系統推算：請先選擇設定。</div>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
-           
-            <label style="font-weight:bold; display:block; margin-bottom: 5px;">各班領班名稱：</label>
+            
+            <label style="font-weight:bold; display:block; margin-bottom: 5px; font-size:1.05rem;">各班領班名稱：</label>
             <div class="setting-grid">
                 <div><label>A班</label><input type="text" id="setTeamA"></div><div><label>B班</label><input type="text" id="setTeamB"></div>
                 <div><label>C班</label><input type="text" id="setTeamC"></div><div><label>D班</label><input type="text" id="setTeamD"></div>
             </div>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
-           
+            
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <label style="font-weight:bold; color:#DC2626; margin:0;">✏️ 手動改班 / 請假設定：</label>
-                <button class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none;" onclick="setToday('addManualDate')">📅 今天日期</button>
+                <label style="font-weight:bold; color:#DC2626; margin:0; font-size:1.05rem;">✏️ 手動改班 / 請假設定：</label>
+                <button class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none;" onclick="setToday('addManualDate')">📅 今天</button>
             </div>
-            <div style="font-size: 0.8rem; color: #6B7280; margin-bottom: 10px;">優先覆蓋原班表，可用於設定各類假別或調班。</div>
-            <div id="manualShiftList" style="margin-bottom:15px; max-height:150px; overflow-y:auto; background:#F9FAFB; border:1px solid var(--border-color); border-radius:8px; padding:5px;"></div>
+            <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 10px;">優先覆蓋原班表，可用於設定各類假別或調班。</div>
+            <div id="manualShiftList" style="margin-bottom:15px; max-height:160px; overflow-y:auto; background:#F9FAFB; border:1px solid var(--border-color); border-radius:8px; padding:5px;"></div>
             <div style="display:flex; gap:8px; background:#FEF2F2; padding:10px; border-radius:8px; border:1px solid #FECACA;">
                 <input type="date" id="addManualDate" style="flex:1.5; padding:8px; margin:0;">
                 <select id="addManualTeam" style="flex:1; padding:8px; margin:0;"><option value="A">A班</option><option value="B">B班</option><option value="C">C班</option><option value="D">D班</option></select>
                 <select id="addManualShift" style="flex:1.5; padding:8px; margin:0;"><option value="特休">特休</option><option value="病假">病假</option><option value="事假">事假</option><option value="公假">公假</option><option value="調:早班1">調:早班1</option><option value="調:早班2">調:早班2</option><option value="調:中班1">調:中班1</option><option value="調:中班2">調:中班2</option><option value="調:晚班1">調:晚班1</option><option value="調:晚班2">調:晚班2</option><option value="調:小休">調:小休</option><option value="調:大休">調:大休</option></select>
-                <button class="btn" onclick="addManualShift()" style="flex:1; padding:8px 5px; font-size:0.9rem; background:#DC2626; margin:0;">新增</button>
+                <button class="btn" onclick="addManualShift()" style="flex:1; padding:8px 5px; font-size:1rem; background:#DC2626; margin:0;">新增</button>
             </div>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
 
-
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <label id="holidayAddLabel" style="font-weight:bold; margin:0;">🎈 國定假日管理：</label>
-                <button class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none;" onclick="setToday('addHolidayDate')">📅 今天日期</button>
+                <label id="holidayAddLabel" style="font-weight:bold; margin:0; font-size:1.05rem;">🎈 國定假日管理：</label>
+                <button class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none;" onclick="setToday('addHolidayDate')">📅 今天</button>
             </div>
-            <div id="holidayList" style="margin-bottom:10px; max-height:150px; overflow-y:auto; background:#F9FAFB; border:1px solid var(--border-color); border-radius:8px; padding:5px;"></div>
+            <div id="holidayList" style="margin-bottom:10px; max-height:160px; overflow-y:auto; background:#F9FAFB; border:1px solid var(--border-color); border-radius:8px; padding:5px;"></div>
             <div style="display:flex; gap:8px; background:#FFFBF0; padding:10px; border-radius:8px; border:1px solid #FDE68A;">
                 <input type="date" id="addHolidayDate" style="flex:2; padding:8px; margin:0;">
                 <input type="text" id="addHolidayName" placeholder="如: 中秋節" style="flex:2; padding:8px; margin:0;">
-                <div style="flex:1.5; display:flex; gap:5px;"><button id="btnSubmitHoliday" class="btn" onclick="addHoliday()" style="padding:8px 5px; font-size:0.9rem; background:#D97706; margin:0;">新增</button><button id="btnCancelHoliday" class="btn btn-delete" onclick="cancelEditHoliday()" style="padding:8px 5px; font-size:0.9rem; display:none; border:none; margin:0;">取消</button></div>
+                <div style="flex:1.5; display:flex; gap:5px;"><button id="btnSubmitHoliday" class="btn" onclick="addHoliday()" style="padding:8px 5px; font-size:1rem; background:#D97706; margin:0;">新增</button><button id="btnCancelHoliday" class="btn btn-delete" onclick="cancelEditHoliday()" style="padding:8px 5px; font-size:1rem; display:none; border:none; margin:0;">取消</button></div>
             </div>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
 
-
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <label style="font-weight:bold; color:#2563EB; margin:0;">📝 工作提醒管理：</label>
-                <button id="btnTaskToday" class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; display:none;" onclick="setToday('addTaskDate')">📅 今天日期</button>
+                <label style="font-weight:bold; color:#2563EB; margin:0; font-size:1.05rem;">📝 工作提醒管理：</label>
+                <button id="btnTaskToday" class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; display:none;" onclick="setToday('addTaskDate')">📅 今天</button>
             </div>
-            <div style="font-size: 0.8rem; color: #6B7280; margin-bottom: 10px;">系統預設與您自訂的工作皆在此管理。</div>
+            <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 10px;">系統預設與您自訂的工作皆在此管理。</div>
             <div id="customTaskList" style="margin-bottom:15px; max-height:250px; overflow-y:auto; background:#F9FAFB; border:1px solid var(--border-color); border-radius:8px; padding:5px;"></div>
             <div style="background:#EFF6FF; padding:10px; border-radius:8px; border:1px solid #BFDBFE;">
-                <label id="taskAddLabel" style="font-size:0.9rem; font-weight:bold; color:#1E3A8A; display:block; margin-bottom:8px;">➕ 新增自訂工作</label>
+                <label id="taskAddLabel" style="font-size:1.05rem; font-weight:bold; color:#1E3A8A; display:block; margin-bottom:8px;">➕ 新增自訂工作</label>
                 <div style="display:flex; gap:8px; margin-bottom:8px;">
                     <select id="addTaskShift" style="flex:1; padding:8px; margin:0;"><option value="早班">早班(皆提醒)</option><option value="早班1">早班1</option><option value="早班2">早班2</option><option value="中班">中班(皆提醒)</option><option value="中班1">中班1</option><option value="中班2">中班2</option><option value="晚班">晚班(皆提醒)</option><option value="晚班1">晚班1</option><option value="晚班2">晚班2</option><option value="全天">全天</option></select>
                     <select id="addTaskRule" style="flex:2; padding:8px; margin:0;" onchange="toggleTaskInputs()"><option value="every_shift">每次當班</option><option value="specific_date">單次特定日期</option><option value="weekly">每週特定星期</option><option value="monthly_day">每月幾號</option><option value="monthly_last">每月最後一天</option><option value="last_monday">每月最後一個週一</option><option value="yearly_range">每年月份區間</option><option value="odd_months">單數月</option><option value="even_months">雙數月</option></select>
@@ -272,15 +254,24 @@
                 <div id="inputWrap_monthRange" style="display:none; margin-bottom:8px; gap:5px; align-items:center;"><input type="number" id="addTaskRangeStart" placeholder="開始月" min="1" max="12" style="padding:8px; margin:0;"><span>至</span><input type="number" id="addTaskRangeEnd" placeholder="結束月" min="1" max="12" style="padding:8px; margin:0;"></div>
                 <div style="display:flex; gap:8px;">
                     <input type="text" id="addTaskText" placeholder="輸入工作內容" style="flex:2; padding:8px; margin:0;">
-                    <button id="btnSubmitTask" class="btn" onclick="addCustomTask()" style="flex:1.5; padding:8px 5px; font-size:0.9rem; background:#2563EB; margin:0;">新增</button>
-                    <button id="btnCancelTask" class="btn btn-delete" onclick="cancelEditCustomTask()" style="flex:1; padding:8px 5px; font-size:0.9rem; display:none; border:none; margin:0;">取消</button>
+                    <button id="btnSubmitTask" class="btn" onclick="addCustomTask()" style="flex:1.5; padding:8px 5px; font-size:1rem; background:#2563EB; margin:0;">新增</button>
+                    <button id="btnCancelTask" class="btn btn-delete" onclick="cancelEditCustomTask()" style="flex:1; padding:8px 5px; font-size:1rem; display:none; border:none; margin:0;">取消</button>
                 </div>
             </div>
+            
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            <label style="font-weight:bold; color: #10B981; margin:0; font-size:1.05rem;">💾 系統資料備份與還原：</label>
+            <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 10px;">匯出包含班別、假日、提醒等所有自訂設定。</div>
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <button class="btn" onclick="exportData()" style="flex:1; background:#10B981; font-size:1rem; padding:10px;">📤 匯出備份</button>
+                <button class="btn" onclick="el('importDataInput').click()" style="flex:1; background:#F59E0B; font-size:1rem; padding:10px;">📥 匯入還原</button>
+                <input type="file" id="importDataInput" style="display:none;" accept=".json" onchange="importData(event)">
+            </div>
+            
             <div class="action-buttons"><button class="btn btn-danger" onclick="restoreDefaults()" style="flex:1;">🔄 恢復預設</button><button class="btn" onclick="saveSettings()" style="flex:2;">💾 儲存設定</button></div>
         </div>
     </div>
 </div>
-
 
 <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab(1)"><div class="tab-icon">👤</div><div class="tab-text">今日班表</div></button>
@@ -288,7 +279,6 @@
     <button class="tab-btn" onclick="switchTab(3)"><div class="tab-icon">⚙️</div><div class="tab-text">系統設定</div></button>
 </div>
 <div id="holidayToast" class="toast"></div>
-
 
 <script>
     // --- 共用 Helpers ---
@@ -298,16 +288,15 @@
     const triggerVibrate = () => { if (navigator.vibrate) navigator.vibrate(50); };
     const formatDateToYYYYMMDD = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-
     // --- 常數與資料邏輯 ---
     const SHIFT_CYCLE = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
     const TEAMS = ["A", "B", "C", "D"];
-   
-    let isActualMode = false;
+    
+    let isActualMode = false; 
     let currentViewTeam = null, currentMonthViewTeam = null;
-    let tempHolidays = {}, tempTasks = [], tempManualShifts = {};
+    let calendarViewDate = new Date(); 
+    let tempHolidays = {}, tempTasks = [], tempManualShifts = {}; 
     let editingHolidayDate = null, editingTaskId = null;
-
 
     const defaultTasks = [
         { id: "t1", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：登錄MI系統的各型泵浦運轉前暨啟動時檢點表" },
@@ -327,7 +316,6 @@
         { id: "t15", shift: "中班", rule: "monthly_last", ruleValue: "", text: "每月底中班：填寫機車行駛記錄表" }
     ];
 
-
     const defaultSettings = {
         baseDate: "2026-01-01", myTeam: "C", defaultMode: false,
         teams: { "A": { name: "蘇明理", offset: 5 }, "B": { name: "林致漢", offset: 7 }, "C": { name: "蔡宏和", offset: 1 }, "D": { name: "林明宗", offset: 3 } },
@@ -335,13 +323,12 @@
         manualShifts: {}
     };
 
-
     let appSettings;
     try {
         let savedData = localStorage.getItem("shiftSettings");
         appSettings = savedData ? JSON.parse(savedData) : JSON.parse(JSON.stringify(defaultSettings));
     } catch(e) { appSettings = JSON.parse(JSON.stringify(defaultSettings)); }
-   
+    
     appSettings.defaultMode = appSettings.defaultMode || false;
     appSettings.holidays = appSettings.holidays || JSON.parse(JSON.stringify(defaultSettings.holidays));
     appSettings.manualShifts = appSettings.manualShifts || {};
@@ -351,7 +338,6 @@
     appSettings.baseDate = isNaN(new Date(appSettings.baseDate).getTime()) ? defaultSettings.baseDate : appSettings.baseDate;
     appSettings.myTeam = appSettings.myTeam || "C";
 
-
     document.addEventListener("DOMContentLoaded", () => {
         isActualMode = appSettings.defaultMode;
         currentViewTeam = currentMonthViewTeam = appSettings.myTeam;
@@ -360,32 +346,157 @@
         el('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
         el('btnActual').className = isActualMode ? 'btn-mode active' : 'btn-mode';
 
-
         setVal("queryDate", formatDateToYYYYMMDD(new Date()));
         el("queryDate").addEventListener("change", renderAppSafe);
         toggleTaskInputs(); loadSettingsToForm(); renderAppSafe();
+
+        const calContainer = el("monthCalendar");
+        let touchStartX = 0;
+        calContainer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+        calContainer.addEventListener('touchend', e => {
+            let touchEndX = e.changedTouches[0].screenX;
+            if (touchEndX < touchStartX - 40) changeCalendarMonth(1); 
+            if (touchEndX > touchStartX + 40) changeCalendarMonth(-1); 
+        }, {passive: true});
     });
 
+    // ★ 升級版的自動推算引擎 (固定假日無上限，變動假日建檔至2036)
+    function ensureHolidaysForYear(y) {
+        // 放寬年份限制，讓固定假日可以無限期延伸
+        if (y < 2026) return; 
+        
+        // ★ 判斷基準：如果該年元旦已經存在，代表系統已經自動生成過了，直接跳過，不再重複提醒
+        if (appSettings.holidays[`${y}-01-01`]) return;
+
+        let newH = {};
+        
+        // 1. 先塞入固定國曆假日 (未來不管查到幾年，這5個假日都會自動產生)
+        ["01-01:元旦", "02-28:和平紀念日", "04-04:兒童節", "05-01:勞動節", "10-10:國慶日"].forEach(item => {
+            let p = item.split(":"); 
+            if (!appSettings.holidays[`${y}-${p[0]}`]) newH[`${y}-${p[0]}`] = p[1];
+        });
+
+        // ★ 聰明偵測：檢查您是否已經「提前手動加好」該年的春節、端午或中秋
+        let userAlreadySet = Object.keys(appSettings.holidays).some(k => 
+            k.startsWith(y + "-") && (appSettings.holidays[k].includes("春節") || appSettings.holidays[k].includes("端午") || appSettings.holidays[k].includes("中秋"))
+        );
+
+        if (!userAlreadySet) {
+            // 2. 自動展開變動的農曆與節氣假日 (內建2026~2050年)
+            const vData = {
+                2026: { l: "02-17", q: "04-05", d: "06-19", m: "09-25" },
+                2027: { l: "02-06", q: "04-05", d: "06-09", m: "09-15" },
+                2028: { l: "01-26", q: "04-04", d: "05-28", m: "10-03" },
+                2029: { l: "02-13", q: "04-04", d: "06-16", m: "09-22" },
+                2030: { l: "02-03", q: "04-05", d: "06-05", m: "09-12" },
+                2031: { l: "01-23", q: "04-05", d: "06-24", m: "10-01" },
+                2032: { l: "02-11", q: "04-04", d: "06-12", m: "09-19" },
+                2033: { l: "01-31", q: "04-04", d: "06-01", m: "09-08" },
+                2034: { l: "02-19", q: "04-05", d: "06-20", m: "09-27" },
+                2035: { l: "02-08", q: "04-05", d: "06-10", m: "09-16" },
+                2036: { l: "01-28", q: "04-04", d: "06-28", m: "10-04" },
+                2037: { l: "02-15", q: "04-04", d: "06-18", m: "09-24" },
+                2038: { l: "02-04", q: "04-05", d: "06-07", m: "09-13" },
+                2039: { l: "01-24", q: "04-05", d: "06-26", m: "10-02" },
+                2040: { l: "02-12", q: "04-04", d: "06-14", m: "09-21" },
+                2041: { l: "02-01", q: "04-04", d: "06-03", m: "09-10" },
+                2042: { l: "01-22", q: "04-05", d: "06-22", m: "09-28" },
+                2043: { l: "02-10", q: "04-05", d: "06-11", m: "09-17" },
+                2044: { l: "01-30", q: "04-04", d: "05-31", m: "10-05" },
+                2045: { l: "02-17", q: "04-04", d: "06-19", m: "09-25" },
+                2046: { l: "02-06", q: "04-05", d: "06-08", m: "09-15" },
+                2047: { l: "01-26", q: "04-05", d: "06-27", m: "10-04" },
+                2048: { l: "02-14", q: "04-04", d: "06-15", m: "09-22" },
+                2049: { l: "02-02", q: "04-04", d: "06-05", m: "09-11" },
+                2050: { l: "01-23", q: "04-05", d: "06-24", m: "09-30" }
+            };
+
+            let vYearData = vData[y];
+            let isFallback = false;
+
+            // ★ 新增：2051年以後，自動往回找前一年的日期作為暫存範本
+            if (!vYearData && y > 2050) {
+                isFallback = true;
+                let prevL = null, prevQ = null, prevD = null, prevM = null;
+                // 掃描前一年的所有假日紀錄
+                for (const [dateStr, name] of Object.entries(appSettings.holidays)) {
+                    if (dateStr.startsWith((y - 1) + "-")) {
+                        let md = dateStr.substring(5);
+                        if (name.includes("春節") && !name.includes("待確認")) prevL = md;
+                        if (name.includes("清明") && !name.includes("待確認")) prevQ = md;
+                        if (name.includes("端午") && !name.includes("待確認")) prevD = md;
+                        if (name.includes("中秋") && !name.includes("待確認")) prevM = md;
+                    }
+                }
+                vYearData = {
+                    l: prevL || "02-10",
+                    q: prevQ || "04-04",
+                    d: prevD || "06-10",
+                    m: prevM || "09-15"
+                };
+            }
+
+            if (vYearData) {
+                // 解析該年度正月初一
+                let lParts = vYearData.l.split('-');
+                let lDate = new Date(y, parseInt(lParts[0]) - 1, parseInt(lParts[1]));
+                let suffix = isFallback ? "(待確認)" : "";
+                
+                // 自動推算 小年夜(-2), 除夕(-1), 春節(0), 初二(+1), 初三(+2)
+                [[-2, `小年夜${suffix}`], [-1, `除夕${suffix}`], [0, `春節${suffix}`], [1, `初二${suffix}`], [2, `初三${suffix}`]].forEach(o => {
+                    let d = new Date(lDate); d.setDate(lDate.getDate() + o[0]);
+                    newH[formatDateToYYYYMMDD(d)] = o[1];
+                });
+                
+                // 處理清明節 (如果剛好跟兒童節同一天，就合併顯示)
+                let qStr = `${y}-${vYearData.q}`;
+                newH[qStr] = newH[qStr] ? newH[qStr] + `/清明節${suffix}` : `清明節${suffix}`;
+                
+                newH[`${y}-${vYearData.d}`] = `端午節${suffix}`;
+                newH[`${y}-${vYearData.m}`] = `中秋節${suffix}`;
+            }
+            
+            // ★ 新增：如果是沿用舊年份的日期，跳出警告視窗
+            if (isFallback) {
+                setTimeout(() => {
+                    alert(`⚠️ 系統提示\n\n${y} 年的農曆變動假日（春節、清明、端午、中秋）已自動沿用前一年的日期，並標註為「(待確認)」。\n\n因為農曆每年不同，請務必至「系統設定 -> 國定假日管理」修正為 ${y} 年正確的日期！`);
+                }, 300);
+            }
+        }
+        
+        // 儲存進系統
+        Object.assign(appSettings.holidays, newH);
+        localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
+        
+        // 如果正好停留在設定頁面，同步更新顯示列表
+        if (tempHolidays) Object.assign(tempHolidays, newH);
+        if (el("holidayList")) renderHolidayList();
+    }
 
     function setToday(inputId) { triggerVibrate(); setVal(inputId, formatDateToYYYYMMDD(new Date())); el(inputId).dispatchEvent(new Event('change')); }
-   
+    
     function switchTab(num) {
         triggerVibrate();
         document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
         el('tab' + num).classList.add('active');
         document.querySelector(`.tab-bar .tab-btn:nth-child(${num})`).classList.add('active');
         const headerCtrls = el('headerControls'), mainHeader = el('mainHeaderSection');
-        if (num === 3) { headerCtrls.style.opacity = '0'; setTimeout(() => { headerCtrls.style.display = 'none'; mainHeader.style.paddingBottom = '5px'; }, 150); }
+        if (num === 3) { headerCtrls.style.opacity = '0'; setTimeout(() => { headerCtrls.style.display = 'none'; mainHeader.style.paddingBottom = '5px'; }, 150); } 
         else { headerCtrls.style.display = 'block'; setTimeout(() => { headerCtrls.style.opacity = '1'; mainHeader.style.paddingBottom = '10px'; }, 10); }
         el('tab' + num).scrollTop = 0;
     }
 
-
     function setMode(mode) { triggerVibrate(); isActualMode = mode; el('btnLogical').className = mode ? 'btn-mode' : 'btn-mode active'; el('btnActual').className = mode ? 'btn-mode active' : 'btn-mode'; renderAppSafe(); }
     function changeViewTeam() { triggerVibrate(); currentViewTeam = getVal("viewTeamSelect"); renderAppSafe(); }
-    function changeMonthViewTeam() { triggerVibrate(); currentMonthViewTeam = getVal("monthViewSelect"); renderAppSafe(); }
-    function changeDate(days) { triggerVibrate(); let d = new Date(getVal("queryDate").replace(/-/g, '/')); d.setDate(d.getDate() + days); setVal("queryDate", formatDateToYYYYMMDD(d)); renderAppSafe(); }
+    function changeMonthViewTeam() { triggerVibrate(); currentMonthViewTeam = getVal("monthViewSelect"); renderMonthTable(); }
+    
+    function changeCalendarMonth(offset) {
+        triggerVibrate();
+        calendarViewDate.setMonth(calendarViewDate.getMonth() + offset);
+        renderMonthTable();
+    }
 
+    function changeDate(days) { triggerVibrate(); let d = new Date(getVal("queryDate").replace(/-/g, '/')); d.setDate(d.getDate() + days); setVal("queryDate", formatDateToYYYYMMDD(d)); renderAppSafe(); }
 
     function getLogicalShift(teamId, targetDateStr) {
         if (appSettings.manualShifts?.[`${targetDateStr}_${teamId}`]) return appSettings.manualShifts[`${targetDateStr}_${teamId}`];
@@ -393,7 +504,6 @@
         const diffDays = Math.round((tDate - bDate) / 86400000) || 0;
         const getShift = d => SHIFT_CYCLE[(((appSettings.teams[teamId].offset || 0) + d) % 8 + 8) % 8];
         let shift = getShift(diffDays);
-
 
         if (shift === "晚班1") {
             let monDate = new Date(tDate); monDate.setDate(tDate.getDate() + (tDate.getDay() === 0 ? -6 : 1 - tDate.getDay()));
@@ -408,9 +518,8 @@
         return shift;
     }
 
-
     function getActualShift(logicalShift) {
-        if (!logicalShift) return "早班1"; if (!isActualMode) return logicalShift;
+        if (!logicalShift) return "早班1"; if (!isActualMode) return logicalShift; 
         let core = logicalShift.replace("$", "");
         const isOverride = core.startsWith("調:");
         let comp = isOverride ? core.replace("調:", "") : core;
@@ -419,7 +528,6 @@
         else if (comp === "晚班2") core = (isOverride ? "調:" : "") + "小休";
         return core;
     }
-
 
     const badgeStyles = {
         "shift-morn": { bg: "var(--morn-color)", fg: "var(--morn-text)" },
@@ -430,43 +538,43 @@
     };
     function getBadgeClass(txt) { if (!txt) return "shift-rest"; if (txt.includes("調:") || txt.includes("假") || txt.includes("特休")) return "shift-override"; if (txt.includes("早")) return "shift-morn"; if (txt.includes("中")) return "shift-mid"; if (txt.includes("晚")) return "shift-night"; return "shift-rest"; }
 
-
     function renderAppSafe() { try { renderApp(); } catch (err) { el("myTeamName").innerText = "⚠️ 資料發生錯誤"; el("myShiftBadge").innerText = "請恢復預設"; } }
-
 
     function renderApp() {
         const qStr = getVal("queryDate"); if (!qStr) return;
         const targetDate = new Date(qStr.replace(/-/g, '/'));
+        
+        // ★ 自動偵測並延展該年度的假日
+        ensureHolidaysForYear(targetDate.getFullYear()); 
+        
         const dateKey = formatDateToYYYYMMDD(targetDate);
-       
+        
         let dayText = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][targetDate.getDay()];
-        if (appSettings.holidays?.[dateKey]) dayText += ` <span style="color:#DC2626; font-size:1rem; margin-left:8px;">🎈 ${appSettings.holidays[dateKey]}</span>`;
+        if (appSettings.holidays?.[dateKey]) dayText += ` <span style="color:#DC2626; font-size:1.1rem; margin-left:8px;">🎈 ${appSettings.holidays[dateKey]}</span>`;
         el("dayOfWeekDisplay").innerHTML = dayText;
 
-
         let myTeamId = currentViewTeam || appSettings.myTeam, myShiftText = "", allTeamsHTML = "";
-       
+        
         TEAMS.forEach(id => {
             let shiftText = getActualShift(getLogicalShift(id, dateKey));
             if (id === myTeamId) {
                 myShiftText = shiftText;
                 el("myTeamName").innerText = `${id}班 (${appSettings.teams[id]?.name || "未知"})`;
-                el("myShiftBadge").innerText = shiftText.replace("調:", "");
+                el("myShiftBadge").innerText = shiftText.replace("調:", ""); 
                 el("myShiftBadge").className = `shift-badge ${getBadgeClass(shiftText)}`;
             }
             allTeamsHTML += `<div class="team-row"><span class="team-name">${id}班 (${appSettings.teams[id]?.name || ""})</span><span class="shift-badge ${getBadgeClass(shiftText)}">${shiftText.replace("調:", "")}</span></div>`;
         });
         el("allTeamsContainer").innerHTML = allTeamsHTML;
 
-
         // --- 換班與休息日出勤提醒 ---
         let cReminders = [], rOvertimes = [], isTodayRestOvertime = false;
-        let sDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1), eDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 2, 0);
+        let sDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1), eDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 2, 0); 
         for (let d = new Date(sDate); d <= eDate; d.setDate(d.getDate() + 1)) {
             let k = formatDateToYYYYMMDD(d), lShift = getLogicalShift(myTeamId, k);
             if (lShift?.startsWith("$") && appSettings.holidays?.[k] && d >= targetDate) cReminders.push(`${d.getMonth()+1}/${d.getDate()} (${appSettings.holidays[k]})`);
         }
-       
+        
         let cY = targetDate.getFullYear(), cM = targetDate.getMonth(), dNum = targetDate.getDate();
         let cycStart = new Date(cY, dNum >= 16 ? cM : cM - 1, 16), cycEnd = new Date(cY, dNum >= 16 ? cM + 1 : cM, 15);
         for (let d = new Date(cycStart); d <= cycEnd; d.setDate(d.getDate() + 1)) {
@@ -477,28 +585,26 @@
             }
         }
 
-
         const cEl = el("holidayConflictContainer"), rEl = el("restDayReminderContainer");
         if (cReminders.length) { cEl.innerHTML = `<div style="font-weight:bold; color:#B91C1C;">🚨 換班提醒：休息日出勤遇國定假日！</div><ul style="margin:0; padding-left:22px; font-weight:bold;">${cReminders.map(c=>`<li>${c}，請記得換班。</li>`).join("")}</ul>`; cEl.style.display = "block"; } else cEl.style.display = "none";
-        if (rOvertimes.length) { rEl.innerHTML = `${isTodayRestOvertime ? `<div style="font-size:1.05rem; font-weight:bold; margin-bottom:8px; border-bottom:1px solid #FCA5A5; padding-bottom:5px;">🚨 今日為休息日出勤！</div>` : ""}<strong>⚠️ 休息日出勤提醒</strong><br><span style="font-size:0.85rem; color:#DC2626;">(結算週期: ${cycStart.getMonth()+1}/16 ~ ${cycEnd.getMonth()+1}/15)</span><br>本週期出勤：${rOvertimes.join(", ")}<div style="margin-top:8px; font-size:0.9rem; font-weight:bold; color:#991B1B;">💡 休息日出勤若請假，請記得調整。</div>`; rEl.style.display = "block"; } else rEl.style.display = "none";
+        if (rOvertimes.length) { rEl.innerHTML = `${isTodayRestOvertime ? `<div style="font-size:1.15rem; font-weight:bold; margin-bottom:8px; border-bottom:1px solid #FCA5A5; padding-bottom:5px;">🚨 今日為休息日出勤！</div>` : ""}<strong>⚠️ 休息日出勤提醒</strong><br><span style="font-size:0.95rem; color:#DC2626;">(結算週期: ${cycStart.getMonth()+1}/16 ~ ${cycEnd.getMonth()+1}/15)</span><br>本週期出勤：${rOvertimes.join(", ")}<div style="margin-top:8px; font-size:1rem; font-weight:bold; color:#991B1B;">💡 休息日出勤若請假，請記得調整。</div>`; rEl.style.display = "block"; } else rEl.style.display = "none";
 
-
-        renderTasks(targetDate, myTeamId, myShiftText); renderMonthTable(targetDate);
+        renderTasks(targetDate, myTeamId, myShiftText); 
+        
+        calendarViewDate = new Date(targetDate);
+        renderMonthTable();
     }
-
 
     function renderTasks(date, myTeamId, myShiftText) {
         let regT = [], perT = [], monT = [], cleanMyShift = (myShiftText || "").replace("$", "").replace("調:", "");
-       
+        
         let activeShifts = ["全天", cleanMyShift];
         if (cleanMyShift.startsWith("早")) activeShifts.push("早班");
         if (cleanMyShift.startsWith("中")) activeShifts.push("中班");
         if (cleanMyShift.startsWith("晚")) activeShifts.push("晚班");
 
-
         const cY = date.getFullYear(), cM = date.getMonth(), cD = date.getDate(), cW = date.getDay();
         const mDays = new Date(cY, cM + 1, 0).getDate(), tStr = formatDateToYYYYMMDD(date);
-
 
         appSettings.tasks.forEach(t => {
             if (!activeShifts.includes(t.shift)) return;
@@ -517,33 +623,46 @@
             if (match) t.rule === 'every_shift' ? regT.push(t.text) : perT.push(t.text);
         });
 
-
         let mElapsed = (cY - 2026) * 12 + cM;
         if (["D", "A", "B", "C"][(Math.floor(mElapsed/2) % 4 + 4) % 4] === myTeamId) monT.push(`輪值：本月做月盤查量油取樣 (營業油槽，20日附近)`);
         if ((cM + 1) % 2 !== 0 && ["B", "C", "D", "A"][(Math.floor(mElapsed/2) % 4 + 4) % 4] === myTeamId) monT.push(`輪值：本月做全規範取樣 (每月10號前)`);
 
-
-        let html = `<li style="background:transparent; border:none; padding:0 0 5px; margin:0 0 8px; font-weight:bold; color:var(--primary); border-bottom:2px solid var(--border-color); border-radius:0;">📅 今日當班工作</li>`;
+        let html = `<li style="background:transparent; border:none; padding:0 0 5px; margin:0 0 8px; font-weight:bold; color:var(--primary); border-bottom:2px solid var(--border-color); border-radius:0; font-size:1.15rem;">📅 今日當班工作</li>`;
         let tTasks = perT.concat(regT);
         html += tTasks.length ? tTasks.map(t => `<li>📍 ${t}</li>`).join("") : `<li class="no-task">🎉 今日無排程工作。</li>`;
-        html += `<li style="background:transparent; border:none; padding:0 0 5px; margin:15px 0 8px; font-weight:bold; color:#D97706; border-bottom:2px solid var(--border-color); border-radius:0;">🗓️ 本月輪值任務</li>`;
+        html += `<li style="background:transparent; border:none; padding:0 0 5px; margin:15px 0 8px; font-weight:bold; color:#D97706; border-bottom:2px solid var(--border-color); border-radius:0; font-size:1.15rem;">🗓️ 本月輪值任務</li>`;
         html += monT.length ? monT.map(t => `<li style="background:#FFFBEB; color:#B45309; border-left-color:#F59E0B;">📌 ${t}</li>`).join("") : `<li class="no-task" style="background:#FFFBEB; color:#B45309; border-left-color:#F59E0B;">本月無輪值工作。</li>`;
         el("taskList").innerHTML = html;
     }
 
+    function renderMonthTable() {
+        const y = calendarViewDate.getFullYear();
+        const m = calendarViewDate.getMonth();
+        
+        // ★ 自動偵測並延展該年度的假日 (支援從月曆滑動到新年份時觸發)
+        ensureHolidaysForYear(y);
 
-    function renderMonthTable(targetDate) {
-        const y = targetDate.getFullYear(), m = targetDate.getMonth(), days = new Date(y, m + 1, 0).getDate(), fw = new Date(y, m, 1).getDay();
+        const days = new Date(y, m + 1, 0).getDate();
+        const fw = new Date(y, m, 1).getDay();
+        
+        if(el("calendarTitle")) el("calendarTitle").innerText = `🗓️ ${m + 1}月班表總覽`;
+        
+        const qStr = getVal("queryDate"); 
+        const gDate = qStr ? new Date(qStr.replace(/-/g, '/')) : new Date();
+
         let html = ["日", "一", "二", "三", "四", "五", "六"].map(wd => `<div class="cal-header">${wd}</div>`).join("");
         for (let i = 0; i < fw; i++) html += `<div class="cal-cell" style="background:#F9FAFB;"></div>`;
-       
+        
         let viewMode = currentMonthViewTeam || appSettings.myTeam;
         for (let day = 1; day <= days; day++) {
             let iterStr = formatDateToYYYYMMDD(new Date(y, m, day)), hName = appSettings.holidays?.[iterStr];
             let onClick = hName ? `onclick="showHolidayToast('${m+1}/${day}', '${hName.replace(/'/g, "\\'")}')"` : "";
-            html += `<div class="cal-cell ${day === targetDate.getDate() ? "today" : ""}" ${onClick} style="${hName ? "cursor:pointer;" : ""}">`;
-            html += `<div class="cal-day-num">${day}${hName ? `<span style="font-size:0.8rem;">🎈</span>` : ""}</div>`;
-           
+            
+            let isToday = (y === gDate.getFullYear() && m === gDate.getMonth() && day === gDate.getDate());
+
+            html += `<div class="cal-cell ${isToday ? "today" : ""}" ${onClick} style="${hName ? "cursor:pointer;" : ""}">`;
+            html += `<div class="cal-day-num">${day}${hName ? `<span style="font-size:0.9rem;">🎈</span>` : ""}</div>`;
+            
             if (viewMode === "ALL") {
                 html += `<div class="cal-shift-all">` + TEAMS.map(id => {
                     let sTxt = getActualShift(getLogicalShift(id, iterStr)), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
@@ -559,42 +678,35 @@
         if(el("monthCalendar")) el("monthCalendar").innerHTML = html;
     }
 
-
     let toastTimeout;
     function showHolidayToast(d, name) { triggerVibrate(); let t = el("holidayToast"); if(!t) return; t.innerHTML = `📅 <strong>${d}</strong><br>🎈 ${name}`; t.classList.add("show"); clearTimeout(toastTimeout); toastTimeout = setTimeout(() => t.classList.remove("show"), 3000); }
 
-
     // --- 設定區塊 ---
     function updateBasePreview() {
-        const dVal = getVal("setBaseDate"), rTeam = getVal("setRefTeam"), rShift = parseInt(getVal("setRefShift")) || 0;
+        const dVal = getVal("setBaseDate"), rTeam = getVal("setRefTeam"), rShift = parseInt(getVal("setRefShift")) || 0; 
         if (!dVal) return el("basePreview").innerHTML = "請先選擇基準日。";
         let offsets = {}, pos = {'C':0, 'D':2, 'A':4, 'B':6}, bPos = pos[rTeam];
         TEAMS.forEach(t => offsets[t] = (rShift + (pos[t] - bPos + 8) % 8) % 8);
         el("basePreview").innerHTML = `<strong style="display:block; margin-bottom:4px;">✨ 推算：${dVal}</strong><span style="color:#DC2626; font-weight:bold;">${rTeam}班</span> 為「${SHIFT_CYCLE[rShift]}」 ➜<br><span style="color:#4B5563;">${TEAMS.filter(t=>t!==rTeam).map(t=>`${t}班「${SHIFT_CYCLE[offsets[t]]}」`).join(" / ")}</span>`;
     }
 
-
     function loadSettingsToForm() {
         setVal("setBaseDate", appSettings.baseDate); setVal("setMyTeam", appSettings.myTeam); setVal("setDefaultMode", appSettings.defaultMode ? "true" : "false");
         setVal("setRefTeam", appSettings.myTeam); setVal("setRefShift", isNaN(appSettings.teams[appSettings.myTeam].offset) ? 0 : appSettings.teams[appSettings.myTeam].offset);
         TEAMS.forEach(t => setVal(`setTeam${t}`, appSettings.teams[t].name || ""));
-        tempHolidays = JSON.parse(JSON.stringify(appSettings.holidays||{})); tempTasks = JSON.parse(JSON.stringify(appSettings.tasks||[])); tempManualShifts = JSON.parse(JSON.stringify(appSettings.manualShifts||{}));
+        tempHolidays = JSON.parse(JSON.stringify(appSettings.holidays||{})); tempTasks = JSON.parse(JSON.stringify(appSettings.tasks||[])); tempManualShifts = JSON.parse(JSON.stringify(appSettings.manualShifts||{})); 
         updateBasePreview(); cancelEditHoliday(); cancelEditCustomTask(); renderHolidayList(); renderTaskList(); renderManualShiftList();
     }
 
-
-    const renderList = (id, data, emptyTxt, htmlFn) => { el(id).innerHTML = data.length ? data.map(htmlFn).join("") : `<div style='color:var(--text-muted); text-align:center; padding:10px;'>${emptyTxt}</div>`; };
-
+    const renderList = (id, data, emptyTxt, htmlFn) => { el(id).innerHTML = data.length ? data.map(htmlFn).join("") : `<div style='color:var(--text-muted); text-align:center; padding:10px; font-size:1.05rem;'>${emptyTxt}</div>`; };
 
     function renderManualShiftList() { renderList("manualShiftList", Object.keys(tempManualShifts).sort(), "目前無紀錄", k => `<div class="list-item"><span><strong>${k.split("_")[0]}</strong> (${k.split("_")[1]}班) - <span style="color:#DC2626; font-weight:bold;">${tempManualShifts[k]}</span></span><div><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { delete tempManualShifts['${k}']; renderManualShiftList(); }">✖</span></div></div>`); }
     function addManualShift() { triggerVibrate(); const d = getVal("addManualDate"), t = getVal("addManualTeam"), s = getVal("addManualShift"); if (!d) return alert("請選日期"); tempManualShifts[`${d}_${t}`] = s; renderManualShiftList(); setVal("addManualDate", ""); }
-
 
     function renderHolidayList() { renderList("holidayList", Object.keys(tempHolidays).sort(), "無設定", d => `<div class="list-item ${d===editingHolidayDate?"editing-item":""}"><span><strong>${d}</strong> - ${tempHolidays[d]}</span><div><span class="list-action-btn btn-edit" onclick="startEditHoliday('${d}')">✎</span><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { if('${d}'===editingHolidayDate) cancelEditHoliday(); delete tempHolidays['${d}']; renderHolidayList(); }">✖</span></div></div>`); }
     function startEditHoliday(d) { triggerVibrate(); editingHolidayDate = d; setVal("addHolidayDate", d); setVal("addHolidayName", tempHolidays[d]); el("holidayAddLabel").innerText = "✏️ 編輯假日"; el("btnSubmitHoliday").innerText = "✅ 更新"; el("btnCancelHoliday").style.display = "inline-block"; renderHolidayList(); }
     function cancelEditHoliday() { triggerVibrate(); editingHolidayDate = null; setVal("addHolidayDate", ""); setVal("addHolidayName", ""); el("holidayAddLabel").innerText = "🎈 國定假日"; el("btnSubmitHoliday").innerText = "新增"; el("btnCancelHoliday").style.display = "none"; renderHolidayList(); }
     function addHoliday() { triggerVibrate(); const d = getVal("addHolidayDate"), n = getVal("addHolidayName"); if (!d || !n) return alert("填寫完整"); if (editingHolidayDate && d!==editingHolidayDate) delete tempHolidays[editingHolidayDate]; else if (!editingHolidayDate && tempHolidays[d] && !confirm("覆蓋?")) return; tempHolidays[d] = n; cancelEditHoliday(); }
-
 
     function toggleTaskInputs() {
         const r = getVal("addTaskRule"); ['inputWrap_date', 'inputWrap_week', 'inputWrap_monthDay', 'inputWrap_monthRange'].forEach(i => el(i).style.display = 'none'); el('btnTaskToday').style.display = r === 'specific_date' ? 'inline-block' : 'none';
@@ -606,18 +718,86 @@
     function cancelEditCustomTask() { triggerVibrate(); editingTaskId = null; setVal("addTaskShift", "早班"); setVal("addTaskRule", "every_shift"); setVal("addTaskText", ""); setVal("addTaskDate", ""); setVal("addTaskWeek", "1"); setVal("addTaskMonthDay", ""); setVal("addTaskRangeStart", ""); setVal("addTaskRangeEnd", ""); toggleTaskInputs(); el("taskAddLabel").innerText = "➕ 新增提醒"; el("btnSubmitTask").innerText = "新增"; el("btnCancelTask").style.display = "none"; renderTaskList(); }
     function addCustomTask() { triggerVibrate(); const s=getVal("addTaskShift"), r=getVal("addTaskRule"), txt=getVal("addTaskText"); let v=""; if(!txt) return alert("輸入內容"); if(r==='specific_date'){v=getVal("addTaskDate"); if(!v) return alert("選日期");} else if(r==='weekly') v=getVal("addTaskWeek"); else if(r==='monthly_day'){v=getVal("addTaskMonthDay"); if(!v||v<1||v>31) return alert("錯誤");} else if(r==='yearly_range'){const st=getVal("addTaskRangeStart"), e=getVal("addTaskRangeEnd"); if(!st||!e||st<1||e>12) return alert("錯誤"); v=`${st}-${e}`;} if(editingTaskId){let idx=tempTasks.findIndex(t=>t.id===editingTaskId); if(idx!==-1) tempTasks[idx]={id:editingTaskId,shift:s,rule:r,ruleValue:v,text:txt};} else tempTasks.push({id:"t_"+Date.now(),shift:s,rule:r,ruleValue:v,text:txt}); cancelEditCustomTask(); }
 
-
     function saveSettings() {
-        triggerVibrate(); appSettings.baseDate = getVal("setBaseDate"); appSettings.myTeam = getVal("setMyTeam"); appSettings.defaultMode = getVal("setDefaultMode") === "true";
+        triggerVibrate(); appSettings.baseDate = getVal("setBaseDate"); appSettings.myTeam = getVal("setMyTeam"); appSettings.defaultMode = getVal("setDefaultMode") === "true"; 
         if(!appSettings.baseDate) return alert("請設定基準日");
         let pos={'C':0,'D':2,'A':4,'B':6}, bPos=pos[getVal("setRefTeam")], rS=parseInt(getVal("setRefShift"))||0;
         TEAMS.forEach(t => { appSettings.teams[t].offset = (rS + (pos[t]-bPos+8)%8)%8; appSettings.teams[t].name = getVal(`setTeam${t}`); });
-        appSettings.holidays = JSON.parse(JSON.stringify(tempHolidays)); appSettings.tasks = JSON.parse(JSON.stringify(tempTasks)); appSettings.manualShifts = JSON.parse(JSON.stringify(tempManualShifts));
+        appSettings.holidays = JSON.parse(JSON.stringify(tempHolidays)); appSettings.tasks = JSON.parse(JSON.stringify(tempTasks)); appSettings.manualShifts = JSON.parse(JSON.stringify(tempManualShifts)); 
         setVal("viewTeamSelect", currentViewTeam = appSettings.myTeam); setVal("monthViewSelect", currentMonthViewTeam = appSettings.myTeam);
-        localStorage.setItem("shiftSettings", JSON.stringify(appSettings)); alert("已儲存！"); renderAppSafe(); switchTab(1);
+        localStorage.setItem("shiftSettings", JSON.stringify(appSettings)); alert("已儲存！"); renderAppSafe(); switchTab(1); 
     }
     function restoreDefaults() { triggerVibrate(); if (confirm("🚨 清除自訂設定？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); setVal("viewTeamSelect", currentViewTeam = appSettings.myTeam); setVal("monthViewSelect", currentMonthViewTeam = appSettings.myTeam); loadSettingsToForm(); renderAppSafe(); alert("已恢復"); switchTab(1); } }
 
+    function exportData() {
+        triggerVibrate();
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appSettings));
+        const dlAnchorElem = document.createElement('a');
+        dlAnchorElem.setAttribute("href", dataStr);
+        dlAnchorElem.setAttribute("download", `供油班表備份_${formatDateToYYYYMMDD(new Date())}.json`);
+        document.body.appendChild(dlAnchorElem);
+        dlAnchorElem.click();
+        document.body.removeChild(dlAnchorElem);
+    }
+    
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                if (importedData && importedData.baseDate && importedData.teams) {
+                    
+                    const now = new Date();
+                    const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+                    
+                    const mergedHolidays = JSON.parse(JSON.stringify(defaultSettings.holidays)); 
+                    if (importedData.holidays) {
+                        for (const [dateStr, name] of Object.entries(importedData.holidays)) {
+                            const hDate = new Date(dateStr.replace(/-/g, '/'));
+                            if (hDate >= oneMonthAgo) {
+                                mergedHolidays[dateStr] = name; 
+                            }
+                        }
+                    }
+                    importedData.holidays = mergedHolidays;
+
+                    const cleanedManualShifts = {};
+                    if (importedData.manualShifts) {
+                        for (const [key, shift] of Object.entries(importedData.manualShifts)) {
+                            const dateStr = key.split('_')[0];
+                            const sDate = new Date(dateStr.replace(/-/g, '/'));
+                            if (sDate >= oneMonthAgo) {
+                                cleanedManualShifts[key] = shift;
+                            }
+                        }
+                    }
+                    importedData.manualShifts = cleanedManualShifts;
+
+                    let mergedTasks = JSON.parse(JSON.stringify(defaultTasks)); 
+                    if (importedData.tasks && Array.isArray(importedData.tasks)) {
+                        importedData.tasks.forEach(impTask => {
+                            if (!defaultTasks.find(dt => dt.id === impTask.id)) {
+                                mergedTasks.push(impTask);
+                            }
+                        });
+                    }
+                    importedData.tasks = mergedTasks;
+
+                    localStorage.setItem("shiftSettings", JSON.stringify(importedData));
+                    alert("✅ 備份資料還原成功！(已自動清除過期歷史紀錄)");
+                    window.location.reload();
+                } else { 
+                    alert("❌ 檔案格式不正確，無法還原！"); 
+                }
+            } catch (err) { 
+                alert("❌ 讀取檔案失敗！請確認檔案格式。"); 
+            }
+            el('importDataInput').value = ""; 
+        };
+        reader.readAsText(file);
+    }
 
     // --- PWA 與更新 ---
     let deferredPrompt;
