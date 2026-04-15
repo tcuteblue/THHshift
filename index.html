@@ -86,7 +86,7 @@
         .cal-day-num { font-size: 1.05rem; font-weight: bold; margin-bottom: 4px; display: flex; justify-content: space-between; color: var(--text-main); }
         .cal-shift-single { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; border-radius: 6px; margin-top: 2px; }
         .cal-shift-all { display: flex; flex-direction: column; gap: 2px; margin-top: 1px; }
-        .cal-shift-all span { font-size: 0.85rem; font-weight: bold; padding: 1px 2px; border-radius: 4px; line-height: 1.2; white-space: nowrap; letter-spacing: -0.5px; text-align: center; }
+        .cal-shift-all span { font-size: 0.75rem; font-weight: bold; padding: 1px 0; border-radius: 4px; line-height: 1.15; white-space: nowrap; letter-spacing: -0.5px; text-align: center; overflow: hidden; }
         
         .toast { visibility: hidden; min-width: 220px; margin-left: -110px; background-color: rgba(31,41,55,0.95); color: #fff; text-align: center; border-radius: 12px; padding: 12px 15px; position: fixed; z-index: 2000; left: 50%; bottom: 85px; font-size: 1.1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(20px); pointer-events: none; line-height: 1.4;}
         .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
@@ -118,6 +118,7 @@
             .tab-content { padding: 10px 10px 75px; }
             .card { padding: 12px; margin-bottom: 8px; border-radius: 10px; }
             .task-list li { font-size: 1rem; }
+            .cal-shift-all span { font-size: 0.65rem; letter-spacing: -0.8px; border-left-width: 2px !important; }
         }
     </style>
 </head>
@@ -644,6 +645,7 @@
 
         const days = new Date(y, m + 1, 0).getDate();
         const fw = new Date(y, m, 1).getDay();
+        const prevMonthDays = new Date(y, m, 0).getDate();
         
         if(el("calendarTitle")) el("calendarTitle").innerText = `🗓️ ${m + 1}月班表總覽`;
         
@@ -651,30 +653,57 @@
         const gDate = qStr ? new Date(qStr.replace(/-/g, '/')) : new Date();
 
         let html = ["日", "一", "二", "三", "四", "五", "六"].map(wd => `<div class="cal-header">${wd}</div>`).join("");
-        for (let i = 0; i < fw; i++) html += `<div class="cal-cell" style="background:#F9FAFB;"></div>`;
         
         let viewMode = currentMonthViewTeam || appSettings.myTeam;
-        for (let day = 1; day <= days; day++) {
-            let iterStr = formatDateToYYYYMMDD(new Date(y, m, day)), hName = appSettings.holidays?.[iterStr];
-            let onClick = hName ? `onclick="showHolidayToast('${m+1}/${day}', '${hName.replace(/'/g, "\\'")}')"` : "";
-            
-            let isToday = (y === gDate.getFullYear() && m === gDate.getMonth() && day === gDate.getDate());
 
-            html += `<div class="cal-cell ${isToday ? "today" : ""}" ${onClick} style="${hName ? "cursor:pointer;" : ""}">`;
-            html += `<div class="cal-day-num">${day}${hName ? `<span style="font-size:0.9rem;">🎈</span>` : ""}</div>`;
+        // ★ 新增：專門用來產生每一格的輔助函數，支援渲染非本月(透明化)的儲存格
+        const renderCell = (iterY, iterM, iterDay, isCurrentMonth) => {
+            let iterDate = new Date(iterY, iterM, iterDay);
+            let iterStr = formatDateToYYYYMMDD(iterDate);
+            let hName = appSettings.holidays?.[iterStr];
+            let onClick = hName ? `onclick="showHolidayToast('${iterDate.getMonth()+1}/${iterDate.getDate()}', '${hName.replace(/'/g, "\\'")}')"` : "";
+            let isToday = (iterDate.getFullYear() === gDate.getFullYear() && iterDate.getMonth() === gDate.getMonth() && iterDate.getDate() === gDate.getDate());
+            
+            // 如果不是這個月的日期，降低透明度，變成淡淡的灰色背景
+            let cellStyle = isCurrentMonth ? "" : "opacity: 0.45; background: #F9FAFB;";
+            let numColor = isCurrentMonth ? "var(--text-main)" : "#9CA3AF";
+            let todayClass = isToday ? "today" : "";
+            
+            let cellHtml = `<div class="cal-cell ${todayClass}" ${onClick} style="${hName ? "cursor:pointer;" : ""} ${cellStyle}">`;
+            cellHtml += `<div class="cal-day-num" style="color:${numColor}">${iterDate.getDate()}${hName ? `<span style="font-size:0.9rem;">🎈</span>` : ""}</div>`;
             
             if (viewMode === "ALL") {
-                html += `<div class="cal-shift-all">` + TEAMS.map(id => {
+                cellHtml += `<div class="cal-shift-all">` + TEAMS.map(id => {
                     let sTxt = getActualShift(getLogicalShift(id, iterStr)), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
-                    return `<span style="background:${s.bg}; color:${s.fg}; border-left:3px solid ${s.fg};">${id}:${sTxt.replace("班","").replace("調:","✏️")}</span>`;
+                    // 為了節省空間，把原本的「A:早1」的冒號拿掉變成「A早1」以防破版
+                    return `<span style="background:${s.bg}; color:${s.fg}; border-left:3px solid ${s.fg};">${id}${sTxt.replace("班","").replace("調:","✏️")}</span>`;
                 }).join("") + `</div>`;
             } else {
                 let sTxt = getActualShift(getLogicalShift(viewMode, iterStr)), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
-                html += `<div class="cal-shift-single" style="background:${s.bg}; color:${s.fg}; ${s.border||""}">${sTxt.replace("班","").replace("調:","✏️")}</div>`;
+                cellHtml += `<div class="cal-shift-single" style="background:${s.bg}; color:${s.fg}; ${s.border||""}">${sTxt.replace("班","").replace("調:","✏️")}</div>`;
             }
-            html += `</div>`;
+            cellHtml += `</div>`;
+            return cellHtml;
+        };
+
+        // 1. 補上前一個月的尾巴日期
+        for (let i = 0; i < fw; i++) {
+            let pDay = prevMonthDays - fw + i + 1;
+            html += renderCell(y, m - 1, pDay, false);
         }
-        for (let i = 0; i < (7 - (fw + days) % 7) % 7; i++) html += `<div class="cal-cell" style="background:#F9FAFB;"></div>`;
+        
+        // 2. 當月的正式日期
+        for (let day = 1; day <= days; day++) {
+            html += renderCell(y, m, day, true);
+        }
+        
+        // 3. 補上下個月的開頭日期 (填滿剩餘空格)
+        let extraCells = (7 - (fw + days) % 7) % 7;
+        for (let i = 0; i < extraCells; i++) {
+            let nDay = i + 1;
+            html += renderCell(y, m + 1, nDay, false);
+        }
+        
         if(el("monthCalendar")) el("monthCalendar").innerHTML = html;
     }
 
