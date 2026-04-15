@@ -675,8 +675,7 @@
             if (viewMode === "ALL") {
                 cellHtml += `<div class="cal-shift-all">` + TEAMS.map(id => {
                     let sTxt = getActualShift(getLogicalShift(id, iterStr)), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
-                    // 為了節省空間，把原本的「A:早1」的冒號拿掉變成「A早1」以防破版
-                    return `<span style="background:${s.bg}; color:${s.fg}; border-left:3px solid ${s.fg};">${id}${sTxt.replace("班","").replace("調:","✏️")}</span>`;
+                    return `<span style="background:${s.bg}; color:${s.fg}; border-left:3px solid ${s.fg};">${id}:${sTxt.replace("班","").replace("調:","✏️")}</span>`;
                 }).join("") + `</div>`;
             } else {
                 let sTxt = getActualShift(getLogicalShift(viewMode, iterStr)), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
