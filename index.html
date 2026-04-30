@@ -87,7 +87,6 @@
         .cal-shift-single { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; border-radius: 6px; margin-top: 2px; }
         .cal-shift-all { display: flex; flex-direction: column; gap: 2px; margin-top: 1px; }
         
-        /* ★ 更新：讓「全部」的四班顯示支援雙欄垂直切齊 */
         .cal-shift-all > span { display: flex; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; padding: 1px 0; border-radius: 4px; line-height: 1.15; white-space: nowrap; letter-spacing: -0.5px; overflow: hidden; }
         .shift-prefix { flex: 0 0 14px; text-align: right; }
         .shift-name { flex: 0 0 24px; text-align: left; padding-left: 2px; }
@@ -122,11 +121,18 @@
             .tab-content { padding: 10px 10px 75px; }
             .card { padding: 12px; margin-bottom: 8px; border-radius: 10px; }
             .task-list li { font-size: 1rem; }
-            /* ★ 更新：適應手機窄螢幕的垂直切齊 */
             .cal-shift-all > span { font-size: 0.65rem; letter-spacing: -0.8px; border-left-width: 2px !important; }
             .shift-prefix { flex: 0 0 11px; }
             .shift-name { flex: 0 0 21px; }
         }
+
+        /* iOS 安裝教學彈窗樣式 */
+        #iosInstallOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:flex-end; padding-bottom:40px; }
+        .ios-modal { background:#fff; width:90%; max-width:400px; padding:25px 20px; border-radius:15px; text-align:center; position:relative; animation: slideInUp 0.3s forwards; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .ios-modal h3 { margin-top:0; color:var(--primary); font-size:1.3rem; margin-bottom: 15px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+        .ios-modal-close { position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.8rem; color:#9CA3AF; cursor:pointer; line-height: 1; }
+        .ios-step { display: flex; align-items: center; text-align:left; font-size:1.1rem; color:var(--text-main); margin-bottom: 15px; font-weight: bold; background: #F9FAFB; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .ios-icon { font-size: 1.5rem; margin: 0 10px; }
     </style>
 </head>
 <body>
@@ -288,6 +294,24 @@
 </div>
 <div id="holidayToast" class="toast"></div>
 
+<!-- ★ 新增：iOS 專屬安裝教學彈窗 -->
+<div id="iosInstallOverlay">
+    <div class="ios-modal">
+        <button class="ios-modal-close" onclick="el('iosInstallOverlay').style.display='none'">&times;</button>
+        <h3>🍎 iOS 安裝教學</h3>
+        <p style="font-size:1rem; color:var(--text-muted); margin-bottom:15px;">將此系統加入主畫面，即可像 APP 一樣離線快速開啟！</p>
+        
+        <div class="ios-step">
+            1. 點擊瀏覽器下方或上方的 <span class="ios-icon" style="color:#007AFF; border:1px solid #007AFF; border-radius:4px; padding:2px 5px; font-size:1.1rem;">⍗</span>「分享」圖示
+        </div>
+        <div class="ios-step">
+            2. 往下滑動選單，點選 <span class="ios-icon" style="color:#333; background:#E5E5EA; border-radius:6px; padding:3px 6px;">➕</span>「<strong>加入主畫面</strong>」
+        </div>
+        
+        <div style="font-size:2rem; margin-top:20px; animation: slideInUp 1s infinite alternate;">⬇️</div>
+    </div>
+</div>
+
 <script>
     // --- 共用 Helpers ---
     const el = id => document.getElementById(id);
@@ -366,31 +390,71 @@
             if (touchEndX < touchStartX - 40) changeCalendarMonth(1); 
             if (touchEndX > touchStartX + 40) changeCalendarMonth(-1); 
         }, {passive: true});
+
+        // ★ APP 狀態偵測與安裝按鈕邏輯
+        checkInstallStatus();
     });
+
+    // ★ APP 狀態偵測與安裝按鈕邏輯
+    function checkInstallStatus() {
+        // 1. 偵測是否已經是 Standalone (已安裝為 APP)
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        const installContainer = el('installButtonContainer');
+
+        if (isStandalone) {
+            // 如果已經是 APP 模式，直接隱藏安裝按鈕
+            installContainer.style.display = 'none';
+        } else {
+            // 2. 偵測是否為 iOS 設備
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+            if (isIOS) {
+                // iOS 專屬邏輯：顯示按鈕，點擊後彈出教學視窗
+                installContainer.style.display = 'block';
+                el('btnInstall').addEventListener('click', () => {
+                    triggerVibrate();
+                    el('iosInstallOverlay').style.display = 'flex';
+                });
+            } else {
+                // Android 邏輯：等待 beforeinstallprompt 事件觸發才顯示原生安裝
+                window.addEventListener('beforeinstallprompt', e => {
+                    e.preventDefault();
+                    deferredPrompt = e;
+                    installContainer.style.display = 'block';
+                });
+
+                el('btnInstall').addEventListener('click', () => {
+                    triggerVibrate();
+                    if (!deferredPrompt) return;
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then(c => {
+                        if (c.outcome === 'accepted') {
+                            installContainer.style.display = 'none';
+                        }
+                        deferredPrompt = null;
+                    });
+                });
+            }
+        }
+    }
 
     // ★ 升級版的自動推算引擎 (固定假日無上限，變動假日建檔至2036)
     function ensureHolidaysForYear(y) {
-        // 放寬年份限制，讓固定假日可以無限期延伸
         if (y < 2026) return; 
-        
-        // ★ 判斷基準：如果該年元旦已經存在，代表系統已經自動生成過了，直接跳過，不再重複提醒
         if (appSettings.holidays[`${y}-01-01`]) return;
 
         let newH = {};
         
-        // 1. 先塞入固定國曆假日 (未來不管查到幾年，這5個假日都會自動產生)
         ["01-01:元旦", "02-28:和平紀念日", "04-04:兒童節", "05-01:勞動節", "10-10:國慶日"].forEach(item => {
             let p = item.split(":"); 
             if (!appSettings.holidays[`${y}-${p[0]}`]) newH[`${y}-${p[0]}`] = p[1];
         });
 
-        // ★ 聰明偵測：檢查您是否已經「提前手動加好」該年的春節、端午或中秋
         let userAlreadySet = Object.keys(appSettings.holidays).some(k => 
             k.startsWith(y + "-") && (appSettings.holidays[k].includes("春節") || appSettings.holidays[k].includes("端午") || appSettings.holidays[k].includes("中秋"))
         );
 
         if (!userAlreadySet) {
-            // 2. 自動展開變動的農曆與節氣假日 (內建2026~2050年)
             const vData = {
                 2026: { l: "02-17", q: "04-05", d: "06-19", m: "09-25" },
                 2027: { l: "02-06", q: "04-05", d: "06-09", m: "09-15" },
@@ -422,11 +486,9 @@
             let vYearData = vData[y];
             let isFallback = false;
 
-            // ★ 新增：2051年以後，自動往回找前一年的日期作為暫存範本
             if (!vYearData && y > 2050) {
                 isFallback = true;
                 let prevL = null, prevQ = null, prevD = null, prevM = null;
-                // 掃描前一年的所有假日紀錄
                 for (const [dateStr, name] of Object.entries(appSettings.holidays)) {
                     if (dateStr.startsWith((y - 1) + "-")) {
                         let md = dateStr.substring(5);
@@ -445,18 +507,15 @@
             }
 
             if (vYearData) {
-                // 解析該年度正月初一
                 let lParts = vYearData.l.split('-');
                 let lDate = new Date(y, parseInt(lParts[0]) - 1, parseInt(lParts[1]));
                 let suffix = isFallback ? "(待確認)" : "";
                 
-                // 自動推算 小年夜(-2), 除夕(-1), 春節(0), 初二(+1), 初三(+2)
                 [[-2, `小年夜${suffix}`], [-1, `除夕${suffix}`], [0, `春節${suffix}`], [1, `初二${suffix}`], [2, `初三${suffix}`]].forEach(o => {
                     let d = new Date(lDate); d.setDate(lDate.getDate() + o[0]);
                     newH[formatDateToYYYYMMDD(d)] = o[1];
                 });
                 
-                // 處理清明節 (如果剛好跟兒童節同一天，就合併顯示)
                 let qStr = `${y}-${vYearData.q}`;
                 newH[qStr] = newH[qStr] ? newH[qStr] + `/清明節${suffix}` : `清明節${suffix}`;
                 
@@ -464,7 +523,6 @@
                 newH[`${y}-${vYearData.m}`] = `中秋節${suffix}`;
             }
             
-            // ★ 新增：如果是沿用舊年份的日期，跳出警告視窗
             if (isFallback) {
                 setTimeout(() => {
                     alert(`⚠️ 系統提示\n\n${y} 年的農曆變動假日（春節、清明、端午、中秋）已自動沿用前一年的日期，並標註為「(待確認)」。\n\n因為農曆每年不同，請務必至「系統設定 -> 國定假日管理」修正為 ${y} 年正確的日期！`);
@@ -472,11 +530,9 @@
             }
         }
         
-        // 儲存進系統
         Object.assign(appSettings.holidays, newH);
         localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
         
-        // 如果正好停留在設定頁面，同步更新顯示列表
         if (tempHolidays) Object.assign(tempHolidays, newH);
         if (el("holidayList")) renderHolidayList();
     }
@@ -552,7 +608,6 @@
         const qStr = getVal("queryDate"); if (!qStr) return;
         const targetDate = new Date(qStr.replace(/-/g, '/'));
         
-        // ★ 自動偵測並延展該年度的假日
         ensureHolidaysForYear(targetDate.getFullYear()); 
         
         const dateKey = formatDateToYYYYMMDD(targetDate);
@@ -575,7 +630,6 @@
         });
         el("allTeamsContainer").innerHTML = allTeamsHTML;
 
-        // --- 換班與休息日出勤提醒 ---
         let cReminders = [], rOvertimes = [], isTodayRestOvertime = false;
         let sDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1), eDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 2, 0); 
         for (let d = new Date(sDate); d <= eDate; d.setDate(d.getDate() + 1)) {
@@ -647,7 +701,6 @@
         const y = calendarViewDate.getFullYear();
         const m = calendarViewDate.getMonth();
         
-        // ★ 自動偵測並延展該年度的假日 (支援從月曆滑動到新年份時觸發)
         ensureHolidaysForYear(y);
 
         const days = new Date(y, m + 1, 0).getDate();
@@ -663,7 +716,6 @@
         
         let viewMode = currentMonthViewTeam || appSettings.myTeam;
 
-        // ★ 新增：專門用來產生每一格的輔助函數，支援渲染非本月(透明化)的儲存格
         const renderCell = (iterY, iterM, iterDay, isCurrentMonth) => {
             let iterDate = new Date(iterY, iterM, iterDay);
             let iterStr = formatDateToYYYYMMDD(iterDate);
@@ -671,7 +723,6 @@
             let onClick = hName ? `onclick="showHolidayToast('${iterDate.getMonth()+1}/${iterDate.getDate()}', '${hName.replace(/'/g, "\\'")}')"` : "";
             let isToday = (iterDate.getFullYear() === gDate.getFullYear() && iterDate.getMonth() === gDate.getMonth() && iterDate.getDate() === gDate.getDate());
             
-            // 如果不是這個月的日期，降低透明度，變成淡淡的灰色背景
             let cellStyle = isCurrentMonth ? "" : "opacity: 0.45; background: #F9FAFB;";
             let numColor = isCurrentMonth ? "var(--text-main)" : "#9CA3AF";
             let todayClass = isToday ? "today" : "";
@@ -684,7 +735,6 @@
                     let sTxt = getActualShift(getLogicalShift(id, iterStr)), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
                     let shiftStr = sTxt.replace("班","").replace("調:","✏️");
                     
-                    // ★ 核心變更：加入了專屬的 prefix 和 name 區域類別，確保不論中文字數多少，前面的 D: 永遠對齊
                     return `<span style="background:${s.bg}; color:${s.fg}; border-left:3px solid ${s.fg};"><span class="shift-prefix">${id}:</span><span class="shift-name">${shiftStr}</span></span>`;
                 }).join("") + `</div>`;
             } else {
@@ -695,18 +745,15 @@
             return cellHtml;
         };
 
-        // 1. 補上前一個月的尾巴日期
         for (let i = 0; i < fw; i++) {
             let pDay = prevMonthDays - fw + i + 1;
             html += renderCell(y, m - 1, pDay, false);
         }
         
-        // 2. 當月的正式日期
         for (let day = 1; day <= days; day++) {
             html += renderCell(y, m, day, true);
         }
         
-        // 3. 補上下個月的開頭日期 (填滿剩餘空格)
         let extraCells = (7 - (fw + days) % 7) % 7;
         for (let i = 0; i < extraCells; i++) {
             let nDay = i + 1;
@@ -719,7 +766,6 @@
     let toastTimeout;
     function showHolidayToast(d, name) { triggerVibrate(); let t = el("holidayToast"); if(!t) return; t.innerHTML = `📅 <strong>${d}</strong><br>🎈 ${name}`; t.classList.add("show"); clearTimeout(toastTimeout); toastTimeout = setTimeout(() => t.classList.remove("show"), 3000); }
 
-    // --- 設定區塊 ---
     function updateBasePreview() {
         const dVal = getVal("setBaseDate"), rTeam = getVal("setRefTeam"), rShift = parseInt(getVal("setRefShift")) || 0; 
         if (!dVal) return el("basePreview").innerHTML = "請先選擇基準日。";
@@ -837,11 +883,7 @@
         reader.readAsText(file);
     }
 
-    // --- PWA 與更新 ---
     let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; el('installButtonContainer').style.display = 'block'; });
-    el('btnInstall').addEventListener('click', () => { triggerVibrate(); if(!deferredPrompt) return; deferredPrompt.prompt(); deferredPrompt.userChoice.then(c => { if(c.outcome==='accepted') el('installButtonContainer').style.display='none'; deferredPrompt=null; }); });
-    window.addEventListener('appinstalled', () => { deferredPrompt = null; el('installButtonContainer').style.display = 'none'; });
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').then(r => r.update()).catch(console.log)); let refreshing = false; navigator.serviceWorker.addEventListener('controllerchange', () => { if (!refreshing) { refreshing = true; window.location.reload(); } }); }
 </script>
 </body>
