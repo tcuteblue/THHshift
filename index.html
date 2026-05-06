@@ -44,7 +44,6 @@
         h1 { text-align: center; font-size: 1.8rem; margin: 0 0 10px 0; color: var(--primary); line-height: 1.3; }
         .header-controls-container { transition: opacity 0.15s, height 0.15s; overflow: hidden; }
         
-        /* 修改1：強制日期選擇區塊不換行 */
         .date-picker-container { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 5px; flex-wrap: nowrap; overflow-x: auto; }
         input[type="date"], select, input[type="text"], input[type="number"] { padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.1rem; width: 100%; box-sizing: border-box; margin-bottom: 8px; background: #fff; }
         input[type="date"] { margin-bottom: 0; flex: 1 1 auto; text-align: center; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05); min-width: 110px; padding: 10px 4px; }
@@ -127,7 +126,6 @@
             .shift-prefix { flex: 0 0 11px; }
             .shift-name { flex: 0 0 21px; }
             
-            /* 修改1附帶：手機螢幕進一步微調間距，確保整行塞得下 */
             .date-picker-container { gap: 4px; }
             input[type="date"] { padding: 8px 2px; font-size: 1rem; min-width: 105px; }
             .btn-icon { padding: 8px 12px; font-size: 1.1rem; }
@@ -168,36 +166,42 @@
         <div class="card">
             <div class="card-title">
                 <span>👨‍💻 今日班表</span>
-                <select id="viewTeamSelect" onchange="changeViewTeam()" style="position: absolute; right: 0; width: auto; padding: 2px 8px; font-size: 1rem; margin: 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; color: #1E3A8A; font-weight: bold;">
-                    <option value="A">A班</option><option value="B">B班</option><option value="C">C班</option><option value="D">D班</option>
+                <select id="viewTeamSelect" onchange="changeViewTeam()" style="position: absolute; right: 0; width: auto; max-width: 150px; padding: 2px 8px; font-size: 1rem; margin: 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; color: #1E3A8A; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <!-- 動態載入選單選項 -->
                 </select>
             </div>
-            <div class="team-row" style="border: none; padding-bottom: 0; justify-content: space-around;">
+            
+            <!-- 單一班別顯示區塊 -->
+            <div id="singleTeamView" class="team-row" style="border: none; padding-bottom: 0; justify-content: space-around;">
                 <span class="team-name" id="myTeamName" style="font-weight: bold; font-size: 1.3rem;">載入中...</span>
                 <span id="myShiftBadge" class="shift-badge" style="font-size: 1.1rem;">載入中...</span>
             </div>
+            <!-- 全部班別顯示區塊 -->
+            <div id="allTeamsTodayView" style="display: none; margin-top: 5px;"></div>
+
             <div id="holidayConflictContainer" class="conflict-warning" style="display: none; margin-top: 15px; padding: 12px; background: #FEF2F2; border-radius: 8px; border: 2px solid #EF4444; color: #991B1B; font-size: 1.05rem;"></div>
             <div id="restDayReminderContainer" style="display: none; margin-top: 15px; padding: 10px; background: #FEF2F2; border-radius: 8px; border: 1px dashed #FCA5A5; color: #B91C1C; font-size: 1.05rem;"></div>
         </div>
-        <div class="card"><div class="card-title">🛠️ 工作提醒</div><ul class="task-list" id="taskList"></ul></div>
+        <div class="card">
+            <div class="card-title">🛠️ 工作提醒 <span id="taskTeamLabel" style="font-size:0.9rem; color:#4F46E5; margin-left:8px; font-weight:normal;"></span></div>
+            <ul class="task-list" id="taskList"></ul>
+        </div>
         <div id="installButtonContainer" class="install-button-container"><button id="btnInstall" class="btn-install">📥 安裝為手機 APP</button><div class="install-explanation">以便離線使用和更快載入</div></div>
     </div>
 
     <div id="tab2" class="tab-content">
-        <!-- 修改4：將日曆區塊移到上方 -->
         <div class="card">
             <div class="card-title" style="justify-content: flex-start; gap: 8px;">
                 <button type="button" class="btn-icon" style="padding: 2px 10px; font-size: 1rem; box-shadow: none; border: 1px solid var(--border-color); cursor: pointer;" onclick="changeCalendarMonth(-1)">◀</button>
                 <span id="calendarTitle" style="font-size: 1.15rem;">🗓️ 載入中...</span>
                 <button type="button" class="btn-icon" style="padding: 2px 10px; font-size: 1rem; box-shadow: none; border: 1px solid var(--border-color); cursor: pointer;" onclick="changeCalendarMonth(1)">▶</button>
-                <select id="monthViewSelect" onchange="changeMonthViewTeam()" style="position: absolute; right: 0; width: auto; padding: 2px 8px; font-size: 1rem; margin: 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; color: #1E3A8A; font-weight: bold;">
-                    <option value="A">A班</option><option value="B">B班</option><option value="C">C班</option><option value="D">D班</option><option value="ALL">全部</option>
+                <select id="monthViewSelect" onchange="changeMonthViewTeam()" style="position: absolute; right: 0; width: auto; max-width: 120px; padding: 2px 8px; font-size: 1rem; margin: 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; color: #1E3A8A; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <!-- 動態載入選單選項 -->
                 </select>
             </div>
             <div id="monthCalendar" class="cal-grid"></div>
         </div>
         
-        <!-- 修改4：將四班今日班別移到下方 -->
         <div class="card"><div class="card-title">📊 四班今日班別</div><div id="allTeamsContainer"></div></div>
     </div>
 
@@ -380,9 +384,26 @@
     appSettings.baseDate = isNaN(new Date(appSettings.baseDate).getTime()) ? defaultSettings.baseDate : appSettings.baseDate;
     appSettings.myTeam = appSettings.myTeam || "C";
 
+    // 更新下拉選單選項 (包含領班名字)
+    function populateDropdowns() {
+        const vSel = el("viewTeamSelect");
+        const mSel = el("monthViewSelect");
+        const vVal = vSel?.value || currentViewTeam || appSettings.myTeam;
+        const mVal = mSel?.value || currentMonthViewTeam || appSettings.myTeam;
+
+        let optionsHtml = TEAMS.map(t => `<option value="${t}">${t}班 (${appSettings.teams[t]?.name || "未設定"})</option>`).join("");
+        let allOption = `<option value="ALL">全部</option>`;
+
+        if(vSel) { vSel.innerHTML = optionsHtml + allOption; vSel.value = vVal; }
+        if(mSel) { mSel.innerHTML = optionsHtml + allOption; mSel.value = mVal; }
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         isActualMode = appSettings.defaultMode;
         currentViewTeam = currentMonthViewTeam = appSettings.myTeam;
+        
+        populateDropdowns(); // 初始化選單
+        
         setVal("viewTeamSelect", currentViewTeam);
         setVal("monthViewSelect", currentMonthViewTeam);
         el('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
@@ -582,7 +603,6 @@
         return shift;
     }
 
-    // 修改3：修改 getActualShift 以推算前一天的休息日標記 ($)
     function getActualShift(logicalShift, teamId, targetDateStr) {
         if (!logicalShift) return "早班1"; 
         if (!isActualMode) return logicalShift; 
@@ -595,7 +615,6 @@
 
         if (comp === "小休") {
             resultCore = (isOverride ? "調:" : "") + "晚班1";
-            // 實際出勤的「晚班1」：需要去查明天標準班表是不是「$晚班1」
             if (teamId && targetDateStr) {
                 let tDate = new Date(targetDateStr.replace(/-/g, '/'));
                 tDate.setDate(tDate.getDate() + 1);
@@ -607,7 +626,7 @@
         }
         else if (comp === "晚班1") {
             resultCore = (isOverride ? "調:" : "") + "晚班2";
-            isOvertime = false; // 晚班2 不帶 $, 因為 $ 屬於前一天的晚班1
+            isOvertime = false; 
         }
         else if (comp === "晚班2") {
             resultCore = (isOverride ? "調:" : "") + "小休";
@@ -640,24 +659,49 @@
         if (appSettings.holidays?.[dateKey]) dayText += ` <span style="color:#DC2626; font-size:1.1rem; margin-left:8px;">🎈 ${appSettings.holidays[dateKey]}</span>`;
         el("dayOfWeekDisplay").innerHTML = dayText;
 
-        let myTeamId = currentViewTeam || appSettings.myTeam, myShiftText = "", allTeamsHTML = "";
+        // 計算視角班別，如果是 "ALL"，則使用預設班別來計算提醒
+        let viewTeamId = currentViewTeam || appSettings.myTeam;
+        let isAllView = viewTeamId === "ALL";
+        let calcTeamId = isAllView ? appSettings.myTeam : viewTeamId;
+        
+        let myShiftTextForCalc = ""; 
+        let allTeamsHTML = "";
         
         TEAMS.forEach(id => {
             let shiftText = getActualShift(getLogicalShift(id, dateKey), id, dateKey);
-            if (id === myTeamId) {
-                myShiftText = shiftText;
-                el("myTeamName").innerText = `${id}班 (${appSettings.teams[id]?.name || "未知"})`;
+            
+            if (id === calcTeamId) {
+                myShiftTextForCalc = shiftText; // 紀錄給提醒、工作列表用
+            }
+            
+            // 處理單一班別顯示邏輯
+            if (!isAllView && id === viewTeamId) {
+                el("myTeamName").innerText = `${id}班 (${appSettings.teams[id]?.name || "未設定"})`;
                 el("myShiftBadge").innerText = shiftText.replace("調:", ""); 
                 el("myShiftBadge").className = `shift-badge ${getBadgeClass(shiftText)}`;
             }
+            
+            // 處理全部班別 HTML
             allTeamsHTML += `<div class="team-row"><span class="team-name">${id}班 (${appSettings.teams[id]?.name || ""})</span><span class="shift-badge ${getBadgeClass(shiftText)}">${shiftText.replace("調:", "")}</span></div>`;
         });
-        el("allTeamsContainer").innerHTML = allTeamsHTML;
+        
+        el("allTeamsContainer").innerHTML = allTeamsHTML; // 同步更新下方總覽
 
+        // 切換 UI 顯示模式 (單一 / 全部)
+        if (isAllView) {
+            el("singleTeamView").style.display = "none";
+            el("allTeamsTodayView").innerHTML = allTeamsHTML;
+            el("allTeamsTodayView").style.display = "block";
+        } else {
+            el("singleTeamView").style.display = "flex";
+            el("allTeamsTodayView").style.display = "none";
+        }
+
+        // --- 提醒與工作顯示 (使用 calcTeamId，即退回預設個人班別) ---
         let cReminders = [], rOvertimes = [], isTodayRestOvertime = false;
         let sDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1), eDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 2, 0); 
         for (let d = new Date(sDate); d <= eDate; d.setDate(d.getDate() + 1)) {
-            let k = formatDateToYYYYMMDD(d), lShift = getLogicalShift(myTeamId, k);
+            let k = formatDateToYYYYMMDD(d), lShift = getLogicalShift(calcTeamId, k);
             if (lShift?.startsWith("$") && appSettings.holidays?.[k] && d >= targetDate) cReminders.push(`${d.getMonth()+1}/${d.getDate()} (${appSettings.holidays[k]})`);
         }
         
@@ -665,19 +709,22 @@
         let cycStart = new Date(cY, dNum >= 16 ? cM : cM - 1, 16), cycEnd = new Date(cY, dNum >= 16 ? cM + 1 : cM, 15);
         for (let d = new Date(cycStart); d <= cycEnd; d.setDate(d.getDate() + 1)) {
             let k = formatDateToYYYYMMDD(d);
-            if (getLogicalShift(myTeamId, k)?.startsWith("$")) {
+            if (getLogicalShift(calcTeamId, k)?.startsWith("$")) {
                 rOvertimes.push(`${d.getMonth()+1}/${d.getDate()}`);
                 if (k === dateKey) isTodayRestOvertime = true;
             }
         }
 
         const cEl = el("holidayConflictContainer"), rEl = el("restDayReminderContainer");
-        if (cReminders.length) { cEl.innerHTML = `<div style="font-weight:bold; color:#B91C1C;">🚨 換班提醒：休息日出勤遇國定假日！</div><ul style="margin:0; padding-left:22px; font-weight:bold;">${cReminders.map(c=>`<li>${c}，請記得換班。</li>`).join("")}</ul>`; cEl.style.display = "block"; } else cEl.style.display = "none";
+        let prefix = isAllView ? `[${calcTeamId}班] ` : ""; // 加上標籤提醒使用者目前是誰的提醒
         
-        // 修改2：文字微調為「本週期的休息日出勤：」
-        if (rOvertimes.length) { rEl.innerHTML = `${isTodayRestOvertime ? `<div style="font-size:1.15rem; font-weight:bold; margin-bottom:8px; border-bottom:1px solid #FCA5A5; padding-bottom:5px;">🚨 今日為休息日出勤！</div>` : ""}<strong>⚠️ 休息日出勤提醒</strong><br><span style="font-size:0.95rem; color:#DC2626;">(結算週期: ${cycStart.getMonth()+1}/16 ~ ${cycEnd.getMonth()+1}/15)</span><br>本週期的休息日出勤：${rOvertimes.join(", ")}<div style="margin-top:8px; font-size:1rem; font-weight:bold; color:#991B1B;">💡 休息日出勤若請假，請記得調整。</div>`; rEl.style.display = "block"; } else rEl.style.display = "none";
+        if (cReminders.length) { cEl.innerHTML = `<div style="font-weight:bold; color:#B91C1C;">🚨 ${prefix}換班提醒：休息日出勤遇國定假日！</div><ul style="margin:0; padding-left:22px; font-weight:bold;">${cReminders.map(c=>`<li>${c}，請記得換班。</li>`).join("")}</ul>`; cEl.style.display = "block"; } else cEl.style.display = "none";
+        
+        if (rOvertimes.length) { rEl.innerHTML = `${isTodayRestOvertime ? `<div style="font-size:1.15rem; font-weight:bold; margin-bottom:8px; border-bottom:1px solid #FCA5A5; padding-bottom:5px;">🚨 今日為休息日出勤！</div>` : ""}<strong>⚠️ ${prefix}休息日出勤提醒</strong><br><span style="font-size:0.95rem; color:#DC2626;">(結算週期: ${cycStart.getMonth()+1}/16 ~ ${cycEnd.getMonth()+1}/15)</span><br>本週期的休息日出勤：${rOvertimes.join(", ")}<div style="margin-top:8px; font-size:1rem; font-weight:bold; color:#991B1B;">💡 休息日出勤若請假，請記得調整。</div>`; rEl.style.display = "block"; } else rEl.style.display = "none";
 
-        renderTasks(targetDate, myTeamId, myShiftText); 
+        // 更新工作提醒標題的班別提示
+        el("taskTeamLabel").innerText = isAllView ? `(顯示專屬班別 ${calcTeamId}班)` : "";
+        renderTasks(targetDate, calcTeamId, myShiftTextForCalc); 
         
         calendarViewDate = new Date(targetDate);
         renderMonthTable();
@@ -804,6 +851,9 @@
         setVal("setBaseDate", appSettings.baseDate); setVal("setMyTeam", appSettings.myTeam); setVal("setDefaultMode", appSettings.defaultMode ? "true" : "false");
         setVal("setRefTeam", appSettings.myTeam); setVal("setRefShift", isNaN(appSettings.teams[appSettings.myTeam].offset) ? 0 : appSettings.teams[appSettings.myTeam].offset);
         TEAMS.forEach(t => setVal(`setTeam${t}`, appSettings.teams[t].name || ""));
+        
+        populateDropdowns(); // 確保下拉選單能抓到最新設定的名字
+
         tempHolidays = JSON.parse(JSON.stringify(appSettings.holidays||{})); tempTasks = JSON.parse(JSON.stringify(appSettings.tasks||[])); tempManualShifts = JSON.parse(JSON.stringify(appSettings.manualShifts||{})); 
         updateBasePreview(); cancelEditHoliday(); cancelEditCustomTask(); renderHolidayList(); renderTaskList(); renderManualShiftList();
     }
@@ -834,6 +884,9 @@
         let pos={'C':0,'D':2,'A':4,'B':6}, bPos=pos[getVal("setRefTeam")], rS=parseInt(getVal("setRefShift"))||0;
         TEAMS.forEach(t => { appSettings.teams[t].offset = (rS + (pos[t]-bPos+8)%8)%8; appSettings.teams[t].name = getVal(`setTeam${t}`); });
         appSettings.holidays = JSON.parse(JSON.stringify(tempHolidays)); appSettings.tasks = JSON.parse(JSON.stringify(tempTasks)); appSettings.manualShifts = JSON.parse(JSON.stringify(tempManualShifts)); 
+        
+        populateDropdowns(); // 儲存後立即更新名稱
+
         setVal("viewTeamSelect", currentViewTeam = appSettings.myTeam); setVal("monthViewSelect", currentMonthViewTeam = appSettings.myTeam);
         localStorage.setItem("shiftSettings", JSON.stringify(appSettings)); alert("已儲存！"); renderAppSafe(); switchTab(1); 
     }
@@ -914,5 +967,3 @@
 </script>
 </body>
 </html>
-
-
