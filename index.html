@@ -921,47 +921,6 @@
     function restoreDefaults() { triggerVibrate(); if (confirm("🚨 清除自訂設定？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); setVal("viewTeamSelect", currentViewTeam = appSettings.myTeam); setVal("monthViewSelect", currentMonthViewTeam = appSettings.myTeam); loadSettingsToForm(); renderAppSafe(); alert("已恢復"); switchTab(1); } }
 
     // ==========================================
-    // --- 共用的核心還原與資料合併邏輯 ---
-    // ==========================================
-    function processImportData(importedData, sourceName) {
-        if (importedData && importedData.baseDate && importedData.teams) {
-            // 強制使用台灣時區時間
-            const now = getTWDate();
-            const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-            
-            const mergedHolidays = JSON.parse(JSON.stringify(defaultSettings.holidays)); 
-            if (importedData.holidays) {
-                for (const [dateStr, name] of Object.entries(importedData.holidays)) {
-                    if (new Date(dateStr.replace(/-/g, '/')) >= oneMonthAgo) mergedHolidays[dateStr] = name; 
-                }
-            }
-            importedData.holidays = mergedHolidays;
-
-            const cleanedManualShifts = {};
-            if (importedData.manualShifts) {
-                for (const [key, shift] of Object.entries(importedData.manualShifts)) {
-                    if (new Date(key.split('_')[0].replace(/-/g, '/')) >= oneMonthAgo) cleanedManualShifts[key] = shift;
-                }
-            }
-            importedData.manualShifts = cleanedManualShifts;
-
-            let mergedTasks = JSON.parse(JSON.stringify(defaultTasks)); 
-            if (importedData.tasks && Array.isArray(importedData.tasks)) {
-                importedData.tasks.forEach(impTask => {
-                    if (!defaultTasks.find(dt => dt.id === impTask.id)) mergedTasks.push(impTask);
-                });
-            }
-            importedData.tasks = mergedTasks;
-
-            localStorage.setItem("shiftSettings", JSON.stringify(importedData));
-            alert(`✅ ${sourceName}資料還原成功！(已自動清除過期歷史紀錄)`);
-            window.location.reload();
-        } else { 
-            alert(`❌ ${sourceName}檔案格式不正確，無法還原！`); 
-        }
-    }
-
-    // ==========================================
     // --- 備份與還原共用邏輯 ---
     // ==========================================
     function processImportData(importedData, sourceName) {
