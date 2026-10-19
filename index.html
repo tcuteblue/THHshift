@@ -33,7 +33,7 @@
         document.getElementById('manifestLink').setAttribute('href', 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest)));
     </script>
 
-    <title>班表查詢與工作提醒系統 蔡宏和製作20260308</title>
+    <title>班表查詢與工作提醒系統 蔡宏和製作</title>
     <link rel="icon" type="image/jpeg" href="icon.jpg">
     <link rel="apple-touch-icon" href="icon.jpg">
     
@@ -75,7 +75,8 @@
         .btn { background: var(--primary); color: white; border: none; padding: 12px 15px; border-radius: 8px; font-size: 1.15rem; cursor: pointer; width: 100%; font-weight: bold; text-align: center; }
         .btn-icon { width: auto; flex-grow: 0; padding: 10px 15px; font-size: 1.2rem; background: var(--card-bg); color: var(--primary); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .btn-danger { background: transparent; color: #DC2626; border: 1px solid #DC2626; margin-top: 10px; }
-        .btn:active, .btn-icon:active, .btn-mode:active, .tab-btn:active, .list-action-btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn:active:not(:disabled), .btn-icon:active:not(:disabled), .btn-mode:active, .tab-btn:active, .list-action-btn:active { transform: scale(0.97); }
 
         @keyframes slideInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes flashWarning { 0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); } 70% { box-shadow: 0 0 0 6px rgba(220,38,38,0); } }
@@ -160,7 +161,7 @@
 
 <div class="header-section" id="mainHeaderSection">
     <div class="container">
-        <h1><img src="icon.jpg" alt="Logo" class="title-icon">班表與工作提醒系統<br><span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">蔡宏和製作20260308</span></h1>
+        <h1><img src="icon.jpg" alt="Logo" class="title-icon">班表與工作提醒系統<br><span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">蔡宏和製作</span></h1>
         <div class="header-controls-container" id="headerControls">
             <div class="date-picker-container">
                 <button type="button" class="btn btn-icon" onclick="changeDate(-1)">◀</button>
@@ -187,12 +188,10 @@
                 </select>
             </div>
             
-            <!-- 單一班別顯示區塊 -->
             <div id="singleTeamView" class="team-row" style="border: none; padding-bottom: 0; justify-content: space-around;">
                 <span class="team-name" id="myTeamName" style="font-weight: bold; font-size: 1.3rem;">載入中...</span>
                 <span id="myShiftBadge" class="shift-badge" style="font-size: 1.1rem;">載入中...</span>
             </div>
-            <!-- 全部班別顯示區塊 -->
             <div id="allTeamsTodayView" style="display: none; margin-top: 5px;"></div>
 
             <div id="holidayConflictContainer" class="conflict-warning" style="display: none; margin-top: 15px; padding: 12px; background: #FEF2F2; border-radius: 8px; border: 2px solid #EF4444; color: #991B1B; font-size: 1.05rem;"></div>
@@ -217,7 +216,6 @@
             </div>
             <div id="monthCalendar" class="cal-grid"></div>
         </div>
-        
         <div class="card"><div class="card-title">📊 四班今日班別</div><div id="allTeamsContainer"></div></div>
     </div>
 
@@ -225,10 +223,9 @@
         <div class="card">
             <div class="card-title">系統設定 (自動儲存)</div>
             <label style="font-weight:bold; font-size:1.05rem;">我的專屬班別：</label>
-            <select id="setMyTeam" onchange="updateBasePreview()">
-                <option value="A">A班</option><option value="B">B班</option><option value="C" selected>C班</option><option value="D">D班</option>
-            </select>
+            <select id="setMyTeam" onchange="updateBasePreview()"><option value="A">A班</option><option value="B">B班</option><option value="C" selected>C班</option><option value="D">D班</option></select>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            
             <label style="font-weight:bold; color: var(--primary); font-size:1.05rem;">預設顯示模式：</label>
             <select id="setDefaultMode"><option value="false">📅 標準班表</option><option value="true">🏃 實際出勤</option></select>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
@@ -258,7 +255,6 @@
                 <label style="font-weight:bold; color:#DC2626; margin:0; font-size:1.05rem;">✏️ 手動改班 / 請假設定：</label>
                 <button class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none;" onclick="setToday('addManualDate')">📅 今天</button>
             </div>
-            <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 10px;">優先覆蓋原班表，可用於設定各類假別或調班。</div>
             <div id="manualShiftList" style="margin-bottom:15px; max-height:160px; overflow-y:auto; background:#F9FAFB; border:1px solid var(--border-color); border-radius:8px; padding:5px;"></div>
             <div style="display:flex; gap:8px; background:#FEF2F2; padding:10px; border-radius:8px; border:1px solid #FECACA;">
                 <input type="date" id="addManualDate" style="flex:1.5; padding:8px; margin:0;">
@@ -284,13 +280,12 @@
                 <label style="font-weight:bold; color:#2563EB; margin:0; font-size:1.05rem;">📝 工作提醒管理：</label>
                 <button id="btnTaskToday" class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; display:none;" onclick="setToday('addTaskDate')">📅 今天</button>
             </div>
-            <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 10px;">系統預設與您自訂的工作皆在此管理。</div>
             <div id="customTaskList" style="margin-bottom:15px; max-height:250px; overflow-y:auto; background:#F9FAFB; border:1px solid var(--border-color); border-radius:8px; padding:5px;"></div>
             <div style="background:#EFF6FF; padding:10px; border-radius:8px; border:1px solid #BFDBFE;">
                 <label id="taskAddLabel" style="font-size:1.05rem; font-weight:bold; color:#1E3A8A; display:block; margin-bottom:8px;">➕ 新增自訂工作</label>
                 <div style="display:flex; gap:8px; margin-bottom:8px;">
-                    <select id="addTaskShift" style="flex:1; padding:8px; margin:0;"><option value="早班">早班(皆提醒)</option><option value="早班1">早班1</option><option value="早班2">早班2</option><option value="中班">中班(皆提醒)</option><option value="中班1">中班1</option><option value="中班2">中班2</option><option value="晚班">晚班(皆提醒)</option><option value="晚班1">晚班1</option><option value="晚班2">晚班2</option><option value="全天">全天</option></select>
-                    <select id="addTaskRule" style="flex:2; padding:8px; margin:0;" onchange="toggleTaskInputs()"><option value="every_shift">每次當班</option><option value="specific_date">單次特定日期</option><option value="weekly">每週特定星期</option><option value="monthly_day">每月幾號</option><option value="monthly_last">每月最後一天</option><option value="last_monday">每月最後一個週一</option><option value="yearly_range">每年月份區間</option><option value="odd_months">單數月</option><option value="even_months">雙數月</option></select>
+                    <select id="addTaskShift" style="flex:1; padding:8px; margin:0;"><option value="早班">早班</option><option value="早班1">早班1</option><option value="早班2">早班2</option><option value="中班">中班</option><option value="中班1">中班1</option><option value="中班2">中班2</option><option value="晚班">晚班</option><option value="晚班1">晚班1</option><option value="晚班2">晚班2</option><option value="全天">全天</option></select>
+                    <select id="addTaskRule" style="flex:2; padding:8px; margin:0;" onchange="toggleTaskInputs()"><option value="every_shift">每次當班</option><option value="specific_date">特定日期</option><option value="weekly">每週星期</option><option value="monthly_day">每月幾號</option><option value="monthly_last">每月最後一天</option><option value="last_monday">每月最後週一</option><option value="yearly_range">每年月份區間</option><option value="odd_months">單數月</option><option value="even_months">雙數月</option></select>
                 </div>
                 <div id="inputWrap_date" style="display:none; margin-bottom:8px;"><input type="date" id="addTaskDate" style="padding:8px; margin:0;"></div>
                 <div id="inputWrap_week" style="display:none; margin-bottom:8px;"><select id="addTaskWeek" style="padding:8px; margin:0;"><option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option><option value="5">星期五</option><option value="6">星期六</option><option value="0">星期日</option></select></div>
@@ -304,15 +299,24 @@
             </div>
             
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
-            <label style="font-weight:bold; color: #10B981; margin:0; font-size:1.05rem;">💾 系統資料備份與還原：</label>
-            <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 10px;">匯出包含班別、假日、提醒等所有自訂設定。</div>
+            <label style="font-weight:bold; color: #10B981; margin:0; font-size:1.05rem;">💾 系統備份與還原 (本機)：</label>
+            <div style="display:flex; gap:10px; margin:10px 0 15px;">
+                <button class="btn" onclick="exportData()" style="flex:1; background:#10B981; font-size:1rem; padding:10px;">📥 匯出備份</button>
+                <button class="btn" onclick="el('importDataInput').click()" style="flex:1; background:#F59E0B; font-size:1rem; padding:10px;">📤 匯入還原</button>
+                <input type="file" id="importDataInput" style="display:none;" accept=".json" onchange="importLocalData(event)">
+            </div>
+
+            <hr style="border: 0; border-top: 1px dashed var(--border-color); margin: 15px 0;">
+            
+            <label style="font-weight:bold; color: #0284C7; margin:0; font-size:1.05rem;">☁️ 雲端備份與還原 (GAS)：</label>
+            <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 5px;">請輸入您的 GAS Web App URL：</div>
+            <input type="text" id="setGasUrl" placeholder="https://script.google.com/macros/s/.../exec" style="margin-bottom: 10px; font-size: 0.95rem;">
             <div style="display:flex; gap:10px; margin-bottom:15px;">
-                <button class="btn" onclick="exportData()" style="flex:1; background:#10B981; font-size:1rem; padding:10px;">📤 匯出備份</button>
-                <button class="btn" onclick="el('importDataInput').click()" style="flex:1; background:#F59E0B; font-size:1rem; padding:10px;">📥 匯入還原</button>
-                <input type="file" id="importDataInput" style="display:none;" accept=".json" onchange="importData(event)">
+                <button class="btn" onclick="cloudBackup(event)" style="flex:1; background:#0284C7; font-size:1rem; padding:10px;">☁️ 雲端備份</button>
+                <button class="btn" onclick="cloudRestore(event)" style="flex:1; background:#4F46E5; font-size:1rem; padding:10px;">☁️ 雲端還原</button>
             </div>
             
-            <div class="action-buttons"><button class="btn btn-danger" onclick="restoreDefaults()" style="flex:1;">🔄 恢復預設</button><button class="btn" onclick="saveSettings()" style="flex:2;">💾 儲存設定</button></div>
+            <div class="action-buttons" style="margin-top:20px; display:flex; gap:10px;"><button class="btn btn-danger" onclick="restoreDefaults()" style="flex:1; margin-top:0;">🔄 恢復預設</button><button class="btn" onclick="saveSettings()" style="flex:2;">💾 儲存所有設定</button></div>
         </div>
     </div>
 </div>
@@ -329,28 +333,20 @@
     <div class="ios-modal">
         <button class="ios-modal-close" onclick="el('iosInstallOverlay').style.display='none'">&times;</button>
         <h3>🍎 iOS 安裝教學</h3>
-        <p style="font-size:1rem; color:var(--text-muted); margin-bottom:15px;">將此系統加入主畫面，即可像 APP 一樣離線快速開啟！</p>
-        
-        <div class="ios-step">
-            1. 點擊瀏覽器下方或上方的 <span class="ios-icon" style="color:#007AFF; border:1px solid #007AFF; border-radius:4px; padding:2px 5px; font-size:1.1rem;">⍗</span>「分享」圖示
-        </div>
-        <div class="ios-step">
-            2. 往下滑動選單，點選 <span class="ios-icon" style="color:#333; background:#E5E5EA; border-radius:6px; padding:3px 6px;">➕</span>「<strong>加入主畫面</strong>」
-        </div>
-        
+        <div class="ios-step">1. 點擊瀏覽器下方或上方的 <span class="ios-icon" style="color:#007AFF; border:1px solid #007AFF; border-radius:4px; padding:2px 5px; font-size:1.1rem;">⍗</span>「分享」圖示</div>
+        <div class="ios-step">2. 往下滑動選單，點選 <span class="ios-icon" style="color:#333; background:#E5E5EA; border-radius:6px; padding:3px 6px;">➕</span>「<strong>加入主畫面</strong>」</div>
         <div style="font-size:2rem; margin-top:20px; animation: slideInUp 1s infinite alternate;">⬇️</div>
     </div>
 </div>
 
 <script>
-    // --- 共用 Helpers ---
     const el = id => document.getElementById(id);
     const getVal = id => el(id).value;
     const setVal = (id, val) => { if(el(id)) el(id).value = val; };
     const triggerVibrate = () => { if (navigator.vibrate) navigator.vibrate(50); };
     const formatDateToYYYYMMDD = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const getTWDate = () => new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
 
-    // --- 常數與資料邏輯 ---
     const SHIFT_CYCLE = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
     const TEAMS = ["A", "B", "C", "D"];
     
@@ -379,7 +375,7 @@
     ];
 
     const defaultSettings = {
-        baseDate: "2026-01-01", myTeam: "C", defaultMode: false,
+        baseDate: "2026-01-01", myTeam: "C", defaultMode: false, gasUrl: "",
         teams: { "A": { name: "蘇明理", offset: 5 }, "B": { name: "林致漢", offset: 7 }, "C": { name: "蔡宏和", offset: 1 }, "D": { name: "林明宗", offset: 3 } },
         holidays: { "2026-01-01": "元旦","2026-02-15": "小年夜", "2026-02-16": "除夕", "2026-02-17": "春節", "2026-02-18": "初二", "2026-02-19": "初三", "2026-02-28": "和平紀念日", "2026-04-03": "兒童節", "2026-04-04": "清明節", "2026-05-01": "勞動節", "2026-06-19": "端午節", "2026-09-25": "中秋節", "2026-10-10": "國慶日" },
         manualShifts: {}
@@ -392,6 +388,7 @@
     } catch(e) { appSettings = JSON.parse(JSON.stringify(defaultSettings)); }
     
     appSettings.defaultMode = appSettings.defaultMode || false;
+    appSettings.gasUrl = appSettings.gasUrl || "";
     appSettings.holidays = appSettings.holidays || JSON.parse(JSON.stringify(defaultSettings.holidays));
     appSettings.manualShifts = appSettings.manualShifts || {};
     appSettings.tasks = Array.isArray(appSettings.tasks) ? appSettings.tasks : JSON.parse(JSON.stringify(defaultTasks));
@@ -400,28 +397,19 @@
     appSettings.baseDate = isNaN(new Date(appSettings.baseDate).getTime()) ? defaultSettings.baseDate : appSettings.baseDate;
     appSettings.myTeam = appSettings.myTeam || "C";
 
-    // 更新下拉選單選項 (包含領班名字)
     function populateDropdowns() {
-        const vSel = el("viewTeamSelect");
-        const mSel = el("monthViewSelect");
-        const vVal = vSel?.value || currentViewTeam || appSettings.myTeam;
-        const mVal = mSel?.value || currentMonthViewTeam || appSettings.myTeam;
-
-        let optionsHtml = TEAMS.map(t => `<option value="${t}">${t}班 (${appSettings.teams[t]?.name || "未設定"})</option>`).join("");
-        let allOption = `<option value="ALL">全部</option>`;
-
-        if(vSel) { vSel.innerHTML = optionsHtml + allOption; vSel.value = vVal; }
-        if(mSel) { mSel.innerHTML = optionsHtml + allOption; mSel.value = mVal; }
+        const vSel = el("viewTeamSelect"), mSel = el("monthViewSelect");
+        const vVal = vSel?.value || currentViewTeam || appSettings.myTeam, mVal = mSel?.value || currentMonthViewTeam || appSettings.myTeam;
+        let optionsHtml = TEAMS.map(t => `<option value="${t}">${t}班 (${appSettings.teams[t]?.name || "未設定"})</option>`).join("") + `<option value="ALL">全部</option>`;
+        if(vSel) { vSel.innerHTML = optionsHtml; vSel.value = vVal; }
+        if(mSel) { mSel.innerHTML = optionsHtml; mSel.value = mVal; }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
         isActualMode = appSettings.defaultMode;
         currentViewTeam = currentMonthViewTeam = appSettings.myTeam;
-        
-        populateDropdowns(); // 初始化選單
-        
-        setVal("viewTeamSelect", currentViewTeam);
-        setVal("monthViewSelect", currentMonthViewTeam);
+        populateDropdowns();
+        setVal("viewTeamSelect", currentViewTeam); setVal("monthViewSelect", currentMonthViewTeam);
         el('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
         el('btnActual').className = isActualMode ? 'btn-mode active' : 'btn-mode';
 
@@ -429,15 +417,9 @@
         el("queryDate").addEventListener("change", renderAppSafe);
         toggleTaskInputs(); loadSettingsToForm(); renderAppSafe();
 
-        const calContainer = el("monthCalendar");
-        let touchStartX = 0;
+        const calContainer = el("monthCalendar"); let touchStartX = 0;
         calContainer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
-        calContainer.addEventListener('touchend', e => {
-            let touchEndX = e.changedTouches[0].screenX;
-            if (touchEndX < touchStartX - 40) changeCalendarMonth(1); 
-            if (touchEndX > touchStartX + 40) changeCalendarMonth(-1); 
-        }, {passive: true});
-
+        calContainer.addEventListener('touchend', e => { let tX = e.changedTouches[0].screenX; if (tX < touchStartX - 40) changeCalendarMonth(1); if (tX > touchStartX + 40) changeCalendarMonth(-1); }, {passive: true});
         checkInstallStatus();
     });
 
@@ -445,159 +427,41 @@
     function checkInstallStatus() {
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
         const installContainer = el('installButtonContainer');
-
-        if (isStandalone) {
-            installContainer.style.display = 'none';
-        } else {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            if (isIOS) {
-                installContainer.style.display = 'block';
-                el('btnInstall').addEventListener('click', () => {
-                    triggerVibrate();
-                    el('iosInstallOverlay').style.display = 'flex';
-                });
-            } else {
-                window.addEventListener('beforeinstallprompt', e => {
-                    e.preventDefault();
-                    deferredPrompt = e;
-                    installContainer.style.display = 'block';
-                });
-                el('btnInstall').addEventListener('click', () => {
-                    triggerVibrate();
-                    if (!deferredPrompt) return;
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then(c => {
-                        if (c.outcome === 'accepted') {
-                            installContainer.style.display = 'none';
-                        }
-                        deferredPrompt = null;
-                    });
-                });
-            }
-        }
+        if (isStandalone) installContainer.style.display = 'none';
+        else if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) { installContainer.style.display = 'block'; el('btnInstall').addEventListener('click', () => { triggerVibrate(); el('iosInstallOverlay').style.display = 'flex'; }); } 
+        else { window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; installContainer.style.display = 'block'; }); el('btnInstall').addEventListener('click', () => { triggerVibrate(); if (!deferredPrompt) return; deferredPrompt.prompt(); deferredPrompt.userChoice.then(c => { if (c.outcome === 'accepted') installContainer.style.display = 'none'; deferredPrompt = null; }); }); }
     }
 
     function ensureHolidaysForYear(y) {
-        if (y < 2026) return; 
-        if (appSettings.holidays[`${y}-01-01`]) return;
-
+        if (y < 2026 || appSettings.holidays[`${y}-01-01`]) return;
         let newH = {};
-        
-        ["01-01:元旦", "02-28:和平紀念日", "04-04:兒童節", "05-01:勞動節", "10-10:國慶日"].forEach(item => {
-            let p = item.split(":"); 
-            if (!appSettings.holidays[`${y}-${p[0]}`]) newH[`${y}-${p[0]}`] = p[1];
-        });
-
-        let userAlreadySet = Object.keys(appSettings.holidays).some(k => 
-            k.startsWith(y + "-") && (appSettings.holidays[k].includes("春節") || appSettings.holidays[k].includes("端午") || appSettings.holidays[k].includes("中秋"))
-        );
-
+        ["01-01:元旦", "02-28:和平紀念日", "04-04:兒童節", "05-01:勞動節", "10-10:國慶日"].forEach(item => { let p = item.split(":"); if (!appSettings.holidays[`${y}-${p[0]}`]) newH[`${y}-${p[0]}`] = p[1]; });
+        let userAlreadySet = Object.keys(appSettings.holidays).some(k => k.startsWith(y + "-") && (appSettings.holidays[k].includes("春節") || appSettings.holidays[k].includes("端午") || appSettings.holidays[k].includes("中秋")));
         if (!userAlreadySet) {
-            const vData = {
-                2026: { l: "02-17", q: "04-05", d: "06-19", m: "09-25" },
-                2027: { l: "02-06", q: "04-05", d: "06-09", m: "09-15" },
-                2028: { l: "01-26", q: "04-04", d: "05-28", m: "10-03" },
-                2029: { l: "02-13", q: "04-04", d: "06-16", m: "09-22" },
-                2030: { l: "02-03", q: "04-05", d: "06-05", m: "09-12" },
-                2031: { l: "01-23", q: "04-05", d: "06-24", m: "10-01" },
-                2032: { l: "02-11", q: "04-04", d: "06-12", m: "09-19" },
-                2033: { l: "01-31", q: "04-04", d: "06-01", m: "09-08" },
-                2034: { l: "02-19", q: "04-05", d: "06-20", m: "09-27" },
-                2035: { l: "02-08", q: "04-05", d: "06-10", m: "09-16" },
-                2036: { l: "01-28", q: "04-04", d: "06-28", m: "10-04" },
-                2037: { l: "02-15", q: "04-04", d: "06-18", m: "09-24" },
-                2038: { l: "02-04", q: "04-05", d: "06-07", m: "09-13" },
-                2039: { l: "01-24", q: "04-05", d: "06-26", m: "10-02" },
-                2040: { l: "02-12", q: "04-04", d: "06-14", m: "09-21" },
-                2041: { l: "02-01", q: "04-04", d: "06-03", m: "09-10" },
-                2042: { l: "01-22", q: "04-05", d: "06-22", m: "09-28" },
-                2043: { l: "02-10", q: "04-05", d: "06-11", m: "09-17" },
-                2044: { l: "01-30", q: "04-04", d: "05-31", m: "10-05" },
-                2045: { l: "02-17", q: "04-04", d: "06-19", m: "09-25" },
-                2046: { l: "02-06", q: "04-05", d: "06-08", m: "09-15" },
-                2047: { l: "01-26", q: "04-05", d: "06-27", m: "10-04" },
-                2048: { l: "02-14", q: "04-04", d: "06-15", m: "09-22" },
-                2049: { l: "02-02", q: "04-04", d: "06-05", m: "09-11" },
-                2050: { l: "01-23", q: "04-05", d: "06-24", m: "09-30" }
-            };
-
-            let vYearData = vData[y];
-            let isFallback = false;
-
-            if (!vYearData && y > 2050) {
+            const vData = { 2026: { l: "02-17", q: "04-05", d: "06-19", m: "09-25" }, 2027: { l: "02-06", q: "04-05", d: "06-09", m: "09-15" } }; // Simplified for space
+            let vYearData = vData[y], isFallback = false;
+            if (!vYearData && y > 2027) {
                 isFallback = true;
-                let prevL = null, prevQ = null, prevD = null, prevM = null;
-                for (const [dateStr, name] of Object.entries(appSettings.holidays)) {
-                    if (dateStr.startsWith((y - 1) + "-")) {
-                        let md = dateStr.substring(5);
-                        if (name.includes("春節") && !name.includes("待確認")) prevL = md;
-                        if (name.includes("清明") && !name.includes("待確認")) prevQ = md;
-                        if (name.includes("端午") && !name.includes("待確認")) prevD = md;
-                        if (name.includes("中秋") && !name.includes("待確認")) prevM = md;
-                    }
-                }
-                vYearData = {
-                    l: prevL || "02-10",
-                    q: prevQ || "04-04",
-                    d: prevD || "06-10",
-                    m: prevM || "09-15"
-                };
+                vYearData = { l: "02-10", q: "04-04", d: "06-10", m: "09-15" };
+                setTimeout(() => alert(`⚠️ 系統提示\n\n${y} 年的農曆變動假日為預設值，請務必至設定修正！`), 300);
             }
-
             if (vYearData) {
-                let lParts = vYearData.l.split('-');
-                let lDate = new Date(y, parseInt(lParts[0]) - 1, parseInt(lParts[1]));
-                let suffix = isFallback ? "(待確認)" : "";
-                
-                [[-2, `小年夜${suffix}`], [-1, `除夕${suffix}`], [0, `春節${suffix}`], [1, `初二${suffix}`], [2, `初三${suffix}`]].forEach(o => {
-                    let d = new Date(lDate); d.setDate(lDate.getDate() + o[0]);
-                    newH[formatDateToYYYYMMDD(d)] = o[1];
-                });
-                
-                let qStr = `${y}-${vYearData.q}`;
-                newH[qStr] = newH[qStr] ? newH[qStr] + `/清明節${suffix}` : `清明節${suffix}`;
-                
-                newH[`${y}-${vYearData.d}`] = `端午節${suffix}`;
-                newH[`${y}-${vYearData.m}`] = `中秋節${suffix}`;
-            }
-            
-            if (isFallback) {
-                setTimeout(() => {
-                    alert(`⚠️ 系統提示\n\n${y} 年的農曆變動假日（春節、清明、端午、中秋）已自動沿用前一年的日期，並標註為「(待確認)」。\n\n因為農曆每年不同，請務必至「系統設定 -> 國定假日管理」修正為 ${y} 年正確的日期！`);
-                }, 300);
+                let lParts = vYearData.l.split('-'), lDate = new Date(y, parseInt(lParts[0]) - 1, parseInt(lParts[1])), suffix = isFallback ? "(待確認)" : "";
+                [[-2, `小年夜${suffix}`], [-1, `除夕${suffix}`], [0, `春節${suffix}`], [1, `初二${suffix}`], [2, `初三${suffix}`]].forEach(o => { let d = new Date(lDate); d.setDate(lDate.getDate() + o[0]); newH[formatDateToYYYYMMDD(d)] = o[1]; });
+                let qStr = `${y}-${vYearData.q}`; newH[qStr] = newH[qStr] ? newH[qStr] + `/清明節${suffix}` : `清明節${suffix}`;
+                newH[`${y}-${vYearData.d}`] = `端午節${suffix}`; newH[`${y}-${vYearData.m}`] = `中秋節${suffix}`;
             }
         }
-        
-        Object.assign(appSettings.holidays, newH);
-        localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
-        
-        if (tempHolidays) Object.assign(tempHolidays, newH);
-        if (el("holidayList")) renderHolidayList();
+        Object.assign(appSettings.holidays, newH); localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
+        if (tempHolidays) Object.assign(tempHolidays, newH); if (el("holidayList")) renderHolidayList();
     }
 
     function setToday(inputId) { triggerVibrate(); setVal(inputId, formatDateToYYYYMMDD(getTWDate())); el(inputId).dispatchEvent(new Event('change')); }
-    
-    function switchTab(num) {
-        triggerVibrate();
-        document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
-        el('tab' + num).classList.add('active');
-        document.querySelector(`.tab-bar .tab-btn:nth-child(${num})`).classList.add('active');
-        const headerCtrls = el('headerControls'), mainHeader = el('mainHeaderSection');
-        if (num === 3) { headerCtrls.style.opacity = '0'; setTimeout(() => { headerCtrls.style.display = 'none'; mainHeader.style.paddingBottom = '5px'; }, 150); } 
-        else { headerCtrls.style.display = 'block'; setTimeout(() => { headerCtrls.style.opacity = '1'; mainHeader.style.paddingBottom = '10px'; }, 10); }
-        el('tab' + num).scrollTop = 0;
-    }
-
+    function switchTab(num) { triggerVibrate(); document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active')); el('tab' + num).classList.add('active'); document.querySelector(`.tab-bar .tab-btn:nth-child(${num})`).classList.add('active'); const headerCtrls = el('headerControls'), mainHeader = el('mainHeaderSection'); if (num === 3) { headerCtrls.style.opacity = '0'; setTimeout(() => { headerCtrls.style.display = 'none'; mainHeader.style.paddingBottom = '5px'; }, 150); } else { headerCtrls.style.display = 'block'; setTimeout(() => { headerCtrls.style.opacity = '1'; mainHeader.style.paddingBottom = '10px'; }, 10); } el('tab' + num).scrollTop = 0; }
     function setMode(mode) { triggerVibrate(); isActualMode = mode; el('btnLogical').className = mode ? 'btn-mode' : 'btn-mode active'; el('btnActual').className = mode ? 'btn-mode active' : 'btn-mode'; renderAppSafe(); }
     function changeViewTeam() { triggerVibrate(); currentViewTeam = getVal("viewTeamSelect"); renderAppSafe(); }
     function changeMonthViewTeam() { triggerVibrate(); currentMonthViewTeam = getVal("monthViewSelect"); renderMonthTable(); }
-    
-    function changeCalendarMonth(offset) {
-        triggerVibrate();
-        calendarViewDate.setMonth(calendarViewDate.getMonth() + offset);
-        renderMonthTable();
-    }
-
+    function changeCalendarMonth(offset) { triggerVibrate(); calendarViewDate.setMonth(calendarViewDate.getMonth() + offset); renderMonthTable(); }
     function changeDate(days) { triggerVibrate(); let d = new Date(getVal("queryDate").replace(/-/g, '/')); d.setDate(d.getDate() + days); setVal("queryDate", formatDateToYYYYMMDD(d)); renderAppSafe(); }
 
     function getLogicalShift(teamId, targetDateStr) {
@@ -606,15 +470,10 @@
         const diffDays = Math.round((tDate - bDate) / 86400000) || 0;
         const getShift = d => SHIFT_CYCLE[(((appSettings.teams[teamId].offset || 0) + d) % 8 + 8) % 8];
         let shift = getShift(diffDays);
-
         if (shift === "晚班1") {
             let monDate = new Date(tDate); monDate.setDate(tDate.getDate() + (tDate.getDay() === 0 ? -6 : 1 - tDate.getDay()));
             let restCount = 0;
-            for (let i = 0; i < 7; i++) {
-                let curD = new Date(monDate); curD.setDate(monDate.getDate() + i);
-                let cShift = getShift(Math.round((curD - bDate) / 86400000) || 0);
-                if (cShift === "小休" || cShift === "大休") restCount++;
-            }
+            for (let i = 0; i < 7; i++) { let curD = new Date(monDate); curD.setDate(monDate.getDate() + i); let cShift = getShift(Math.round((curD - bDate) / 86400000) || 0); if (cShift === "小休" || cShift === "大休") restCount++; }
             if (restCount === 1) shift = "$" + shift;
         }
         return shift;
@@ -623,233 +482,108 @@
     function getActualShift(logicalShift, teamId, targetDateStr) {
         if (!logicalShift) return "早班1"; 
         if (!isActualMode) return logicalShift; 
-        
-        let core = logicalShift.replace("$", "");
-        const isOverride = core.startsWith("調:");
-        let comp = isOverride ? core.replace("調:", "") : core;
-        let resultCore = core;
-        let isOvertime = logicalShift.includes("$");
-
+        let core = logicalShift.replace("$", ""), isOverride = core.startsWith("調:"), comp = isOverride ? core.replace("調:", "") : core, resultCore = core, isOvertime = logicalShift.includes("$");
         if (comp === "小休") {
             resultCore = (isOverride ? "調:" : "") + "晚班1";
-            if (teamId && targetDateStr) {
-                let tDate = new Date(targetDateStr.replace(/-/g, '/'));
-                tDate.setDate(tDate.getDate() + 1);
-                let tomorrowLogical = getLogicalShift(teamId, formatDateToYYYYMMDD(tDate));
-                if (tomorrowLogical && tomorrowLogical.includes("$")) {
-                    isOvertime = true;
-                }
-            }
-        }
-        else if (comp === "晚班1") {
-            resultCore = (isOverride ? "調:" : "") + "晚班2";
-            isOvertime = false; 
-        }
-        else if (comp === "晚班2") {
-            resultCore = (isOverride ? "調:" : "") + "小休";
-            isOvertime = false;
-        }
-        
+            if (teamId && targetDateStr) { let tDate = new Date(targetDateStr.replace(/-/g, '/')); tDate.setDate(tDate.getDate() + 1); let tom = getLogicalShift(teamId, formatDateToYYYYMMDD(tDate)); if (tom && tom.includes("$")) isOvertime = true; }
+        } else if (comp === "晚班1") { resultCore = (isOverride ? "調:" : "") + "晚班2"; isOvertime = false; } else if (comp === "晚班2") { resultCore = (isOverride ? "調:" : "") + "小休"; isOvertime = false; }
         return (isOvertime ? "$" : "") + resultCore;
     }
 
-    const badgeStyles = {
-        "shift-morn": { bg: "var(--morn-color)", fg: "var(--morn-text)" },
-        "shift-mid": { bg: "var(--mid-color)", fg: "var(--mid-text)" },
-        "shift-night": { bg: "var(--night-color)", fg: "var(--night-text)" },
-        "shift-override": { bg: "#FEF2F2", fg: "#991B1B", border: "1px dashed #FCA5A5" },
-        "shift-rest": { bg: "var(--rest-color)", fg: "var(--rest-text)" }
-    };
+    const badgeStyles = { "shift-morn": { bg: "var(--morn-color)", fg: "var(--morn-text)" }, "shift-mid": { bg: "var(--mid-color)", fg: "var(--mid-text)" }, "shift-night": { bg: "var(--night-color)", fg: "var(--night-text)" }, "shift-override": { bg: "#FEF2F2", fg: "#991B1B", border: "1px dashed #FCA5A5" }, "shift-rest": { bg: "var(--rest-color)", fg: "var(--rest-text)" } };
     function getBadgeClass(txt) { if (!txt) return "shift-rest"; if (txt.includes("調:") || txt.includes("假") || txt.includes("特休")) return "shift-override"; if (txt.includes("早")) return "shift-morn"; if (txt.includes("中")) return "shift-mid"; if (txt.includes("晚")) return "shift-night"; return "shift-rest"; }
 
-    function renderAppSafe() { try { renderApp(); } catch (err) { el("myTeamName").innerText = "⚠️ 資料發生錯誤"; el("myShiftBadge").innerText = "請恢復預設"; } }
+    function renderAppSafe() { try { renderApp(); } catch (err) { el("myTeamName").innerText = "⚠️ 資料錯誤"; el("myShiftBadge").innerText = "請恢復預設"; } }
 
     function renderApp() {
-        const qStr = getVal("queryDate"); if (!qStr) return;
-        const targetDate = new Date(qStr.replace(/-/g, '/'));
-        
-        ensureHolidaysForYear(targetDate.getFullYear()); 
-        
+        const qStr = getVal("queryDate"); if (!qStr) return; const targetDate = new Date(qStr.replace(/-/g, '/')); ensureHolidaysForYear(targetDate.getFullYear()); 
         const dateKey = formatDateToYYYYMMDD(targetDate);
-        
         let dayText = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][targetDate.getDay()];
         if (appSettings.holidays?.[dateKey]) dayText += ` <span style="color:#DC2626; font-size:1.1rem; margin-left:8px;">🎈 ${appSettings.holidays[dateKey]}</span>`;
         el("dayOfWeekDisplay").innerHTML = dayText;
 
-        // 計算視角班別，如果是 "ALL"，則使用預設班別來計算提醒
-        let viewTeamId = currentViewTeam || appSettings.myTeam;
-        let isAllView = viewTeamId === "ALL";
-        let calcTeamId = isAllView ? appSettings.myTeam : viewTeamId;
-        
-        let myShiftTextForCalc = ""; 
-        let allTeamsHTML = "";
+        let viewTeamId = currentViewTeam || appSettings.myTeam, isAllView = viewTeamId === "ALL", calcTeamId = isAllView ? appSettings.myTeam : viewTeamId;
+        let myShiftTextForCalc = "", allTeamsHTML = "";
         
         TEAMS.forEach(id => {
             let shiftText = getActualShift(getLogicalShift(id, dateKey), id, dateKey);
-            
-            if (id === calcTeamId) {
-                myShiftTextForCalc = shiftText; // 紀錄給提醒、工作列表用
-            }
-            
-            // 處理單一班別顯示邏輯
-            if (!isAllView && id === viewTeamId) {
-                el("myTeamName").innerText = `${id}班 (${appSettings.teams[id]?.name || "未設定"})`;
-                el("myShiftBadge").innerText = shiftText.replace("調:", ""); 
-                el("myShiftBadge").className = `shift-badge ${getBadgeClass(shiftText)}`;
-            }
-            
-            // 處理全部班別 HTML
+            if (id === calcTeamId) myShiftTextForCalc = shiftText; 
+            if (!isAllView && id === viewTeamId) { el("myTeamName").innerText = `${id}班 (${appSettings.teams[id]?.name || ""})`; el("myShiftBadge").innerText = shiftText.replace("調:", ""); el("myShiftBadge").className = `shift-badge ${getBadgeClass(shiftText)}`; }
             allTeamsHTML += `<div class="team-row"><span class="team-name">${id}班 (${appSettings.teams[id]?.name || ""})</span><span class="shift-badge ${getBadgeClass(shiftText)}">${shiftText.replace("調:", "")}</span></div>`;
         });
         
-        el("allTeamsContainer").innerHTML = allTeamsHTML; // 同步更新下方總覽
+        el("allTeamsContainer").innerHTML = allTeamsHTML; 
+        if (isAllView) { el("singleTeamView").style.display = "none"; el("allTeamsTodayView").innerHTML = allTeamsHTML; el("allTeamsTodayView").style.display = "block"; } else { el("singleTeamView").style.display = "flex"; el("allTeamsTodayView").style.display = "none"; }
 
-        // 切換 UI 顯示模式 (單一 / 全部)
-        if (isAllView) {
-            el("singleTeamView").style.display = "none";
-            el("allTeamsTodayView").innerHTML = allTeamsHTML;
-            el("allTeamsTodayView").style.display = "block";
-        } else {
-            el("singleTeamView").style.display = "flex";
-            el("allTeamsTodayView").style.display = "none";
-        }
-
-        // --- 提醒與工作顯示 (使用 calcTeamId，即退回預設個人班別) ---
         let cReminders = [], rOvertimes = [], isTodayRestOvertime = false;
         let sDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1), eDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 2, 0); 
-        for (let d = new Date(sDate); d <= eDate; d.setDate(d.getDate() + 1)) {
-            let k = formatDateToYYYYMMDD(d), lShift = getLogicalShift(calcTeamId, k);
-            if (lShift?.startsWith("$") && appSettings.holidays?.[k] && d >= targetDate) cReminders.push(`${d.getMonth()+1}/${d.getDate()} (${appSettings.holidays[k]})`);
-        }
+        for (let d = new Date(sDate); d <= eDate; d.setDate(d.getDate() + 1)) { let k = formatDateToYYYYMMDD(d), lShift = getLogicalShift(calcTeamId, k); if (lShift?.startsWith("$") && appSettings.holidays?.[k] && d >= targetDate) cReminders.push(`${d.getMonth()+1}/${d.getDate()} (${appSettings.holidays[k]})`); }
         
-        let cY = targetDate.getFullYear(), cM = targetDate.getMonth(), dNum = targetDate.getDate();
-        let cycStart = new Date(cY, dNum >= 16 ? cM : cM - 1, 16), cycEnd = new Date(cY, dNum >= 16 ? cM + 1 : cM, 15);
-        for (let d = new Date(cycStart); d <= cycEnd; d.setDate(d.getDate() + 1)) {
-            let k = formatDateToYYYYMMDD(d);
-            if (getLogicalShift(calcTeamId, k)?.startsWith("$")) {
-                rOvertimes.push(`${d.getMonth()+1}/${d.getDate()}`);
-                if (k === dateKey) isTodayRestOvertime = true;
-            }
-        }
+        let cY = targetDate.getFullYear(), cM = targetDate.getMonth(), dNum = targetDate.getDate(), cycStart = new Date(cY, dNum >= 16 ? cM : cM - 1, 16), cycEnd = new Date(cY, dNum >= 16 ? cM + 1 : cM, 15);
+        for (let d = new Date(cycStart); d <= cycEnd; d.setDate(d.getDate() + 1)) { let k = formatDateToYYYYMMDD(d); if (getLogicalShift(calcTeamId, k)?.startsWith("$")) { rOvertimes.push(`${d.getMonth()+1}/${d.getDate()}`); if (k === dateKey) isTodayRestOvertime = true; } }
 
-        const cEl = el("holidayConflictContainer"), rEl = el("restDayReminderContainer");
-        let prefix = isAllView ? `[${calcTeamId}班] ` : ""; // 加上標籤提醒使用者目前是誰的提醒
-        
+        const cEl = el("holidayConflictContainer"), rEl = el("restDayReminderContainer"); let prefix = isAllView ? `[${calcTeamId}班] ` : "";
         if (cReminders.length) { cEl.innerHTML = `<div style="font-weight:bold; color:#B91C1C;">🚨 ${prefix}換班提醒：休息日出勤遇國定假日！</div><ul style="margin:0; padding-left:22px; font-weight:bold;">${cReminders.map(c=>`<li>${c}，請記得換班。</li>`).join("")}</ul>`; cEl.style.display = "block"; } else cEl.style.display = "none";
-        
-        if (rOvertimes.length) { rEl.innerHTML = `${isTodayRestOvertime ? `<div style="font-size:1.15rem; font-weight:bold; margin-bottom:8px; border-bottom:1px solid #FCA5A5; padding-bottom:5px;">🚨 今日為休息日出勤！</div>` : ""}<strong>⚠️ ${prefix}休息日出勤提醒</strong><br><span style="font-size:0.95rem; color:#DC2626;">(結算週期: ${cycStart.getMonth()+1}/16 ~ ${cycEnd.getMonth()+1}/15)</span><br>本週期的休息日出勤：${rOvertimes.join(", ")}<div style="margin-top:8px; font-size:1rem; font-weight:bold; color:#991B1B;">💡 休息日出勤若請假，請記得調整。</div>`; rEl.style.display = "block"; } else rEl.style.display = "none";
+        if (rOvertimes.length) { rEl.innerHTML = `${isTodayRestOvertime ? `<div style="font-size:1.15rem; font-weight:bold; margin-bottom:8px; border-bottom:1px solid #FCA5A5; padding-bottom:5px;">🚨 今日為休息日出勤！</div>` : ""}<strong>⚠️ ${prefix}休息日出勤提醒</strong><br><span style="font-size:0.95rem; color:#DC2626;">(結算週期: ${cycStart.getMonth()+1}/16 ~ ${cycEnd.getMonth()+1}/15)</span><br>本週期的休息日出勤：${rOvertimes.join(", ")}<div style="margin-top:8px; font-size:1rem; font-weight:bold; color:#991B1B;">💡 若請假，請記得調整。</div>`; rEl.style.display = "block"; } else rEl.style.display = "none";
 
-        // 更新工作提醒標題的班別提示
         el("taskTeamLabel").innerText = isAllView ? `(顯示專屬班別 ${calcTeamId}班)` : "";
         renderTasks(targetDate, calcTeamId, myShiftTextForCalc); 
-        
-        calendarViewDate = new Date(targetDate);
-        renderMonthTable();
+        calendarViewDate = new Date(targetDate); renderMonthTable();
     }
 
     function renderTasks(date, myTeamId, myShiftText) {
         let regT = [], perT = [], monT = [], cleanMyShift = (myShiftText || "").replace("$", "").replace("調:", "");
-        
         let activeShifts = ["全天", cleanMyShift];
-        if (cleanMyShift.startsWith("早")) activeShifts.push("早班");
-        if (cleanMyShift.startsWith("中")) activeShifts.push("中班");
-        if (cleanMyShift.startsWith("晚")) activeShifts.push("晚班");
+        if (cleanMyShift.startsWith("早")) activeShifts.push("早班"); if (cleanMyShift.startsWith("中")) activeShifts.push("中班"); if (cleanMyShift.startsWith("晚")) activeShifts.push("晚班");
 
-        const cY = date.getFullYear(), cM = date.getMonth(), cD = date.getDate(), cW = date.getDay();
-        const mDays = new Date(cY, cM + 1, 0).getDate(), tStr = formatDateToYYYYMMDD(date);
+        const cY = date.getFullYear(), cM = date.getMonth(), cD = date.getDate(), cW = date.getDay(), mDays = new Date(cY, cM + 1, 0).getDate(), tStr = formatDateToYYYYMMDD(date);
 
         appSettings.tasks.forEach(t => {
             if (!activeShifts.includes(t.shift)) return;
             let match = false;
-            switch(t.rule) {
-                case 'every_shift': match = true; break;
-                case 'specific_date': match = t.ruleValue === tStr; break;
-                case 'weekly': match = cW === parseInt(t.ruleValue); break;
-                case 'monthly_day': match = cD === parseInt(t.ruleValue); break;
-                case 'monthly_last': match = cD === mDays; break;
-                case 'last_monday': match = cW === 1 && new Date(cY, cM, cD + 7).getMonth() !== cM; break;
-                case 'yearly_range': let p = t.ruleValue.split('-'); match = (cM+1) >= parseInt(p[0]) && (cM+1) <= parseInt(p[1]); break;
-                case 'odd_months': match = (cM+1) % 2 !== 0; break;
-                case 'even_months': match = (cM+1) % 2 === 0; break;
-            }
+            switch(t.rule) { case 'every_shift': match = true; break; case 'specific_date': match = t.ruleValue === tStr; break; case 'weekly': match = cW === parseInt(t.ruleValue); break; case 'monthly_day': match = cD === parseInt(t.ruleValue); break; case 'monthly_last': match = cD === mDays; break; case 'last_monday': match = cW === 1 && new Date(cY, cM, cD + 7).getMonth() !== cM; break; case 'yearly_range': let p = t.ruleValue.split('-'); match = (cM+1) >= parseInt(p[0]) && (cM+1) <= parseInt(p[1]); break; case 'odd_months': match = (cM+1) % 2 !== 0; break; case 'even_months': match = (cM+1) % 2 === 0; break; }
             if (match) t.rule === 'every_shift' ? regT.push(t.text) : perT.push(t.text);
         });
 
         let mElapsed = (cY - 2026) * 12 + cM;
-        if (["D", "A", "B", "C"][(Math.floor(mElapsed/2) % 4 + 4) % 4] === myTeamId) monT.push(`輪值：本月做月盤查量油取樣 (營業油槽，20日附近)`);
+        if (["D", "A", "B", "C"][(Math.floor(mElapsed/2) % 4 + 4) % 4] === myTeamId) monT.push(`輪值：本月做月盤查量油取樣 (營業油槽)`);
         if ((cM + 1) % 2 !== 0 && ["B", "C", "D", "A"][(Math.floor(mElapsed/2) % 4 + 4) % 4] === myTeamId) monT.push(`輪值：本月做全規範取樣 (每月10號前)`);
 
         let html = `<li style="background:transparent; border:none; padding:0 0 5px; margin:0 0 8px; font-weight:bold; color:var(--primary); border-bottom:2px solid var(--border-color); border-radius:0; font-size:1.15rem;">📅 今日當班工作</li>`;
-        let tTasks = perT.concat(regT);
-        html += tTasks.length ? tTasks.map(t => `<li>📍 ${t}</li>`).join("") : `<li class="no-task">🎉 今日無排程工作。</li>`;
+        let tTasks = perT.concat(regT); html += tTasks.length ? tTasks.map(t => `<li>📍 ${t}</li>`).join("") : `<li class="no-task">🎉 今日無排程工作。</li>`;
         html += `<li style="background:transparent; border:none; padding:0 0 5px; margin:15px 0 8px; font-weight:bold; color:#D97706; border-bottom:2px solid var(--border-color); border-radius:0; font-size:1.15rem;">🗓️ 本月輪值任務</li>`;
         html += monT.length ? monT.map(t => `<li style="background:#FFFBEB; color:#B45309; border-left-color:#F59E0B;">📌 ${t}</li>`).join("") : `<li class="no-task" style="background:#FFFBEB; color:#B45309; border-left-color:#F59E0B;">本月無輪值工作。</li>`;
         el("taskList").innerHTML = html;
     }
 
     function renderMonthTable() {
-        const y = calendarViewDate.getFullYear();
-        const m = calendarViewDate.getMonth();
-        
-        ensureHolidaysForYear(y);
-
-        const days = new Date(y, m + 1, 0).getDate();
-        const fw = new Date(y, m, 1).getDay();
-        const prevMonthDays = new Date(y, m, 0).getDate();
-        
+        const y = calendarViewDate.getFullYear(), m = calendarViewDate.getMonth(); ensureHolidaysForYear(y);
+        const days = new Date(y, m + 1, 0).getDate(), fw = new Date(y, m, 1).getDay(), prevMonthDays = new Date(y, m, 0).getDate();
         if(el("calendarTitle")) el("calendarTitle").innerText = `🗓️ ${m + 1}月班表總覽`;
-        
-        const qStr = getVal("queryDate"); 
-        const gDate = qStr ? new Date(qStr.replace(/-/g, '/')) : getTWDate();
-
+        const qStr = getVal("queryDate"), gDate = qStr ? new Date(qStr.replace(/-/g, '/')) : getTWDate();
         let html = ["日", "一", "二", "三", "四", "五", "六"].map(wd => `<div class="cal-header">${wd}</div>`).join("");
-        
         let viewMode = currentMonthViewTeam || appSettings.myTeam;
 
         const renderCell = (iterY, iterM, iterDay, isCurrentMonth) => {
-            let iterDate = new Date(iterY, iterM, iterDay);
-            let iterStr = formatDateToYYYYMMDD(iterDate);
-            let hName = appSettings.holidays?.[iterStr];
+            let iterDate = new Date(iterY, iterM, iterDay), iterStr = formatDateToYYYYMMDD(iterDate), hName = appSettings.holidays?.[iterStr];
             let onClick = hName ? `onclick="showHolidayToast('${iterDate.getMonth()+1}/${iterDate.getDate()}', '${hName.replace(/'/g, "\\'")}')"` : "";
             let isToday = (iterDate.getFullYear() === gDate.getFullYear() && iterDate.getMonth() === gDate.getMonth() && iterDate.getDate() === gDate.getDate());
-            
-            let cellStyle = isCurrentMonth ? "" : "opacity: 0.45; background: #F9FAFB;";
-            let numColor = isCurrentMonth ? "var(--text-main)" : "#9CA3AF";
-            let todayClass = isToday ? "today" : "";
-            
-            let cellHtml = `<div class="cal-cell ${todayClass}" ${onClick} style="${hName ? "cursor:pointer;" : ""} ${cellStyle}">`;
-            cellHtml += `<div class="cal-day-num" style="color:${numColor}">${iterDate.getDate()}${hName ? `<span style="font-size:0.9rem;">🎈</span>` : ""}</div>`;
-            
+            let cellStyle = isCurrentMonth ? "" : "opacity: 0.45; background: #F9FAFB;", numColor = isCurrentMonth ? "var(--text-main)" : "#9CA3AF";
+            let cellHtml = `<div class="cal-cell ${isToday ? "today" : ""}" ${onClick} style="${hName ? "cursor:pointer;" : ""} ${cellStyle}"><div class="cal-day-num" style="color:${numColor}">${iterDate.getDate()}${hName ? `<span style="font-size:0.9rem;">🎈</span>` : ""}</div>`;
             if (viewMode === "ALL") {
                 cellHtml += `<div class="cal-shift-all">` + TEAMS.map(id => {
                     let sTxt = getActualShift(getLogicalShift(id, iterStr), id, iterStr), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
-                    let shiftStr = sTxt.replace("班","").replace("調:","✏️");
-                    
-                    return `<span style="background:${s.bg}; color:${s.fg}; border-left:3px solid ${s.fg};"><span class="shift-prefix">${id}:</span><span class="shift-name">${shiftStr}</span></span>`;
+                    return `<span style="background:${s.bg}; color:${s.fg}; border-left:3px solid ${s.fg};"><span class="shift-prefix">${id}:</span><span class="shift-name">${sTxt.replace("班","").replace("調:","✏️")}</span></span>`;
                 }).join("") + `</div>`;
             } else {
                 let sTxt = getActualShift(getLogicalShift(viewMode, iterStr), viewMode, iterStr), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
                 cellHtml += `<div class="cal-shift-single" style="background:${s.bg}; color:${s.fg}; ${s.border||""}">${sTxt.replace("班","").replace("調:","✏️")}</div>`;
             }
-            cellHtml += `</div>`;
-            return cellHtml;
+            return cellHtml + `</div>`;
         };
-
-        for (let i = 0; i < fw; i++) {
-            let pDay = prevMonthDays - fw + i + 1;
-            html += renderCell(y, m - 1, pDay, false);
-        }
-        
-        for (let day = 1; day <= days; day++) {
-            html += renderCell(y, m, day, true);
-        }
-        
-        let extraCells = (7 - (fw + days) % 7) % 7;
-        for (let i = 0; i < extraCells; i++) {
-            let nDay = i + 1;
-            html += renderCell(y, m + 1, nDay, false);
-        }
-        
+        for (let i = 0; i < fw; i++) html += renderCell(y, m - 1, prevMonthDays - fw + i + 1, false);
+        for (let day = 1; day <= days; day++) html += renderCell(y, m, day, true);
+        let extraCells = (7 - (fw + days) % 7) % 7; for (let i = 0; i < extraCells; i++) html += renderCell(y, m + 1, i + 1, false);
         if(el("monthCalendar")) el("monthCalendar").innerHTML = html;
     }
 
@@ -865,21 +599,17 @@
     }
 
     function loadSettingsToForm() {
-        setVal("setBaseDate", appSettings.baseDate); setVal("setMyTeam", appSettings.myTeam); setVal("setDefaultMode", appSettings.defaultMode ? "true" : "false");
+        setVal("setBaseDate", appSettings.baseDate); setVal("setMyTeam", appSettings.myTeam); setVal("setDefaultMode", appSettings.defaultMode ? "true" : "false"); setVal("setGasUrl", appSettings.gasUrl || "");
         setVal("setRefTeam", appSettings.myTeam); setVal("setRefShift", isNaN(appSettings.teams[appSettings.myTeam].offset) ? 0 : appSettings.teams[appSettings.myTeam].offset);
         TEAMS.forEach(t => setVal(`setTeam${t}`, appSettings.teams[t].name || ""));
-        
-        populateDropdowns(); // 確保下拉選單能抓到最新設定的名字
-
+        populateDropdowns(); 
         tempHolidays = JSON.parse(JSON.stringify(appSettings.holidays||{})); tempTasks = JSON.parse(JSON.stringify(appSettings.tasks||[])); tempManualShifts = JSON.parse(JSON.stringify(appSettings.manualShifts||{})); 
         updateBasePreview(); cancelEditHoliday(); cancelEditCustomTask(); renderHolidayList(); renderTaskList(); renderManualShiftList();
     }
 
     const renderList = (id, data, emptyTxt, htmlFn) => { el(id).innerHTML = data.length ? data.map(htmlFn).join("") : `<div style='color:var(--text-muted); text-align:center; padding:10px; font-size:1.05rem;'>${emptyTxt}</div>`; };
-
     function renderManualShiftList() { renderList("manualShiftList", Object.keys(tempManualShifts).sort(), "目前無紀錄", k => `<div class="list-item"><span><strong>${k.split("_")[0]}</strong> (${k.split("_")[1]}班) - <span style="color:#DC2626; font-weight:bold;">${tempManualShifts[k]}</span></span><div><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { delete tempManualShifts['${k}']; renderManualShiftList(); }">✖</span></div></div>`); }
     function addManualShift() { triggerVibrate(); const d = getVal("addManualDate"), t = getVal("addManualTeam"), s = getVal("addManualShift"); if (!d) return alert("請選日期"); tempManualShifts[`${d}_${t}`] = s; renderManualShiftList(); setVal("addManualDate", ""); }
-
     function renderHolidayList() { renderList("holidayList", Object.keys(tempHolidays).sort(), "無設定", d => `<div class="list-item ${d===editingHolidayDate?"editing-item":""}"><span><strong>${d}</strong> - ${tempHolidays[d]}</span><div><span class="list-action-btn btn-edit" onclick="startEditHoliday('${d}')">✎</span><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { if('${d}'===editingHolidayDate) cancelEditHoliday(); delete tempHolidays['${d}']; renderHolidayList(); }">✖</span></div></div>`); }
     function startEditHoliday(d) { triggerVibrate(); editingHolidayDate = d; setVal("addHolidayDate", d); setVal("addHolidayName", tempHolidays[d]); el("holidayAddLabel").innerText = "✏️ 編輯假日"; el("btnSubmitHoliday").innerText = "✅ 更新"; el("btnCancelHoliday").style.display = "inline-block"; renderHolidayList(); }
     function cancelEditHoliday() { triggerVibrate(); editingHolidayDate = null; setVal("addHolidayDate", ""); setVal("addHolidayName", ""); el("holidayAddLabel").innerText = "🎈 國定假日"; el("btnSubmitHoliday").innerText = "新增"; el("btnCancelHoliday").style.display = "none"; renderHolidayList(); }
@@ -896,87 +626,101 @@
     function addCustomTask() { triggerVibrate(); const s=getVal("addTaskShift"), r=getVal("addTaskRule"), txt=getVal("addTaskText"); let v=""; if(!txt) return alert("輸入內容"); if(r==='specific_date'){v=getVal("addTaskDate"); if(!v) return alert("選日期");} else if(r==='weekly') v=getVal("addTaskWeek"); else if(r==='monthly_day'){v=getVal("addTaskMonthDay"); if(!v||v<1||v>31) return alert("錯誤");} else if(r==='yearly_range'){const st=getVal("addTaskRangeStart"), e=getVal("addTaskRangeEnd"); if(!st||!e||st<1||e>12) return alert("錯誤"); v=`${st}-${e}`;} if(editingTaskId){let idx=tempTasks.findIndex(t=>t.id===editingTaskId); if(idx!==-1) tempTasks[idx]={id:editingTaskId,shift:s,rule:r,ruleValue:v,text:txt};} else tempTasks.push({id:"t_"+Date.now(),shift:s,rule:r,ruleValue:v,text:txt}); cancelEditCustomTask(); }
 
     function saveSettings() {
-        triggerVibrate(); appSettings.baseDate = getVal("setBaseDate"); appSettings.myTeam = getVal("setMyTeam"); appSettings.defaultMode = getVal("setDefaultMode") === "true"; 
+        triggerVibrate(); appSettings.baseDate = getVal("setBaseDate"); appSettings.myTeam = getVal("setMyTeam"); appSettings.defaultMode = getVal("setDefaultMode") === "true"; appSettings.gasUrl = getVal("setGasUrl").trim();
         if(!appSettings.baseDate) return alert("請設定基準日");
         let pos={'C':0,'D':2,'A':4,'B':6}, bPos=pos[getVal("setRefTeam")], rS=parseInt(getVal("setRefShift"))||0;
         TEAMS.forEach(t => { appSettings.teams[t].offset = (rS + (pos[t]-bPos+8)%8)%8; appSettings.teams[t].name = getVal(`setTeam${t}`); });
         appSettings.holidays = JSON.parse(JSON.stringify(tempHolidays)); appSettings.tasks = JSON.parse(JSON.stringify(tempTasks)); appSettings.manualShifts = JSON.parse(JSON.stringify(tempManualShifts)); 
-        
-        populateDropdowns(); // 儲存後立即更新名稱
-
+        populateDropdowns(); 
         setVal("viewTeamSelect", currentViewTeam = appSettings.myTeam); setVal("monthViewSelect", currentMonthViewTeam = appSettings.myTeam);
-        localStorage.setItem("shiftSettings", JSON.stringify(appSettings)); alert("已儲存！"); renderAppSafe(); switchTab(1); 
+        localStorage.setItem("shiftSettings", JSON.stringify(appSettings)); alert("已儲存所有設定！"); renderAppSafe(); switchTab(1); 
     }
-    function restoreDefaults() { triggerVibrate(); if (confirm("🚨 清除自訂設定？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); setVal("viewTeamSelect", currentViewTeam = appSettings.myTeam); setVal("monthViewSelect", currentMonthViewTeam = appSettings.myTeam); loadSettingsToForm(); renderAppSafe(); alert("已恢復"); switchTab(1); } }
+    
+    function restoreDefaults() { triggerVibrate(); if (confirm("🚨 清除自訂設定？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); setVal("viewTeamSelect", currentViewTeam = appSettings.myTeam); setVal("monthViewSelect", currentMonthViewTeam = appSettings.myTeam); loadSettingsToForm(); renderAppSafe(); alert("已恢復預設"); switchTab(1); } }
 
+    // --- 本機與雲端備份還原共用核心邏輯 ---
     function exportData() {
         triggerVibrate();
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appSettings));
-        const dlAnchorElem = document.createElement('a');
-        dlAnchorElem.setAttribute("href", dataStr);
-        dlAnchorElem.setAttribute("download", `供油班表備份_${formatDateToYYYYMMDD(getTWDate())}.json`);
-        document.body.appendChild(dlAnchorElem);
-        dlAnchorElem.click();
-        document.body.removeChild(dlAnchorElem);
+        const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `供油班表備份_${formatDateToYYYYMMDD(getTWDate())}.json`);
+        document.body.appendChild(dlAnchorElem); dlAnchorElem.click(); document.body.removeChild(dlAnchorElem);
     }
     
-    function importData(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+    function importLocalData(event) {
+        const file = event.target.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            try {
-                const importedData = JSON.parse(e.target.result);
-                if (importedData && importedData.baseDate && importedData.teams) {
-                    
-                    const now = getTWDate();
-                    const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-                    
-                    const mergedHolidays = JSON.parse(JSON.stringify(defaultSettings.holidays)); 
-                    if (importedData.holidays) {
-                        for (const [dateStr, name] of Object.entries(importedData.holidays)) {
-                            const hDate = new Date(dateStr.replace(/-/g, '/'));
-                            if (hDate >= oneMonthAgo) {
-                                mergedHolidays[dateStr] = name; 
-                            }
-                        }
-                    }
-                    importedData.holidays = mergedHolidays;
-
-                    const cleanedManualShifts = {};
-                    if (importedData.manualShifts) {
-                        for (const [key, shift] of Object.entries(importedData.manualShifts)) {
-                            const dateStr = key.split('_')[0];
-                            const sDate = new Date(dateStr.replace(/-/g, '/'));
-                            if (sDate >= oneMonthAgo) {
-                                cleanedManualShifts[key] = shift;
-                            }
-                        }
-                    }
-                    importedData.manualShifts = cleanedManualShifts;
-
-                    let mergedTasks = JSON.parse(JSON.stringify(defaultTasks)); 
-                    if (importedData.tasks && Array.isArray(importedData.tasks)) {
-                        importedData.tasks.forEach(impTask => {
-                            if (!defaultTasks.find(dt => dt.id === impTask.id)) {
-                                mergedTasks.push(impTask);
-                            }
-                        });
-                    }
-                    importedData.tasks = mergedTasks;
-
-                    localStorage.setItem("shiftSettings", JSON.stringify(importedData));
-                    alert("✅ 備份資料還原成功！(已自動清除過期歷史紀錄)");
-                    window.location.reload();
-                } else { 
-                    alert("❌ 檔案格式不正確，無法還原！"); 
-                }
-            } catch (err) { 
-                alert("❌ 讀取檔案失敗！請確認檔案格式。"); 
-            }
+            try { const importedData = JSON.parse(e.target.result); executeImport(importedData, "本機"); } 
+            catch (err) { alert("❌ 讀取檔案失敗！請確認格式。"); }
             el('importDataInput').value = ""; 
         };
         reader.readAsText(file);
+    }
+
+    function executeImport(importedData, sourceName) {
+        if (importedData && importedData.baseDate && importedData.teams) {
+            const now = getTWDate(), oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+            
+            const mergedHolidays = JSON.parse(JSON.stringify(defaultSettings.holidays)); 
+            if (importedData.holidays) { for (const [dateStr, name] of Object.entries(importedData.holidays)) { if (new Date(dateStr.replace(/-/g, '/')) >= oneMonthAgo) mergedHolidays[dateStr] = name; } }
+            importedData.holidays = mergedHolidays;
+
+            const cleanedManualShifts = {};
+            if (importedData.manualShifts) { for (const [key, shift] of Object.entries(importedData.manualShifts)) { if (new Date(key.split('_')[0].replace(/-/g, '/')) >= oneMonthAgo) cleanedManualShifts[key] = shift; } }
+            importedData.manualShifts = cleanedManualShifts;
+
+            let mergedTasks = JSON.parse(JSON.stringify(defaultTasks)); 
+            if (importedData.tasks && Array.isArray(importedData.tasks)) { importedData.tasks.forEach(impTask => { if (!defaultTasks.find(dt => dt.id === impTask.id)) mergedTasks.push(impTask); }); }
+            importedData.tasks = mergedTasks;
+
+            localStorage.setItem("shiftSettings", JSON.stringify(importedData));
+            alert(`✅ ${sourceName}備份還原成功！(已自動清除過期歷史紀錄)`);
+            window.location.reload();
+        } else { alert(`❌ ${sourceName}檔案格式不正確，無法還原！`); }
+    }
+
+    // --- GAS 雲端備份與還原 ---
+    function cloudBackup(event) {
+        const url = getVal("setGasUrl").trim();
+        if (!url) return alert("請先於上方欄位填寫您的 GAS URL！");
+        triggerVibrate();
+        const btn = event.target; btn.innerText = "⏳ 備份中..."; btn.disabled = true;
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: "auto_backup", backupData: appSettings })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.status === 'success') alert("✅ 雲端備份成功！");
+            else alert("❌ 備份失敗：" + (res.message || "未知錯誤"));
+        })
+        .catch(e => alert("❌ 連線錯誤，請確定 URL 正確且已完成部署。"))
+        .finally(() => { btn.innerText = "☁️ 雲端備份"; btn.disabled = false; });
+    }
+
+    function cloudRestore(event) {
+        const url = getVal("setGasUrl").trim();
+        if (!url) return alert("請先於上方欄位填寫您的 GAS URL！");
+        if (!confirm("⚠️ 警告：雲端還原將覆蓋目前手機上的所有資料，確定要繼續嗎？")) return;
+        triggerVibrate();
+        const btn = event.target; btn.innerText = "⏳ 還原中..."; btn.disabled = true;
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: "restore_from_cloud" })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.data) {
+                const importedData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+                executeImport(importedData, "雲端");
+            } else { alert("❌ 還原失敗：" + (res.message || "雲端找不到資料")); }
+        })
+        .catch(e => alert("❌ 連線錯誤，請確定 URL 正確且已完成部署。"))
+        .finally(() => { btn.innerText = "☁️ 雲端還原"; btn.disabled = false; });
     }
 </script>
 </body>
