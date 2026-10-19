@@ -307,8 +307,8 @@
             <label style="font-weight:bold; color: #10B981; margin:0; font-size:1.05rem;">💾 系統備份與還原</label>
             <div style="font-size: 0.9rem; color: #6B7280; margin: 5px 0 10px 0;">支援 Google 雲端同步與本機匯出入，方便跨裝置還原。</div>
             
-            <!-- 四個按鈕：由上而下、由左而右 2x2 排列 -->
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:35px;">
+            <!-- 四個按鈕 (下邊距調整為標準 15px) -->
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" onclick="cloudBackup(event)" style="background:#0284C7; font-size:1rem; padding:10px; margin:0;">☁️ 雲端備份</button>
                 <button class="btn" onclick="cloudRestore(event)" style="background:#4F46E5; font-size:1rem; padding:10px; margin:0;">☁️ 雲端還原</button>
                 <button class="btn" onclick="exportData()" style="background:#10B981; font-size:1rem; padding:10px; margin:0;">📤 本機備份</button>
@@ -316,10 +316,13 @@
             </div>
             <input type="file" id="importDataInput" style="display:none;" accept=".json" onchange="importData(event)">
 
-            <!-- 恢復預設與儲存設定 (透過 margin-bottom: 35px 已在上方產生明顯空白隔開) -->
-            <div class="action-buttons" style="display:flex; gap:15px; margin-bottom: 10px;">
+            <!-- 統一風格分隔線 (上下間距 15px) -->
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+
+            <!-- 恢復預設與儲存設定 (1:1 等寬) -->
+            <div class="action-buttons" style="display:flex; gap:15px;">
                 <button class="btn btn-danger" onclick="restoreDefaults()" style="flex:1; margin-top:0;">🔄 恢復預設</button>
-                <button class="btn" onclick="saveSettings()" style="flex:2; margin-top:0;">💾 儲存設定</button>
+                <button class="btn" onclick="saveSettings()" style="flex:1; margin-top:0;">💾 儲存設定</button>
             </div>
     </div>
 </div>
