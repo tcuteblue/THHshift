@@ -5,7 +5,9 @@
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+      // 強制使用台灣時間
+      const getTWDate = () => new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
+      gtag('js', getTWDate());
       gtag('config', 'G-B6CYHLTWCH');
     </script>
     <meta charset="UTF-8">
@@ -15,7 +17,21 @@
     <meta name="apple-mobile-web-app-title" content="供油班表">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#F3F4F6"> 
-    <link rel="manifest" href="manifest.json">
+    
+    <!-- 單檔 PWA 內嵌 Manifest -->
+    <link rel="manifest" id="manifestLink">
+    <script>
+        const manifest = {
+            "name": "供油班表",
+            "short_name": "供油班表",
+            "start_url": window.location.href,
+            "display": "standalone",
+            "background_color": "#F3F4F6",
+            "theme_color": "#F3F4F6",
+            "icons": [{"src": "icon.jpg", "sizes": "192x192", "type": "image/jpeg"}]
+        };
+        document.getElementById('manifestLink').setAttribute('href', 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest)));
+    </script>
 
     <title>班表查詢與工作提醒系統 蔡宏和製作20260308</title>
     <link rel="icon" type="image/jpeg" href="icon.jpg">
@@ -340,7 +356,7 @@
     
     let isActualMode = false; 
     let currentViewTeam = null, currentMonthViewTeam = null;
-    let calendarViewDate = new Date(); 
+    let calendarViewDate = getTWDate(); 
     let tempHolidays = {}, tempTasks = [], tempManualShifts = {}; 
     let editingHolidayDate = null, editingTaskId = null;
 
@@ -409,7 +425,7 @@
         el('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
         el('btnActual').className = isActualMode ? 'btn-mode active' : 'btn-mode';
 
-        setVal("queryDate", formatDateToYYYYMMDD(new Date()));
+        setVal("queryDate", formatDateToYYYYMMDD(getTWDate()));
         el("queryDate").addEventListener("change", renderAppSafe);
         toggleTaskInputs(); loadSettingsToForm(); renderAppSafe();
 
@@ -425,6 +441,7 @@
         checkInstallStatus();
     });
 
+    let deferredPrompt;
     function checkInstallStatus() {
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
         const installContainer = el('installButtonContainer');
@@ -558,7 +575,7 @@
         if (el("holidayList")) renderHolidayList();
     }
 
-    function setToday(inputId) { triggerVibrate(); setVal(inputId, formatDateToYYYYMMDD(new Date())); el(inputId).dispatchEvent(new Event('change')); }
+    function setToday(inputId) { triggerVibrate(); setVal(inputId, formatDateToYYYYMMDD(getTWDate())); el(inputId).dispatchEvent(new Event('change')); }
     
     function switchTab(num) {
         triggerVibrate();
@@ -783,7 +800,7 @@
         if(el("calendarTitle")) el("calendarTitle").innerText = `🗓️ ${m + 1}月班表總覽`;
         
         const qStr = getVal("queryDate"); 
-        const gDate = qStr ? new Date(qStr.replace(/-/g, '/')) : new Date();
+        const gDate = qStr ? new Date(qStr.replace(/-/g, '/')) : getTWDate();
 
         let html = ["日", "一", "二", "三", "四", "五", "六"].map(wd => `<div class="cal-header">${wd}</div>`).join("");
         
@@ -897,7 +914,7 @@
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appSettings));
         const dlAnchorElem = document.createElement('a');
         dlAnchorElem.setAttribute("href", dataStr);
-        dlAnchorElem.setAttribute("download", `供油班表備份_${formatDateToYYYYMMDD(new Date())}.json`);
+        dlAnchorElem.setAttribute("download", `供油班表備份_${formatDateToYYYYMMDD(getTWDate())}.json`);
         document.body.appendChild(dlAnchorElem);
         dlAnchorElem.click();
         document.body.removeChild(dlAnchorElem);
@@ -912,7 +929,7 @@
                 const importedData = JSON.parse(e.target.result);
                 if (importedData && importedData.baseDate && importedData.teams) {
                     
-                    const now = new Date();
+                    const now = getTWDate();
                     const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
                     
                     const mergedHolidays = JSON.parse(JSON.stringify(defaultSettings.holidays)); 
@@ -961,9 +978,6 @@
         };
         reader.readAsText(file);
     }
-
-    let deferredPrompt;
-    if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').then(r => r.update()).catch(console.log)); let refreshing = false; navigator.serviceWorker.addEventListener('controllerchange', () => { if (!refreshing) { refreshing = true; window.location.reload(); } }); }
 </script>
 </body>
 </html>
