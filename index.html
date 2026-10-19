@@ -305,9 +305,8 @@
             
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
             <label style="font-weight:bold; color: #10B981; margin:0; font-size:1.05rem;">💾 系統備份與還原</label>
-            <div style="font-size: 0.9rem; color: #6B7280; margin: 5px 0 10px 0;">支援 Google 雲端同步與本機匯出入，方便跨裝置還原。</div>
+            <div style="font-size: 0.9rem; color: #6B7280; margin: 5px 0 10px 0;">支援 Google 雲端同步與本機匯出入，變更設定將自動安靜雲端備份。</div>
             
-            <!-- 四個按鈕 (下邊距調整為標準 15px) -->
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" onclick="cloudBackup(event)" style="background:#0284C7; font-size:1rem; padding:10px; margin:0;">☁️ 雲端備份</button>
                 <button class="btn" onclick="cloudRestore(event)" style="background:#4F46E5; font-size:1rem; padding:10px; margin:0;">☁️ 雲端還原</button>
@@ -316,15 +315,13 @@
             </div>
             <input type="file" id="importDataInput" style="display:none;" accept=".json" onchange="importData(event)">
 
-            <!-- 統一風格分隔線 (上下間距 15px) -->
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
 
-            <!-- 恢復預設與儲存設定 (1:1 等寬) -->
-            <div class="action-buttons" style="display:flex; gap:15px;">
+            <div class="action-buttons" style="display:flex; gap:15px; margin-bottom:10px;">
                 <button class="btn btn-danger" onclick="restoreDefaults()" style="flex:1; margin-top:0;">🔄 恢復預設</button>
                 <button class="btn" onclick="saveSettings()" style="flex:1; margin-top:0;">💾 儲存設定</button>
             </div>
-    </div>
+</div>
 </div>
 
 <div class="tab-bar">
@@ -449,6 +446,7 @@
         }, {passive: true});
 
         checkInstallStatus();
+        setTimeout(() => { if (typeof silentCloudBackup === 'function') silentCloudBackup(); }, 1500);
     });
 
     let deferredPrompt;
@@ -915,7 +913,10 @@
         populateDropdowns(); // 儲存後立即更新名稱
 
         setVal("viewTeamSelect", currentViewTeam = appSettings.myTeam); setVal("monthViewSelect", currentMonthViewTeam = appSettings.myTeam);
-        localStorage.setItem("shiftSettings", JSON.stringify(appSettings)); alert("已儲存！"); renderAppSafe(); switchTab(1); 
+        localStorage.setItem("shiftSettings", JSON.stringify(appSettings)); 
+        localStorage.setItem("pendingSync", "true"); // 標記有新設定需要備份
+        if (typeof silentCloudBackup === 'function') silentCloudBackup(); // 觸發安靜備份
+        alert("已儲存！\n(系統將於背景自動更新雲端備份)"); renderAppSafe(); switchTab(1);
     }
     function restoreDefaults() { triggerVibrate(); if (confirm("🚨 清除自訂設定？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); setVal("viewTeamSelect", currentViewTeam = appSettings.myTeam); setVal("monthViewSelect", currentMonthViewTeam = appSettings.myTeam); loadSettingsToForm(); renderAppSafe(); alert("已恢復"); switchTab(1); } }
 
@@ -961,15 +962,52 @@
     }
 
     // ==========================================
-    // --- 1. 本機備份 (檔名附帶精準台灣時間) ---
+    // --- 備份與還原共用邏輯 ---
     // ==========================================
+    function processImportData(importedData, sourceName) {
+        if (importedData && importedData.baseDate && importedData.teams) {
+            const now = getTWDate();
+            const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+            
+            const mergedHolidays = JSON.parse(JSON.stringify(defaultSettings.holidays)); 
+            if (importedData.holidays) {
+                for (const [dateStr, name] of Object.entries(importedData.holidays)) {
+                    if (new Date(dateStr.replace(/-/g, '/')) >= oneMonthAgo) mergedHolidays[dateStr] = name; 
+                }
+            }
+            importedData.holidays = mergedHolidays;
+
+            const cleanedManualShifts = {};
+            if (importedData.manualShifts) {
+                for (const [key, shift] of Object.entries(importedData.manualShifts)) {
+                    if (new Date(key.split('_')[0].replace(/-/g, '/')) >= oneMonthAgo) cleanedManualShifts[key] = shift;
+                }
+            }
+            importedData.manualShifts = cleanedManualShifts;
+
+            let mergedTasks = JSON.parse(JSON.stringify(defaultTasks)); 
+            if (importedData.tasks && Array.isArray(importedData.tasks)) {
+                importedData.tasks.forEach(impTask => {
+                    if (!defaultTasks.find(dt => dt.id === impTask.id)) mergedTasks.push(impTask);
+                });
+            }
+            importedData.tasks = mergedTasks;
+
+            localStorage.setItem("shiftSettings", JSON.stringify(importedData));
+            localStorage.setItem("pendingSync", "true"); // 標記需要備份
+
+            alert(`✅ ${sourceName}資料還原成功！(已自動清除過期歷史紀錄)`);
+            window.location.reload();
+        } else { 
+            alert(`❌ ${sourceName}檔案格式不正確，無法還原！`); 
+        }
+    }
+
     function exportData() {
         triggerVibrate();
-        // 強制使用台灣時區時間
         const now = getTWDate();
         const pad = n => String(n).padStart(2, '0');
         const timeString = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
-        
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appSettings));
         const dlAnchorElem = document.createElement('a');
         dlAnchorElem.setAttribute("href", dataStr);
@@ -979,32 +1017,35 @@
         document.body.removeChild(dlAnchorElem);
     }
     
-    // ==========================================
-    // --- 2. 本機還原 ---
-    // ==========================================
     function importData(event) {
         const file = event.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            try {
-                const importedData = JSON.parse(e.target.result);
-                processImportData(importedData, "本機");
-            } catch (err) { 
-                alert("❌ 讀取檔案失敗！請確認檔案格式。"); 
-            }
+            try { processImportData(JSON.parse(e.target.result), "本機"); } 
+            catch (err) { alert("❌ 讀取檔案失敗！請確認檔案格式。"); }
             el('importDataInput').value = ""; 
         };
         reader.readAsText(file);
     }
 
     // ==========================================
-    // --- 3. GAS 雲端備份與還原 (內建網址) ---
+    // --- GAS 雲端備份與自動安靜備份 ---
     // ==========================================
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw0wAnCPZkw3nlyx0Eg08Ejk49oG_itD82PqH9IP4X7S4oR5br1NTCmlUJsNfME2kbZ/exec";
-    
-    // 💡 雲端檔名固定，確保換手機時「一鍵還原」能精確對準最新檔案
-    const CLOUD_FILE_NAME = "供油班表_最新雲端備份.json";
+    const CLOUD_FILE_NAME = "供油班表_雲端備份.json";
+
+    function silentCloudBackup() {
+        if (localStorage.getItem("pendingSync") !== "true") return; 
+        fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: "auto_backup", fileName: CLOUD_FILE_NAME, backupData: appSettings })
+        })
+        .then(r => r.json())
+        .then(res => { if (res.status === 'success') localStorage.removeItem("pendingSync"); })
+        .catch(e => { /* 失敗則安靜忽略，pendingSync 標記會保留，下次有機會再傳 */ });
+    }
 
     function cloudBackup(event) {
         triggerVibrate();
@@ -1016,28 +1057,25 @@
         fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ 
-                action: "auto_backup", 
-                fileName: CLOUD_FILE_NAME,
-                backupData: appSettings 
-            })
+            body: JSON.stringify({ action: "auto_backup", fileName: CLOUD_FILE_NAME, backupData: appSettings })
         })
         .then(r => r.json())
         .then(res => {
-            // 強制使用台灣時區時間來顯示備份成功訊息
             const now = getTWDate();
             const pad = n => String(n).padStart(2, '0');
             const timeStr = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
             
-            if (res.status === 'success') alert(`✅ 雲端備份成功！\n備份時間 (台灣時間)：${timeStr}`);
-            else alert("❌ 備份失敗：" + (res.message || "未知錯誤"));
+            if (res.status === 'success') {
+                localStorage.removeItem("pendingSync");
+                alert(`✅ 雲端備份成功！\n時間：${timeStr}`);
+            } else alert("❌ 備份失敗：" + (res.message || "未知錯誤"));
         })
         .catch(e => alert("❌ 連線錯誤，請確認網路連線。"))
         .finally(() => { btn.innerText = originalText; btn.disabled = false; });
     }
 
     function cloudRestore(event) {
-        if (!confirm("⚠️ 警告：雲端還原將覆蓋目前手機上的資料，確定要繼續嗎？")) return;
+        if (!confirm("⚠️ 警告：雲端還原將覆蓋手機資料，確定繼續嗎？")) return;
         triggerVibrate();
         const btn = event.target; 
         const originalText = btn.innerText;
@@ -1047,19 +1085,14 @@
         fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ 
-                action: "restore_from_cloud",
-                fileName: CLOUD_FILE_NAME
-            })
+            body: JSON.stringify({ action: "restore_from_cloud", fileName: CLOUD_FILE_NAME })
         })
         .then(r => r.json())
         .then(res => {
             if (res.data) {
                 const importedData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
                 processImportData(importedData, "雲端");
-            } else { 
-                alert("❌ 還原失敗：" + (res.message || "雲端找不到資料")); 
-            }
+            } else alert("❌ 還原失敗：" + (res.message || "雲端找不到資料")); 
         })
         .catch(e => alert("❌ 連線錯誤，請確認網路連線。"))
         .finally(() => { btn.innerText = originalText; btn.disabled = false; });
