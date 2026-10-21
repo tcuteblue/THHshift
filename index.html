@@ -805,7 +805,7 @@
         const fw = new Date(y, m, 1).getDay();
         const prevMonthDays = new Date(y, m, 0).getDate();
         
-        if(el("calendarTitle")) el("calendarTitle").innerText = `🗓️ ${m + 1}月班表總覽`;
+        if(el("calendarTitle")) el("calendarTitle").innerText = `🗓️ ${y}年${m + 1}月班表總覽`;
         
         const qStr = getVal("queryDate"); 
         const gDate = qStr ? new Date(qStr.replace(/-/g, '/')) : getTWDate();
