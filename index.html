@@ -1,1257 +1,1075 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-B6CYHLTWCH"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      // 強制使用台灣時間
+      const getTWDate = () => new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
+      gtag('js', getTWDate());
+      gtag('config', 'G-B6CYHLTWCH');
+    </script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>電子票證管家</title>
-    <link rel="icon" href="icon.png" type="image/png">
-    <link rel="shortcut icon" href="icon.png" type="image/png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="供油班表">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#F3F4F6"> 
+    
+    <!-- 單檔 PWA 內嵌 Manifest -->
+    <link rel="manifest" id="manifestLink">
+    <script>
+        const manifest = {
+            "name": "供油班表",
+            "short_name": "供油班表",
+            "start_url": window.location.href,
+            "display": "standalone",
+            "background_color": "#F3F4F6",
+            "theme_color": "#F3F4F6",
+            "icons": [{"src": "icon.jpg", "sizes": "192x192", "type": "image/jpeg"}]
+        };
+        document.getElementById('manifestLink').setAttribute('href', 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest)));
+    </script>
+
+    <title>班表查詢與工作提醒系統 蔡宏和製作20260308</title>
+    <link rel="icon" type="image/jpeg" href="icon.jpg">
+    <link rel="apple-touch-icon" href="icon.jpg">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
-
+        * { -webkit-tap-highlight-color: transparent; outline: none; }
         :root {
-            /* 清新明亮主題色盤 */
-            --bg-color: #f0f4f8; 
-            --card-bg: #ffffff;
-            --border-color: #e2e8f0;
-            --text-main: #334155;
-            --text-muted: #64748b;
+            --primary: #4F46E5; --bg-color: #F3F4F6; --card-bg: #FFFFFF;
+            --text-main: #1F2937; --text-muted: #6B7280; --border-color: #E5E7EB;
+            --morn-color: #FEF3C7; --morn-text: #D97706;
+            --mid-color: #DBEAFE; --mid-text: #2563EB;
+            --night-color: #F3E8FF; --night-text: #9333EA;
+            --rest-color: #F3F4F6; --rest-text: #4B5563;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; display: flex; flex-direction: column; min-height: 100vh; padding-top: env(safe-area-inset-top); }
+        .title-icon { width: 1.8rem; height: 1.8rem; vertical-align: text-bottom; margin-right: 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .install-button-container { display: none; text-align: center; margin: 20px 0; animation: slideInUp 0.5s ease-out forwards; }
+        .btn-install { background: var(--primary); color: white; border: none; padding: 15px 25px; border-radius: 8px; font-size: 1.2rem; cursor: pointer; width: 100%; max-width: 400px; font-weight: bold; margin: 0 auto; display: flex; justify-content: center; gap: 10px; box-shadow: 0 4px 6px -1px rgba(79,70,229,0.2); }
+        .btn-install:active { transform: scale(0.97); }
+        .install-explanation { font-size: 0.9rem; color: var(--text-muted); margin-top: 8px; font-weight: bold; }
+
+        .header-section { padding: 15px 15px 0 15px; background: var(--bg-color); border-bottom: 1px solid var(--border-color); transition: padding 0.15s; }
+        .container { width: 100%; max-width: 500px; margin: 0 auto; }
+        h1 { text-align: center; font-size: 1.8rem; margin: 0 0 10px 0; color: var(--primary); line-height: 1.3; }
+        .header-controls-container { transition: opacity 0.15s, height 0.15s; overflow: hidden; }
+        
+        .date-picker-container { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 5px; flex-wrap: nowrap; overflow-x: auto; }
+        input[type="date"], select, input[type="text"], input[type="number"] { padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.1rem; width: 100%; box-sizing: border-box; margin-bottom: 8px; background: #fff; }
+        input[type="date"] { margin-bottom: 0; flex: 1 1 auto; text-align: center; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05); min-width: 110px; padding: 10px 4px; }
+        
+        #dayOfWeekDisplay { text-align: center; font-weight: bold; font-size: 1.25rem; color: var(--primary); margin-bottom: 12px; letter-spacing: 1px; }
+
+        .toggle-group { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; max-width: 400px; margin: 0 auto; }
+        .btn-mode { flex: 1; padding: 10px 0; border: 1px solid var(--primary); border-radius: 8px; background: transparent; color: var(--primary); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: all 0.15s; }
+        .btn-mode.active { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(79,70,229,0.2); }
+
+        .card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08); animation: slideInUp 0.3s ease-out forwards; }
+        .card-title { font-size: 1.25rem; font-weight: bold; margin: 0 0 12px 0; border-bottom: 2px solid var(--border-color); padding-bottom: 6px; display: flex; justify-content: center; align-items: center; color: var(--text-main); position: relative; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 15px; border-radius: 8px; font-size: 1.15rem; cursor: pointer; width: 100%; font-weight: bold; text-align: center; }
+        .btn-icon { width: auto; flex-grow: 0; padding: 10px 15px; font-size: 1.2rem; background: var(--card-bg); color: var(--primary); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-danger { background: transparent; color: #DC2626; border: 1px solid #DC2626; margin-top: 10px; }
+        .btn:active, .btn-icon:active, .btn-mode:active, .tab-btn:active, .list-action-btn:active { transform: scale(0.97); }
+
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes flashWarning { 0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); } 70% { box-shadow: 0 0 0 6px rgba(220,38,38,0); } }
+        .conflict-warning { animation: flashWarning 2s infinite; }
+
+        .shift-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 1.05rem; }
+        .shift-morn { background: var(--morn-color); color: var(--morn-text); }
+        .shift-mid { background: var(--mid-color); color: var(--mid-text); }
+        .shift-night { background: var(--night-color); color: var(--night-text); }
+        .shift-rest { background: var(--rest-color); color: var(--rest-text); }
+        .shift-override { background: #FEF2F2; color: #991B1B; border: 1px dashed #FCA5A5; }
+
+        .team-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+        .team-row:last-child { border-bottom: none; }
+        .team-name { font-size: 1.15rem; }
+
+        .task-list { list-style-type: none; padding: 0; margin: 0; }
+        .task-list li { background: #FEF2F2; color: #DC2626; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 1.05rem; border-left: 4px solid #EF4444; animation: slideInUp 0.3s forwards; line-height: 1.4; }
+        .task-list li.no-task { background: #ECFCCB; color: #4D7C0F; border-left-color: #84CC16; }
+
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: var(--border-color); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; touch-action: pan-y; }
+        .cal-header { background: #F3F4F6; text-align: center; font-weight: bold; font-size: 0.95rem; padding: 6px 0; color: var(--text-muted); }
+        .cal-cell { background: #FFFFFF; min-height: 80px; padding: 4px; display: flex; flex-direction: column; position: relative; }
+        .cal-cell.today { background: #FEF9C3; }
+        .cal-day-num { font-size: 1.05rem; font-weight: bold; margin-bottom: 4px; display: flex; justify-content: space-between; color: var(--text-main); }
+        .cal-shift-single { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; border-radius: 6px; margin-top: 2px; }
+        .cal-shift-all { display: flex; flex-direction: column; gap: 2px; margin-top: 1px; }
+        
+        .cal-shift-all > span { display: flex; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; padding: 1px 0; border-radius: 4px; line-height: 1.15; white-space: nowrap; letter-spacing: -0.5px; overflow: hidden; }
+        .shift-prefix { flex: 0 0 14px; text-align: right; }
+        .shift-name { flex: 0 0 24px; text-align: left; padding-left: 2px; }
+        
+        .toast { visibility: hidden; min-width: 220px; margin-left: -110px; background-color: rgba(31,41,55,0.95); color: #fff; text-align: center; border-radius: 12px; padding: 12px 15px; position: fixed; z-index: 2000; left: 50%; bottom: 85px; font-size: 1.1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(20px); pointer-events: none; line-height: 1.4;}
+        .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
+
+        .setting-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .setting-grid label { font-size: 1rem; color: var(--text-muted); margin-bottom: 4px; display: block; }
+        .list-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; align-items: center; font-size: 1rem; background: #fff; border-radius: 6px; margin-bottom: 6px; }
+        .task-badge { background: #E5E7EB; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; color: #374151; margin-right: 5px; font-weight: bold; }
+        .list-action-btn { font-size: 0.9rem; cursor: pointer; padding: 4px 8px; margin-left: 5px; border-radius: 4px; font-weight: bold; display: inline-block; }
+        .btn-edit { background: #DBEAFE; color: #1E40AF; }
+        .btn-delete { background: #FEE2E2; color: #B91C1C; }
+        .editing-item { border: 2px solid #60A5FA !important; background: #EFF6FF !important; }
+
+        .tab-content { display: none; flex: 1; padding: 15px; padding-bottom: 80px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .tab-content.active { display: block; }
+        .tab-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: #FFFFFF; border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+        .tab-btn { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; border: none; background: transparent; cursor: pointer; color: var(--text-muted); }
+        .tab-icon { font-size: 1.5rem; margin-bottom: 4px; }
+        .tab-text { font-size: 0.9rem; font-weight: bold; }
+        .tab-btn.active { color: var(--primary); }
+
+        @media screen and (max-width: 480px) {
+            html { font-size: 17px; } 
+            .header-section { padding: 10px 10px 0; }
+            h1 { font-size: 1.5rem; margin-bottom: 8px; }
+            #dayOfWeekDisplay { font-size: 1.15rem; margin-bottom: 8px; }
+            .toggle-group { margin-bottom: 10px; gap: 5px; }
+            .btn-mode { padding: 6px 0; font-size: 1.05rem; }
+            .tab-content { padding: 10px 10px 75px; }
+            .card { padding: 12px; margin-bottom: 8px; border-radius: 10px; }
+            .task-list li { font-size: 1rem; }
+            .cal-shift-all > span { font-size: 0.65rem; letter-spacing: -0.8px; border-left-width: 2px !important; }
+            .shift-prefix { flex: 0 0 11px; }
+            .shift-name { flex: 0 0 21px; }
             
-            /* 天空藍主色調 */
-            --primary-color: #0ea5e9;
-            --primary-dark: #0284c7;
-            --primary-light: #e0f2fe;
-
-            /* 輔助色系 */
-            --danger-color: #ef4444;
-            --danger-dark: #b91c1c;
-            --warning-color: #f59e0b;
-            --success-color: #10b981;
-            --purple-color: #8b5cf6;
-            --purple-dark: #6d28d9;
-            
-            /* 票證專屬色 */
-            --color-easy: #0d9488; 
-            --color-ipass: #f59e0b; 
-            --color-icash: #f43f5e; 
+            .date-picker-container { gap: 4px; }
+            input[type="date"] { padding: 8px 2px; font-size: 1rem; min-width: 105px; }
+            .btn-icon { padding: 8px 12px; font-size: 1.1rem; }
         }
 
-        * { box-sizing: border-box; }
-        
-        body { 
-            font-family: 'Noto Sans TC', -apple-system, sans-serif; 
-            margin: 0; padding: 0; padding-bottom: 95px; 
-            background-color: var(--bg-color); 
-            color: var(--text-main); 
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* Navbar & Tabs */
-        .header { 
-            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); color: var(--primary-color); 
-            padding: 16px 20px; text-align: center; font-size: 24px; font-weight: bold; 
-            letter-spacing: 2px; position: sticky; top: 0; z-index: 10; 
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-        
-        .tab-content { display: none; padding: 15px; max-width: 600px; margin: 0 auto; animation: fadeIn 0.3s ease-in-out; }
-        .active-tab { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-        .bottom-nav { 
-            display: flex; justify-content: space-around; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px);
-            position: fixed; bottom: 0; width: 100%; border-top: 1px solid var(--border-color); padding: 12px 0; z-index: 10; 
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
-        }
-        .nav-btn { background: none; border: none; font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; width: 33%; transition: all 0.2s; } 
-        .nav-icon { font-size: 24px; margin-bottom: 4px; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); filter: grayscale(100%) opacity(0.6); } 
-        .nav-btn.active { color: var(--primary-color); }
-        .nav-btn.active .nav-icon { transform: translateY(-4px) scale(1.15); filter: none; }
-        
-        /* 3D 按鈕樣式 */
-        .btn-3d {
-            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            top: 0;
-            display: inline-flex; justify-content: center; align-items: center;
-        }
-        .btn-3d:active {
-            top: 4px;
-            box-shadow: 0 0 0 transparent !important;
-        }
-        
-        .btn-block { width: 100%; padding: 14px; font-size: 16px; margin-bottom: 12px; font-weight: bold; border:none; border-radius:12px; cursor:pointer;} 
-        .btn-primary { background-color: var(--primary-color); color: #fff; box-shadow: 0 4px 0 var(--primary-dark); }
-        .btn-backup { background-color: var(--text-muted); color: #fff; box-shadow: 0 4px 0 #475569; }
-        .btn-green { background-color: var(--success-color); color: #fff; box-shadow: 0 4px 0 #059669; }
-        .btn-cancel-modal { background-color: #f1f5f9; color: var(--text-muted); box-shadow: 0 4px 0 #cbd5e1; flex:1 1 40%; padding:14px; border-radius:12px; cursor:pointer; font-size: 16px; font-weight: bold; border: none;}
-        .btn-danger-alt { background-color: #fee2e2; color: var(--danger-color); box-shadow: 0 4px 0 #fca5a5; font-weight: bold; margin-top: 10px; }
-
-        .btn-sm { padding: 10px 4px; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; color: white; letter-spacing: 1px; } 
-        .btn-sm-deduct { background-color: var(--danger-color); box-shadow: 0 4px 0 var(--danger-dark); }
-        .btn-sm-topup { background-color: var(--primary-color); box-shadow: 0 4px 0 var(--primary-dark); }
-        .btn-sm-reg { background-color: var(--purple-color); box-shadow: 0 4px 0 var(--purple-dark); }
-
-        /* Cards */
-        .card-item { 
-            background: var(--card-bg); border-radius: 16px; 
-            padding: 16px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06); 
-            position: relative; transition: box-shadow 0.3s ease; border: 1px solid var(--border-color);
-        }
-        
-        .card-top-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 12px; }
-        .card-title { font-size: 18px; font-weight: bold; color: var(--text-main); white-space: nowrap; } 
-        .card-type { font-size: 12px; padding: 4px 8px; border-radius: 6px; color: #fff; font-weight: bold; white-space: nowrap; } 
-        .type-easy { background-color: var(--color-easy); } 
-        .type-ipass { background-color: var(--color-ipass); } 
-        .type-icash { background-color: var(--color-icash); } 
-        
-        .btn-gear { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 4px; transition: all 0.3s; } 
-        .btn-gear:hover { color: var(--primary-color); }
-
-        .card-numbers { font-size: 13px; color: var(--text-muted); background: var(--bg-color); padding: 10px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; gap: 5px; } 
-        .card-numbers span { color: var(--text-main); font-weight: 500; font-family: 'Orbitron', 'Noto Sans TC', sans-serif;}
-        .card-balance-compact { font-family: 'Orbitron', sans-serif; font-size: 26px; font-weight: bold; text-align: right; color: var(--text-main); letter-spacing: -1px; white-space: nowrap; } 
-        .card-info { font-size: 14px; text-align: center; margin-bottom: 16px; padding: 10px; background: var(--primary-light); border-radius: 8px; display:flex; justify-content: space-around; align-items:center;} 
-        
-        .card-actions-compact { display: flex; gap: 12px; justify-content: space-between; padding-bottom: 4px;}
-        
-        /* Table / Overview */
-        .overview-card { background: var(--card-bg); border-radius: 16px; padding: 16px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); border: 1px solid var(--border-color);}
-        .overview-table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; } 
-        .overview-table th { color: var(--text-muted); padding: 10px 4px; border-bottom: 2px solid var(--border-color); font-weight: bold; }
-        .overview-table td { padding: 12px 4px; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
-        .overview-table tr:last-child td { border-bottom: none; }
-        .val-num { font-family: 'Orbitron', sans-serif; font-weight: 700; color: var(--text-main);}
-        .star-btn { cursor: pointer; color: #cbd5e1; font-size: 20px; margin: 0 4px; transition: 0.2s; user-select: none; } 
-        .star-btn.active { color: var(--warning-color); }
-        .clickable-row { cursor: pointer; transition: background-color 0.2s ease; }
-        .clickable-row:hover { background: #f8fafc; }
-        .sortable-row.dragging { background: var(--primary-light) !important; opacity: 0.8; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        
-        .drag-handle { cursor: grab; margin-right: 6px; color: var(--text-muted); font-size: 18px; touch-action: none; padding: 8px 4px; display: inline-block;} 
-        .sortable-row:active .drag-handle { cursor: grabbing; }
-
-        /* General UI Elements */
-        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 8px; }
-        .btn-install { background-color: var(--card-bg); color: var(--primary-color); border: 2px solid var(--primary-color); font-weight: bold; font-size: 16px; width: 100%; padding: 12px; border-radius: 12px; margin-bottom: 15px; cursor: pointer;}
-        
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-size: 15px; font-weight: bold; color: var(--text-main); } 
-        .form-control { width: 100%; padding: 12px; background: #fff; border: 2px solid var(--border-color); border-radius: 10px; font-size: 16px; color: var(--text-main); transition: all 0.2s; } 
-        .form-control:focus { outline: none; border-color: var(--primary-color); background: #fff;}
-        select.form-control { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 12px center; background-size: 1.2em; }
-        .checkbox-label { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--text-main); cursor: pointer; padding: 6px 0; margin-bottom: 0 !important; font-weight: normal !important;} 
-        .checkbox-label input { width: 18px; height: 18px; accent-color: var(--primary-color); cursor: pointer; }
-        
-        /* Modals */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 50; justify-content: center; align-items: center; }
-        .modal { background: var(--card-bg); padding: 25px; border-radius: 20px; width: 90%; max-width: 380px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .modal h3 { margin-top: 0; font-size: 20px; color: var(--text-main); border-bottom: 2px solid var(--bg-color); padding-bottom: 12px; margin-bottom: 18px;}
-        .modal-buttons { display: flex; gap: 12px; margin-top: 25px; flex-wrap: wrap; }
-
-        /* History Items */
-        .history-item { background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start; border: 1px solid var(--border-color); box-shadow: 0 2px 8px rgba(0,0,0,0.03);}
-        .history-left { display: flex; flex-direction: column; flex: 1; }
-        .history-time { font-size: 13px; color: var(--text-muted); } 
-        .history-desc { font-size: 16px; font-weight: bold; margin-top: 6px; line-height: 1.4; color: var(--text-main);} 
-        .history-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
-        .history-amount { font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: bold; } 
-        
-        .hist-deduct { border-left: 5px solid var(--danger-color); }
-        .hist-topup { border-left: 5px solid var(--primary-color); }
-        .hist-calib { border-left: 5px solid var(--warning-color); }
-        .hist-reg { border-left: 5px solid var(--purple-color); }
-        
-        .amt-deduct { color: var(--danger-color); }
-        .amt-topup { color: var(--primary-color); }
-        .amt-calib { color: var(--warning-color); }
-        .amt-reg { color: var(--purple-color); }
-        
-        .btn-edit-hist { margin-top: 8px; padding: 6px 12px; font-size: 13px; font-weight:bold; cursor: pointer; background: var(--bg-color); border: none; border-radius: 6px; color: var(--text-muted); transition: 0.2s;} 
-        .btn-delete-hist { margin-top: 8px; padding: 6px 12px; font-size: 13px; font-weight:bold; cursor: pointer; background: #fee2e2; border: none; border-radius: 6px; color: var(--danger-color); transition: 0.2s; margin-left: 8px;} 
-        
-        .backup-notice { background: #dcfce7; color: #166534; padding: 12px; border-radius: 10px; text-align: center; font-size: 14px; margin-bottom: 15px; border: 1px solid #bbf7d0; display: none; font-weight: 500;} 
-        .name-truncated { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; border-bottom: 1px dashed var(--text-muted); }
-
-        /* 統計區塊樣式 */
-        .stats-month-group { margin-bottom: 20px; animation: fadeIn 0.3s ease; }
-        .stats-month-title { color: var(--text-muted); border-bottom: 2px solid var(--border-color); padding-bottom: 8px; margin-bottom: 10px; display:flex; justify-content:space-between; font-weight:bold; }
-        .stats-item { background: var(--card-bg); border: 1px solid var(--border-color); padding: 12px 15px; border-radius: 10px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center; }
-        
-        /* 提示狀態樣式 */
-        .banner-warning { text-align:center; font-size:13px; font-weight:bold; color:#b45309; background:#fef3c7; padding:8px; border-radius:8px; margin-bottom:12px; border: 1px solid #fde68a; }
-        .banner-urgent { text-align:center; font-size:13px; font-weight:bold; color:var(--danger-color); background:#fee2e2; padding:8px; border-radius:8px; margin-bottom:12px; border: 1px solid #fca5a5; }
-        .card-warning { border: 2px solid #fde68a !important; }
-        .card-urgent { border: 2px solid #fca5a5 !important; }
-        
-        .table-warning { background-color: #fef3c7; border-left: 3px solid var(--warning-color) !important; }
-        .table-urgent { border-left: 3px solid var(--danger-color) !important; background-color: #fee2e2; }
-        
-        .multi-sort-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-        .multi-sort-row label { flex: 0 0 60px; font-size: 14px; color: var(--primary-dark); font-weight: bold; margin-bottom: 0; }
-        
-        /* 新增多重排序啟用的高亮樣式 */
-        .btn-multi-active { background-color: var(--primary-light) !important; color: var(--primary-dark) !important; border: 2px solid var(--primary-color) !important; box-shadow: 0 4px 0 var(--primary-dark) !important; }
-
-        /* 雙重備份 2x2 對稱按鈕排版 */
-        .backup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
-        .btn-grid { padding: 16px 8px; border-radius: 16px; font-size: 16px; font-weight: 900; border: none; cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; gap: 6px; }
-        .btn-grid:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-c-bak { background: linear-gradient(135deg, #3498db, #2980b9); color: white; box-shadow: 0 4px 0 #1f618d; }
-        .btn-c-res { background: linear-gradient(135deg, #16a085, #1abc9c); color: white; box-shadow: 0 4px 0 #0e6655; }
-        .btn-l-bak { background: linear-gradient(135deg, #607D8B, #455A64); color: white; box-shadow: 0 4px 0 #37474f; }
-        .btn-l-res { background: linear-gradient(135deg, #a2d9ce, #73c6b6); color: #0b5345; box-shadow: 0 4px 0 #76d7c4; }
+        /* iOS 安裝教學彈窗樣式 */
+        #iosInstallOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:flex-end; padding-bottom:40px; }
+        .ios-modal { background:#fff; width:90%; max-width:400px; padding:25px 20px; border-radius:15px; text-align:center; position:relative; animation: slideInUp 0.3s forwards; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .ios-modal h3 { margin-top:0; color:var(--primary); font-size:1.3rem; margin-bottom: 15px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+        .ios-modal-close { position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.8rem; color:#9CA3AF; cursor:pointer; line-height: 1; }
+        .ios-step { display: flex; align-items: center; text-align:left; font-size:1.1rem; color:var(--text-main); margin-bottom: 15px; font-weight: bold; background: #F9FAFB; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .ios-icon { font-size: 1.5rem; margin: 0 10px; }
     </style>
 </head>
 <body>
-    <div class="header">電子票證管家</div>
 
-    <!-- Tab: 我的卡片 -->
-    <div id="tab-cards" class="tab-content active-tab">
-        <button id="install-app-btn" class="btn-install" style="display: none;">📲 安裝為 APP 桌面捷徑</button>
-        <div id="last-backup-info" class="backup-notice"></div>
-        
-        <!-- 首頁搜尋列 -->
-        <div class="toolbar">
-            <input type="text" id="card-search" class="form-control" placeholder="🔍 搜尋卡片名稱、號碼..." onkeyup="renderCards()" style="margin-bottom: 0;">
-        </div>
-
-        <div class="toolbar" id="sort-toolbar" style="display:none; font-size:14px;">
-            <div style="color:var(--text-muted); font-weight:bold; white-space:nowrap;">排序：</div>
-            <select id="card-sort-select" class="form-control" style="flex:1; padding: 10px;" onchange="handleSortChange()">
-                <option value="smart">🧠 智慧推薦 (優先登錄/儲值)</option>
-                <option value="default">🕒 預設排序 (新增順序)</option>
-                <option value="balance">💰 卡片餘額 (金額高低切換)</option>
-                <option value="type">🏷️ 卡片種類 (預設順序)</option>
-                <option value="custom">✋ 自訂排序 (手動拖曳總覽)</option>
-            </select>
-            <!-- 將多重排序獨立為按鈕，方便隨時開啟與調整 -->
-            <button id="multi-sort-btn" class="btn-cancel-modal btn-3d" style="padding: 10px 14px; border-radius: 10px; flex:none; margin: 0 0 0 8px; font-size: 14px;" onclick="openMultiSortModal()" title="進階多重疊加排序">🎛️</button>
-            <button id="reset-sort-btn" class="btn-cancel-modal btn-3d" style="display:none; padding: 10px 14px; border-radius: 10px; flex:none; margin: 0 0 0 8px; font-size: 14px;" onclick="resetCustomSort()" title="重置排序">🔄</button>
-            <button id="balance-sort-btn" class="btn-cancel-modal btn-3d" style="display:none; padding: 10px 14px; border-radius: 10px; flex:none; margin: 0 0 0 8px; font-size: 14px;" onclick="toggleBalanceSort()"></button>
-        </div>
-
-        <div class="overview-card" id="overview-container" style="display:none;">
-            <div onclick="toggleOverview()" style="cursor:pointer; text-align:center; font-size:15px; font-weight:bold; color:var(--text-main); letter-spacing:1px; display:flex; justify-content:center; align-items:center; gap:8px;">
-                📊 卡片資訊總覽 <span id="overview-toggle-icon" style="transition: transform 0.3s ease; font-size: 12px; color: var(--primary-color);">▼</span>
+<div class="header-section" id="mainHeaderSection">
+    <div class="container">
+        <h1 style="margin-bottom: 5px;"><img src="icon.jpg" alt="Logo" class="title-icon">班表與工作提醒系統<br><span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">蔡宏和製作20260308</span></h1>
+        <div class="header-controls-container" id="headerControls">
+            <div class="date-picker-container" style="margin-bottom: 3px;">
+                <button type="button" class="btn btn-icon" onclick="changeDate(-1)">◀</button>
+                <input type="date" id="queryDate">
+                <button type="button" class="btn btn-icon" onclick="changeDate(1)">▶</button>
+                
+                <!-- 全新動態日曆圖示按鈕 -->
+                <button type="button" onclick="setToday('queryDate')" style="width: 42px; height: 42px; padding: 0; border: 1px solid var(--border-color); border-radius: 8px; background: #fff; cursor: pointer; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex-shrink: 0;">
+                    <div style="background: #EF4444; color: white; font-size: 0.65rem; font-weight: bold; height: 14px; line-height: 14px; text-align: center; width: 100%;">今日</div>
+                    <div id="dynamicTodayNum" style="color: #1F2937; font-size: 1.1rem; font-weight: bold; flex: 1; display: flex; align-items: center; justify-content: center; background: #FAFAFA;">21</div>
+                </button>
             </div>
-            <div id="overview-content" style="margin-top: 15px;">
-                <table class="overview-table"><tbody id="overview-table-body"></tbody></table>
+            <!-- 調整星期幾的上下間距 -->
+            <div id="dayOfWeekDisplay" style="margin-bottom: 6px;">載入中...</div>
+            <!-- 調整模式切換按鈕的下間距 -->
+            <div class="toggle-group" style="margin-bottom: 10px;">
+                <button type="button" id="btnLogical" class="btn-mode active" onclick="setMode(false)">📅 標準班表</button>
+                <button type="button" id="btnActual" class="btn-mode" onclick="setMode(true)">🏃 實際出勤</button>
             </div>
         </div>
-
-        <div id="cards-container"></div>
     </div>
+</div>
 
-    <!-- Tab: 歷史記錄 -->
-    <div id="tab-history" class="tab-content">
-        <h3 style="margin-top:0; color:var(--text-main); border-bottom: 2px solid var(--border-color); padding-bottom:10px; font-size: 20px;">📜 歷史記錄與統計</h3>
-        <div class="form-group">
-            <input type="text" id="history-search" class="form-control" placeholder="🔍 搜尋紀錄、卡片、明細..." onkeyup="renderHistory()" style="margin-bottom: 12px;">
-            <select id="history-card-select" class="form-control" onchange="renderHistory()">
-                <!-- JS 動態產生選項 -->
-            </select>
-        </div>
-        <div id="history-container"></div>
-    </div>
-
-    <!-- Tab: 系統設定 -->
-    <div id="tab-settings" class="tab-content">
-        <div class="card-item" style="padding:20px;">
-            <h3 style="margin-top:0; color:var(--text-main); border-bottom: 2px solid var(--border-color); padding-bottom:10px; font-size: 18px;">✨ 新增卡片</h3>
-            <div class="form-group"><label>卡片名稱</label><input type="text" id="new-card-name" class="form-control" placeholder="例如：科技通勤卡"></div>
-            <div class="form-group">
-                <label>卡片種類</label>
-                <select id="new-card-type" class="form-control" onchange="toggleJcbUI('new-card')">
-                    <option value="悠遊卡">悠遊卡</option><option value="一卡通">一卡通</option><option value="愛金卡">愛金卡</option>
+<div class="container" style="flex: 1; display: flex; flex-direction: column;">
+    <div id="tab1" class="tab-content active">
+        <div class="card">
+            <div class="card-title">
+                <span>👨‍💻 今日班表</span>
+                <select id="viewTeamSelect" onchange="changeViewTeam()" style="position: absolute; right: 0; width: auto; max-width: 150px; padding: 2px 8px; font-size: 1rem; margin: 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; color: #1E3A8A; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <!-- 動態載入選單選項 -->
                 </select>
             </div>
-            <div class="form-group" id="new-card-jcb-group">
-                <label class="checkbox-label"><input type="checkbox" id="new-card-is-jcb" checked onchange="toggleJcbUI('new-card')"> 設為 JCB 悠遊卡 (啟用加值登錄)</label>
-            </div>
-            <div class="form-group"><label>信用卡號 (選填)</label><input type="text" id="new-card-credit" class="form-control" placeholder="例如：12345678..."></div>
-            <div class="form-group"><label>票證卡號 (選填)</label><input type="text" id="new-card-transit" class="form-control" placeholder="例如：0123456789"></div>
-            <div class="form-group"><label>初始餘額</label><input type="number" id="new-card-balance" class="form-control" placeholder="0"></div>
             
-            <div style="background: var(--bg-color); padding: 15px; border-radius: 10px; margin-bottom: 22px; border-left: 4px solid var(--purple-color);">
-                <p style="font-size: 13px; color: var(--text-muted); margin-top: 0; margin-bottom: 10px; font-weight: bold;">補登建檔前次數 (跨月/年自動歸零)</p>
-                <div class="form-group" id="new-card-regcount-group" style="margin-bottom: 12px;">
-                    <label style="font-size: 14px;">本年已登錄次數</label><input type="number" id="new-card-regcount" class="form-control" placeholder="0" min="0">
+            <!-- 單一班別顯示區塊 -->
+            <div id="singleTeamView" class="team-row" style="border: none; padding-bottom: 0; justify-content: space-around;">
+                <span class="team-name" id="myTeamName" style="font-weight: bold; font-size: 1.3rem;">載入中...</span>
+                <span id="myShiftBadge" class="shift-badge" style="font-size: 1.1rem;">載入中...</span>
+            </div>
+            <!-- 全部班別顯示區塊 -->
+            <div id="allTeamsTodayView" style="display: none; margin-top: 5px;"></div>
+
+            <div id="holidayConflictContainer" class="conflict-warning" style="display: none; margin-top: 15px; padding: 12px; background: #FEF2F2; border-radius: 8px; border: 2px solid #EF4444; color: #991B1B; font-size: 1.05rem;"></div>
+            <div id="restDayReminderContainer" style="display: none; margin-top: 15px; padding: 10px; background: #FEF2F2; border-radius: 8px; border: 1px dashed #FCA5A5; color: #B91C1C; font-size: 1.05rem;"></div>
+        </div>
+        <div class="card">
+            <div class="card-title">🛠️ 工作提醒 <span id="taskTeamLabel" style="font-size:0.9rem; color:#4F46E5; margin-left:8px; font-weight:normal;"></span></div>
+            <ul class="task-list" id="taskList"></ul>
+        </div>
+        <div id="installButtonContainer" class="install-button-container"><button id="btnInstall" class="btn-install">📥 安裝為手機 APP</button><div class="install-explanation">以便離線使用和更快載入</div></div>
+    </div>
+
+    <div id="tab2" class="tab-content">
+        <div class="card">
+            <!-- 第一行：切換月份與標題 -->
+            <div class="card-title" style="justify-content: center; gap: 15px; border-bottom: none; padding-bottom: 0;">
+                <button type="button" class="btn-icon" style="padding: 4px 15px; font-size: 1.1rem; box-shadow: none; border: 1px solid var(--border-color); cursor: pointer; background: #F9FAFB;" onclick="changeCalendarMonth(-1)">◀</button>
+                <span id="calendarTitle" style="font-size: 1.25rem; white-space: nowrap;">🗓️ 載入中...</span>
+                <button type="button" class="btn-icon" style="padding: 4px 15px; font-size: 1.1rem; box-shadow: none; border: 1px solid var(--border-color); cursor: pointer; background: #F9FAFB;" onclick="changeCalendarMonth(1)">▶</button>
+            </div>
+            <!-- 第二行：顯示視角選單 (靠右對齊) -->
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;">
+                <select id="monthViewSelect" onchange="changeMonthViewTeam()" style="width: auto; padding: 4px 10px; font-size: 1rem; margin: 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; color: #1E3A8A; font-weight: bold;">
+                    <!-- 動態載入選單選項 -->
+                </select>
+            </div>
+            <div id="monthCalendar" class="cal-grid"></div>
+        </div>
+        
+        <div class="card"><div class="card-title">📊 四班今日班別</div><div id="allTeamsContainer"></div></div>
+    </div>
+
+    <div id="tab3" class="tab-content">
+        <div class="card">
+            <div class="card-title">系統設定 (自動儲存)</div>
+            <label style="font-weight:bold; font-size:1.05rem;">我的專屬班別：</label>
+            <select id="setMyTeam" onchange="updateBasePreview()">
+                <option value="A">A班</option><option value="B">B班</option><option value="C" selected>C班</option><option value="D">D班</option>
+            </select>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            <label style="font-weight:bold; color: var(--primary); font-size:1.05rem;">預設顯示模式：</label>
+            <select id="setDefaultMode"><option value="false">📅 標準班表</option><option value="true">🏃 實際出勤</option></select>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            
+            <label style="font-weight:bold; font-size:1.05rem;">基準日設定：</label>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <input type="date" id="setBaseDate" onchange="updateBasePreview()">
+                <button type="button" class="btn" onclick="setToday('setBaseDate')" style="width:auto; white-space:nowrap; background:#E5E7EB; color:#4B5563; padding:8px 12px; font-size:1rem;">📅 今天</button>
+            </div>
+            <label style="font-weight:bold; display:block; margin-top:10px; font-size:1.05rem;">指定基準班別與當天班表：</label>
+            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px;">系統將自動精準推算其他三班狀態。</div>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <select id="setRefTeam" style="flex:1;" onchange="updateBasePreview()"><option value="A">A班</option><option value="B">B班</option><option value="C" selected>C班</option><option value="D">D班</option></select>
+                <select id="setRefShift" style="flex:2;" onchange="updateBasePreview()"><option value="0">早班1</option><option value="1">早班2</option><option value="2">中班1</option><option value="3">中班2</option><option value="4">小休</option><option value="5">晚班1</option><option value="6">晚班2</option><option value="7">大休</option></select>
+            </div>
+            <div id="basePreview" style="background: #EFF6FF; border: 1px dashed #93C5FD; padding: 10px; border-radius: 8px; font-size: 1rem; color: #1E3A8A; margin-bottom: 15px; line-height:1.4;">系統推算：請先選擇設定。</div>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            
+            <label style="font-weight:bold; display:block; margin-bottom: 5px; font-size:1.05rem;">各班領班名稱：</label>
+            <div class="setting-grid">
+                <div><label>A班</label><input type="text" id="setTeamA"></div><div><label>B班</label><input type="text" id="setTeamB"></div>
+                <div><label>C班</label><input type="text" id="setTeamC"></div><div><label>D班</label><input type="text" id="setTeamD"></div>
+            </div>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label style="font-weight:bold; color:#DC2626; margin:0; font-size:1.05rem;">✏️ 手動改班 / 請假設定：</label>
+                <button class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none;" onclick="setToday('addManualDate')">📅 今天</button>
+            </div>
+            <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 10px;">優先覆蓋原班表，可用於設定各類假別或調班。</div>
+            <div id="manualShiftList" style="margin-bottom:15px; max-height:160px; overflow-y:auto; background:#F9FAFB; border:1px solid var(--border-color); border-radius:8px; padding:5px;"></div>
+            <div style="display:flex; gap:8px; background:#FEF2F2; padding:10px; border-radius:8px; border:1px solid #FECACA;">
+                <input type="date" id="addManualDate" style="flex:1.5; padding:8px; margin:0;">
+                <select id="addManualTeam" style="flex:1; padding:8px; margin:0;"><option value="A">A班</option><option value="B">B班</option><option value="C">C班</option><option value="D">D班</option></select>
+                <select id="addManualShift" style="flex:1.5; padding:8px; margin:0;"><option value="特休">特休</option><option value="病假">病假</option><option value="事假">事假</option><option value="公假">公假</option><option value="調:早班1">調:早班1</option><option value="調:早班2">調:早班2</option><option value="調:中班1">調:中班1</option><option value="調:中班2">調:中班2</option><option value="調:晚班1">調:晚班1</option><option value="調:晚班2">調:晚班2</option><option value="調:小休">調:小休</option><option value="調:大休">調:大休</option></select>
+                <button class="btn" onclick="addManualShift()" style="flex:1; padding:8px 5px; font-size:1rem; background:#DC2626; margin:0;">新增</button>
+            </div>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label id="holidayAddLabel" style="font-weight:bold; margin:0; font-size:1.05rem;">🎈 國定假日管理：</label>
+                <button class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none;" onclick="setToday('addHolidayDate')">📅 今天</button>
+            </div>
+            <div id="holidayList" style="margin-bottom:10px; max-height:160px; overflow-y:auto; background:#F9FAFB; border:1px solid var(--border-color); border-radius:8px; padding:5px;"></div>
+            <div style="display:flex; gap:8px; background:#FFFBF0; padding:10px; border-radius:8px; border:1px solid #FDE68A;">
+                <input type="date" id="addHolidayDate" style="flex:2; padding:8px; margin:0;">
+                <input type="text" id="addHolidayName" placeholder="如: 中秋節" style="flex:2; padding:8px; margin:0;">
+                <div style="flex:1.5; display:flex; gap:5px;"><button id="btnSubmitHoliday" class="btn" onclick="addHoliday()" style="padding:8px 5px; font-size:1rem; background:#D97706; margin:0;">新增</button><button id="btnCancelHoliday" class="btn btn-delete" onclick="cancelEditHoliday()" style="padding:8px 5px; font-size:1rem; display:none; border:none; margin:0;">取消</button></div>
+            </div>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label style="font-weight:bold; color:#2563EB; margin:0; font-size:1.05rem;">📝 工作提醒管理：</label>
+                <button id="btnTaskToday" class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; display:none;" onclick="setToday('addTaskDate')">📅 今天</button>
+            </div>
+            <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 10px;">系統預設與您自訂的工作皆在此管理。</div>
+            <div id="customTaskList" style="margin-bottom:15px; max-height:250px; overflow-y:auto; background:#F9FAFB; border:1px solid var(--border-color); border-radius:8px; padding:5px;"></div>
+            <div style="background:#EFF6FF; padding:10px; border-radius:8px; border:1px solid #BFDBFE;">
+                <label id="taskAddLabel" style="font-size:1.05rem; font-weight:bold; color:#1E3A8A; display:block; margin-bottom:8px;">➕ 新增自訂工作</label>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <select id="addTaskShift" style="flex:1; padding:8px; margin:0;"><option value="早班">早班(皆提醒)</option><option value="早班1">早班1</option><option value="早班2">早班2</option><option value="中班">中班(皆提醒)</option><option value="中班1">中班1</option><option value="中班2">中班2</option><option value="晚班">晚班(皆提醒)</option><option value="晚班1">晚班1</option><option value="晚班2">晚班2</option><option value="全天">全天</option></select>
+                    <select id="addTaskRule" style="flex:2; padding:8px; margin:0;" onchange="toggleTaskInputs()"><option value="every_shift">每次當班</option><option value="specific_date">單次特定日期</option><option value="weekly">每週特定星期</option><option value="monthly_day">每月幾號</option><option value="monthly_last">每月最後一天</option><option value="last_monday">每月最後一個週一</option><option value="yearly_range">每年月份區間</option><option value="odd_months">單數月</option><option value="even_months">雙數月</option></select>
                 </div>
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label style="font-size: 14px;">本月已儲值次數</label><input type="number" id="new-card-topup-count" class="form-control" placeholder="0" min="0">
-                </div>
-            </div>
-            <button class="btn-block btn-primary btn-3d" onclick="addCard()">新增資料</button>
-        </div>
-
-        <div class="card-item" style="margin-top: 20px; padding:20px;">
-            <h3 style="margin-top:0; color:var(--text-main); border-bottom: 2px solid var(--border-color); padding-bottom:10px; font-size: 18px;">⚙️ 系統備份與還原</h3>
-            
-            <div class="backup-grid">
-                <button class="btn-grid btn-c-bak btn-3d" id="btn-cloud-backup" onclick="cloudBackup(false)">☁️ 雲端備份</button>
-                <button class="btn-grid btn-c-res btn-3d" id="btn-cloud-restore" onclick="cloudRestore()">☁️ 雲端還原</button>
-                <button class="btn-grid btn-l-bak btn-3d" onclick="exportBackup(true)">📥 本機備份</button>
-                <button class="btn-grid btn-l-res btn-3d" onclick="document.getElementById('import-file').click()">📤 本機還原</button>
-            </div>
-            
-            <button class="btn-block btn-green btn-3d" style="margin-top: 15px;" onclick="exportTxt()">📝 匯出卡片純文字資訊 (.txt)</button>
-
-            <!-- 隱藏的檔案上傳元件 -->
-            <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importBackup(event)">
-        </div>
-    </div>
-
-    <!-- Navigation -->
-    <div class="bottom-nav">
-        <button class="nav-btn active" onclick="switchTab('cards', this)"><div class="nav-icon">💳</div><span>我的卡片</span></button>
-        <button class="nav-btn" onclick="switchTab('history', this)"><div class="nav-icon">📊</div><span>歷史記錄</span></button>
-        <button class="nav-btn" onclick="switchTab('settings', this)"><div class="nav-icon">⚙️</div><span>系統設定</span></button>
-    </div>
-
-    <!-- 通用確認與警告對話框 -->
-    <div class="modal-overlay" id="dialog-modal" style="z-index: 100;">
-        <div class="modal" style="text-align: center; max-width: 300px; padding: 25px 20px;">
-            <h3 id="dialog-title" style="color: var(--primary-color); font-size: 20px; border: none; margin-bottom: 10px;">提示</h3>
-            <p id="dialog-message" style="font-size: 16px; margin-bottom: 25px; color: var(--text-main); line-height: 1.5; word-break: break-all;"></p>
-            <div class="modal-buttons" id="dialog-buttons" style="margin-top: 0;"></div>
-        </div>
-    </div>
-
-    <!-- 啟動提醒視窗 -->
-    <div class="modal-overlay" id="startup-reminder-modal" style="z-index: 50;">
-        <div class="modal" style="text-align: center; max-width: 320px;">
-            <h3 style="color: var(--warning-color); font-size: 20px; border: none; margin-bottom: 10px;">💡 儲值提醒</h3>
-            <p style="font-size: 15px; margin-bottom: 15px; color: var(--text-main);">以下卡片本月已登錄，但尚未有儲值紀錄，請記得完成儲值以獲取回饋：</p>
-            <div id="startup-reminder-list" style="max-height: 200px; overflow-y: auto; margin-bottom: 20px;"></div>
-            <button class="btn-block btn-3d" style="background-color: var(--warning-color); color: #fff; box-shadow: 0 4px 0 #d97706; margin-bottom:0;" onclick="closeModal('startup-reminder-modal')">我知道了</button>
-        </div>
-    </div>
-
-    <!-- iOS 安裝教學彈窗 -->
-    <div class="modal-overlay" id="ios-install-modal" style="z-index: 60;">
-        <div class="modal" style="text-align: center; max-width: 320px;">
-            <h3 style="color: var(--primary-color); font-size: 20px; border: none; margin-bottom: 10px;">📲 安裝至主畫面</h3>
-            <p style="font-size: 15px; margin-bottom: 20px; color: var(--text-main); text-align: left; line-height: 1.6;">
-                在 iOS 裝置上，請跟著以下步驟安裝 APP：<br><br>
-                1. 點擊 Safari 瀏覽器下方的「分享」圖示 <span style="font-size:18px;">⍗</span><br>
-                2. 往下滑動並點選「<span style="color:var(--primary-color); font-weight:bold;">➕ 加入主畫面</span>」<br>
-                3. 點擊右上角的「新增」即可！
-            </p>
-            <button class="btn-block btn-primary btn-3d" style="margin-bottom:0;" onclick="closeModal('ios-install-modal')">我知道了</button>
-        </div>
-    </div>
-
-    <!-- 儲值選項視窗 -->
-    <div class="modal-overlay" id="topup-option-modal" style="z-index: 25;">
-        <div class="modal" style="text-align: center; max-width: 320px;">
-            <h3 style="color: var(--primary-color); font-size: 20px; border:none; margin-bottom: 15px;">選擇儲值金額</h3>
-            <p style="color: var(--text-main); font-size: 15px; margin-bottom: 20px;">是否要快速儲值預設的 500 元？</p>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                <button class="btn-block btn-primary btn-3d" style="margin-bottom:0;" onclick="quickTopup500()">確定 (儲值 500 元)</button>
-                <button class="btn-block btn-backup btn-3d" style="margin-bottom:0; background-color: var(--primary-light); color: var(--primary-dark); box-shadow: 0 4px 0 #bae6fd;" onclick="openCustomTopup()">輸入其他金額</button>
-                <button class="btn-cancel-modal btn-3d" style="width: 100%; margin-top: 5px; flex: none;" onclick="closeModal('topup-option-modal')">取消</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 進階疊加排序面板 -->
-    <div class="modal-overlay" id="multi-sort-modal" style="z-index: 40;">
-        <div class="modal">
-            <h3 style="color: var(--primary-color); font-size: 20px; border-bottom: 2px solid var(--bg-color); margin-bottom: 20px;">🎛️ 進階疊加排序</h3>
-            <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">請依序設定排列優先權。當上層條件相同時，將自動套用下層條件進行細排。</p>
-            
-            <div class="multi-sort-row"><label>優先 1</label><select id="ms-l1" class="form-control" style="padding: 10px;"></select></div>
-            <div class="multi-sort-row"><label>優先 2</label><select id="ms-l2" class="form-control" style="padding: 10px;"></select></div>
-            <div class="multi-sort-row"><label>優先 3</label><select id="ms-l3" class="form-control" style="padding: 10px;"></select></div>
-            <div class="multi-sort-row"><label>優先 4</label><select id="ms-l4" class="form-control" style="padding: 10px;"></select></div>
-            
-            <div class="modal-buttons" style="margin-top: 30px;">
-                <button class="btn-cancel-modal btn-3d" onclick="cancelMultiSort()">取消</button>
-                <button class="btn-block btn-primary btn-3d" style="margin-bottom:0; flex:1 1 40%;" onclick="saveMultiSort()">套用排序</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 輸入扣款與自訂儲值視窗 -->
-    <div class="modal-overlay" id="action-modal">
-        <div class="modal">
-            <h3 id="modal-title">輸入金額</h3>
-            <div class="form-group"><label>金額</label><input type="number" id="modal-amount" class="form-control" placeholder="請輸入金額"></div>
-            <div class="form-group">
-                <label>消費明細 (選填)</label>
-                <!-- 加入 list 屬性指向 datalist，並關閉預設 autocomplete 以防干擾 -->
-                <input type="text" id="modal-memo" class="form-control" list="memo-datalist" autocomplete="off" placeholder="例如：超商買咖啡">
-                <!-- 原生的資料清單，供手機鍵盤上方顯示用 -->
-                <datalist id="memo-datalist"></datalist>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn-cancel-modal btn-3d" onclick="closeModal('action-modal')">取消</button>
-                <button class="btn-block btn-primary btn-3d" style="margin-bottom:0; flex:1 1 40%;" onclick="submitAction()">確認執行</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 編輯紀錄視窗 -->
-    <div class="modal-overlay" id="edit-modal">
-        <div class="modal">
-            <h3>編輯記錄</h3><input type="hidden" id="edit-tx-id">
-            <div class="form-group"><label>日期時間</label><input type="datetime-local" id="edit-datetime" class="form-control"></div>
-            <div class="form-group"><label>金額</label><input type="number" id="edit-amount" class="form-control"></div>
-            <div class="form-group"><label>消費明細</label><input type="text" id="edit-memo" class="form-control"></div>
-            <div class="modal-buttons">
-                <button class="btn-cancel-modal btn-3d" onclick="closeModal('edit-modal')">取消</button>
-                <button class="btn-block btn-primary btn-3d" style="margin-bottom:0; flex:1 1 40%;" onclick="submitEdit()">儲存變更</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 編輯卡片視窗 -->
-    <div class="modal-overlay" id="edit-card-modal">
-        <div class="modal">
-            <h3>編輯卡片資訊</h3><input type="hidden" id="edit-card-id">
-            <div class="form-group"><label>卡片名稱</label><input type="text" id="edit-card-name" class="form-control"></div>
-            <div class="form-group"><label>實際餘額 (校正)</label><input type="number" id="edit-card-balance" class="form-control"><p style="font-size:13px; color:var(--text-muted); margin-top:6px;">自動新增「校正」紀錄以平衡帳目</p></div>
-            <div class="form-group"><label>卡片種類</label><select id="edit-card-type" class="form-control" onchange="toggleJcbUI('edit-card')"><option value="悠遊卡">悠遊卡</option><option value="一卡通">一卡通</option><option value="愛金卡">愛金卡</option></select></div>
-            <div class="form-group" id="edit-card-jcb-group"><label class="checkbox-label"><input type="checkbox" id="edit-card-is-jcb" onchange="toggleJcbUI('edit-card')"> 設為 JCB 悠遊卡</label></div>
-            <div class="form-group"><label>信用卡號 (選填)</label><input type="text" id="edit-card-credit" class="form-control"></div>
-            <div class="form-group"><label>票證卡號 (選填)</label><input type="text" id="edit-card-transit" class="form-control"></div>
-            
-            <div style="background: var(--bg-color); padding: 15px; border-radius: 10px; margin-bottom: 22px; border-left: 4px solid var(--purple-color);">
-                <div class="form-group" id="edit-card-regcount-group" style="margin-bottom: 12px;">
-                    <label style="font-size: 14px;">本年已登錄次數 (建檔前)</label><input type="number" id="edit-card-regcount" class="form-control" min="0">
-                </div>
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label style="font-size: 14px;">本月已儲值次數 (建檔前)</label><input type="number" id="edit-card-topup-count" class="form-control" min="0">
+                <div id="inputWrap_date" style="display:none; margin-bottom:8px;"><input type="date" id="addTaskDate" style="padding:8px; margin:0;"></div>
+                <div id="inputWrap_week" style="display:none; margin-bottom:8px;"><select id="addTaskWeek" style="padding:8px; margin:0;"><option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option><option value="5">星期五</option><option value="6">星期六</option><option value="0">星期日</option></select></div>
+                <div id="inputWrap_monthDay" style="display:none; margin-bottom:8px;"><input type="number" id="addTaskMonthDay" placeholder="輸入日期 (1-31)" min="1" max="31" style="padding:8px; margin:0;"></div>
+                <div id="inputWrap_monthRange" style="display:none; margin-bottom:8px; gap:5px; align-items:center;"><input type="number" id="addTaskRangeStart" placeholder="開始月" min="1" max="12" style="padding:8px; margin:0;"><span>至</span><input type="number" id="addTaskRangeEnd" placeholder="結束月" min="1" max="12" style="padding:8px; margin:0;"></div>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="addTaskText" placeholder="輸入工作內容" style="flex:2; padding:8px; margin:0;">
+                    <button id="btnSubmitTask" class="btn" onclick="addCustomTask()" style="flex:1.5; padding:8px 5px; font-size:1rem; background:#2563EB; margin:0;">新增</button>
+                    <button id="btnCancelTask" class="btn btn-delete" onclick="cancelEditCustomTask()" style="flex:1; padding:8px 5px; font-size:1rem; display:none; border:none; margin:0;">取消</button>
                 </div>
             </div>
             
-            <div class="modal-buttons">
-                <button class="btn-cancel-modal btn-3d" onclick="closeModal('edit-card-modal')">取消</button>
-                <button class="btn-block btn-primary btn-3d" style="margin-bottom:0; flex:1 1 40%;" onclick="submitEditCard()">儲存</button>
-                <button class="btn-block btn-danger-alt btn-3d" onclick="deleteCardFromEdit()">🗑️ 刪除此卡片</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // --- 核心變數與初始化 ---
-        const DB_KEY = 'TransitApp_Data';
-        let appData = { cards: [], transactions: [], customOrder: [], isOverviewCollapsed: false, multiSort: {l1: 'type-default', l2: 'balance-desc', l3: 'none', l4: 'none'} };
-        let deferredPrompt, currentAction = { cardId: null, type: null };
-        let allowAppExit = false; 
-
-        // 安全的通用對話框 (取代 alert / confirm)
-        let dialogCallback = null;
-        function showDialog(message, title = '提示', isConfirm = false, callback = null) {
-            document.getElementById('dialog-title').innerText = title;
-            document.getElementById('dialog-title').style.color = isConfirm ? 'var(--warning-color)' : 'var(--primary-color)';
-            document.getElementById('dialog-message').innerText = message;
-            const btnContainer = document.getElementById('dialog-buttons');
-            btnContainer.innerHTML = '';
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            <label style="font-weight:bold; color: #10B981; margin:0; font-size:1.05rem;">💾 系統備份與還原</label>
+            <div style="font-size: 0.9rem; color: #6B7280; margin: 5px 0 10px 0;">支援 Google 雲端同步與本機匯出入，變更設定將自動安靜雲端備份。</div>
             
-            if (isConfirm) {
-                dialogCallback = callback;
-                btnContainer.innerHTML = `
-                    <button class="btn-cancel-modal btn-3d" onclick="closeDialog(false)">取消</button>
-                    <button class="btn-block btn-primary btn-3d" style="margin-bottom:0; flex:1 1 40%; background-color: var(--warning-color); box-shadow: 0 4px 0 #d97706;" onclick="closeDialog(true)">確定</button>
-                `;
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                <button class="btn" onclick="cloudBackup(event)" style="background:#0284C7; font-size:1rem; padding:10px; margin:0;">☁️ 雲端備份</button>
+                <button class="btn" onclick="cloudRestore(event)" style="background:#4F46E5; font-size:1rem; padding:10px; margin:0;">☁️ 雲端還原</button>
+                <button class="btn" onclick="exportData()" style="background:#10B981; font-size:1rem; padding:10px; margin:0;">📤 本機備份</button>
+                <button class="btn" onclick="el('importDataInput').click()" style="background:#F59E0B; font-size:1rem; padding:10px; margin:0;">📥 本機還原</button>
+            </div>
+            <input type="file" id="importDataInput" style="display:none;" accept=".json" onchange="importData(event)">
+
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+
+            <div class="action-buttons" style="display:flex; gap:15px; margin-bottom:10px;">
+                <button class="btn btn-danger" onclick="restoreDefaults()" style="flex:1; margin-top:0;">🔄 恢復預設</button>
+                <button class="btn" onclick="saveSettings()" style="flex:1; margin-top:0;">💾 儲存設定</button>
+            </div>
+</div>
+</div>
+
+<div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(1)"><div class="tab-icon">👤</div><div class="tab-text">今日班表</div></button>
+    <button class="tab-btn" onclick="switchTab(2)"><div class="tab-icon">🗓️</div><div class="tab-text">班表總覽</div></button>
+    <button class="tab-btn" onclick="switchTab(3)"><div class="tab-icon">⚙️</div><div class="tab-text">系統設定</div></button>
+</div>
+<div id="holidayToast" class="toast"></div>
+
+<!-- iOS 安裝教學彈窗 -->
+<div id="iosInstallOverlay">
+    <div class="ios-modal">
+        <button class="ios-modal-close" onclick="el('iosInstallOverlay').style.display='none'">&times;</button>
+        <h3>🍎 iOS 安裝教學</h3>
+        <p style="font-size:1rem; color:var(--text-muted); margin-bottom:15px;">將此系統加入主畫面，即可像 APP 一樣離線快速開啟！</p>
+        
+        <div class="ios-step">
+            1. 點擊瀏覽器下方或上方的 <span class="ios-icon" style="color:#007AFF; border:1px solid #007AFF; border-radius:4px; padding:2px 5px; font-size:1.1rem;">⍗</span>「分享」圖示
+        </div>
+        <div class="ios-step">
+            2. 往下滑動選單，點選 <span class="ios-icon" style="color:#333; background:#E5E5EA; border-radius:6px; padding:3px 6px;">➕</span>「<strong>加入主畫面</strong>」
+        </div>
+        
+        <div style="font-size:2rem; margin-top:20px; animation: slideInUp 1s infinite alternate;">⬇️</div>
+    </div>
+</div>
+
+<script>
+    // --- 共用 Helpers ---
+    const el = id => document.getElementById(id);
+    const getVal = id => el(id).value;
+    const setVal = (id, val) => { if(el(id)) el(id).value = val; };
+    const triggerVibrate = () => { if (navigator.vibrate) navigator.vibrate(50); };
+    const formatDateToYYYYMMDD = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    // --- 常數與資料邏輯 ---
+    const SHIFT_CYCLE = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
+    const TEAMS = ["A", "B", "C", "D"];
+    
+    let isActualMode = false; 
+    let currentViewTeam = null, currentMonthViewTeam = null;
+    let calendarViewDate = getTWDate(); 
+    let tempHolidays = {}, tempTasks = [], tempManualShifts = {}; 
+    let editingHolidayDate = null, editingTaskId = null;
+
+    const defaultTasks = [
+        { id: "t1", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：登錄MI系統的各型泵浦運轉前暨啟動時檢點表" },
+        { id: "t2", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：填寫CPI放水閥操作記錄表等7份檢查表" },
+        { id: "t3", shift: "中班", rule: "every_shift", ruleValue: "", text: "中班：填寫CPI放水閥操作記錄表" },
+        { id: "t4", shift: "早班", rule: "yearly_range", ruleValue: "3-11", text: "3~11月早班：填寫高氣溫戶外作業評估檢點表" },
+        { id: "t5", shift: "早班", rule: "monthly_day", ruleValue: "1", text: "初一早班：登錄MI系統的儲槽計量設備每月檢查表" },
+        { id: "t6", shift: "早班", rule: "monthly_day", ruleValue: "1", text: "初一早班：列印上個月的管壓趨勢圖" },
+        { id: "t7", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：登錄MI系統的的儲槽操作前後(或每週)保養檢查表" },
+        { id: "t8", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫一般重質輕質液泵浦軸封設備元件每週目視檢查表" },
+        { id: "t9", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫漏油偵測警報系統檢查表" },
+        { id: "t10", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫緊急洗眼沖淋設備檢查表" },
+        { id: "t11", shift: "早班", rule: "last_monday", ruleValue: "", text: "月底週一早班：登錄平板的緊急洗眼沖淋設備檢查表" },
+        { id: "t12", shift: "早班", rule: "last_monday", ruleValue: "", text: "月底週一早班：登錄平板的漏油偵測警報系統檢查表" },
+        { id: "t13", shift: "晚班", rule: "every_shift", ruleValue: "", text: "晚班：填寫結帳量油記錄表" },
+        { id: "t14", shift: "晚班", rule: "every_shift", ruleValue: "", text: "晚班：填寫油槽放水記錄表" },
+        { id: "t15", shift: "中班", rule: "monthly_last", ruleValue: "", text: "每月底中班：填寫機車行駛記錄表" }
+    ];
+
+    const defaultSettings = {
+        baseDate: "2026-01-01", myTeam: "C", defaultMode: false,
+        teams: { "A": { name: "蘇明理", offset: 5 }, "B": { name: "林致漢", offset: 7 }, "C": { name: "蔡宏和", offset: 1 }, "D": { name: "林明宗", offset: 3 } },
+        holidays: { "2026-01-01": "元旦","2026-02-15": "小年夜", "2026-02-16": "除夕", "2026-02-17": "春節", "2026-02-18": "初二", "2026-02-19": "初三", "2026-02-28": "和平紀念日", "2026-04-03": "兒童節", "2026-04-04": "清明節", "2026-05-01": "勞動節", "2026-06-19": "端午節", "2026-09-25": "中秋節", "2026-10-10": "國慶日" },
+        manualShifts: {}
+    };
+
+    let appSettings;
+    try {
+        let savedData = localStorage.getItem("shiftSettings");
+        appSettings = savedData ? JSON.parse(savedData) : JSON.parse(JSON.stringify(defaultSettings));
+    } catch(e) { appSettings = JSON.parse(JSON.stringify(defaultSettings)); }
+    
+    appSettings.defaultMode = appSettings.defaultMode || false;
+    appSettings.holidays = appSettings.holidays || JSON.parse(JSON.stringify(defaultSettings.holidays));
+    appSettings.manualShifts = appSettings.manualShifts || {};
+    appSettings.tasks = Array.isArray(appSettings.tasks) ? appSettings.tasks : JSON.parse(JSON.stringify(defaultTasks));
+    appSettings.teams = appSettings.teams?.["A"] ? appSettings.teams : JSON.parse(JSON.stringify(defaultSettings.teams));
+    TEAMS.forEach(t => appSettings.teams[t].offset = isNaN(appSettings.teams[t].offset) ? defaultSettings.teams[t].offset : appSettings.teams[t].offset);
+    appSettings.baseDate = isNaN(new Date(appSettings.baseDate).getTime()) ? defaultSettings.baseDate : appSettings.baseDate;
+    appSettings.myTeam = appSettings.myTeam || "C";
+
+    // 更新下拉選單選項 (包含領班名字)
+    function populateDropdowns() {
+        const vSel = el("viewTeamSelect");
+        const mSel = el("monthViewSelect");
+        const vVal = vSel?.value || currentViewTeam || appSettings.myTeam;
+        const mVal = mSel?.value || currentMonthViewTeam || appSettings.myTeam;
+
+        let optionsHtml = TEAMS.map(t => `<option value="${t}">${t}班 (${appSettings.teams[t]?.name || "未設定"})</option>`).join("");
+        let allOption = `<option value="ALL">全部</option>`;
+
+        if(vSel) { vSel.innerHTML = optionsHtml + allOption; vSel.value = vVal; }
+        if(mSel) { mSel.innerHTML = optionsHtml + allOption; mSel.value = mVal; }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        isActualMode = appSettings.defaultMode;
+        currentViewTeam = currentMonthViewTeam = appSettings.myTeam;
+        
+        populateDropdowns(); // 初始化選單
+        
+        setVal("viewTeamSelect", currentViewTeam);
+        setVal("monthViewSelect", currentMonthViewTeam);
+        el('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
+        el('btnActual').className = isActualMode ? 'btn-mode active' : 'btn-mode';
+
+        // 👇 加上這行，讓小日曆圖示顯示今天的日期數字
+        if (el('dynamicTodayNum')) el('dynamicTodayNum').innerText = getTWDate().getDate();
+
+        setVal("queryDate", formatDateToYYYYMMDD(getTWDate()));
+        el("queryDate").addEventListener("change", renderAppSafe);
+        toggleTaskInputs(); loadSettingsToForm(); renderAppSafe();
+
+        const calContainer = el("monthCalendar");
+        let touchStartX = 0;
+        calContainer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+        calContainer.addEventListener('touchend', e => {
+            let touchEndX = e.changedTouches[0].screenX;
+            if (touchEndX < touchStartX - 40) changeCalendarMonth(1); 
+            if (touchEndX > touchStartX + 40) changeCalendarMonth(-1); 
+        }, {passive: true});
+
+        checkInstallStatus();
+        setTimeout(() => { if (typeof silentCloudBackup === 'function') silentCloudBackup(); }, 1500);
+    });
+
+    let deferredPrompt;
+    function checkInstallStatus() {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        const installContainer = el('installButtonContainer');
+
+        if (isStandalone) {
+            installContainer.style.display = 'none';
+        } else {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (isIOS) {
+                installContainer.style.display = 'block';
+                el('btnInstall').addEventListener('click', () => {
+                    triggerVibrate();
+                    el('iosInstallOverlay').style.display = 'flex';
+                });
             } else {
-                btnContainer.innerHTML = `<button class="btn-block btn-primary btn-3d" style="margin-bottom:0;" onclick="closeModal('dialog-modal')">確定</button>`;
+                window.addEventListener('beforeinstallprompt', e => {
+                    e.preventDefault();
+                    deferredPrompt = e;
+                    installContainer.style.display = 'block';
+                });
+                el('btnInstall').addEventListener('click', () => {
+                    triggerVibrate();
+                    if (!deferredPrompt) return;
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then(c => {
+                        if (c.outcome === 'accepted') {
+                            installContainer.style.display = 'none';
+                        }
+                        deferredPrompt = null;
+                    });
+                });
             }
-            document.getElementById('dialog-modal').style.display = 'flex';
         }
-        function closeDialog(result) { closeModal('dialog-modal'); if (dialogCallback) dialogCallback(result); }
+    }
 
-        function isIOS() { return (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream; }
-        function isPWA() { return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; }
+    function ensureHolidaysForYear(y) {
+        if (y < 2026) return; 
+        if (appSettings.holidays[`${y}-01-01`]) return;
 
-        function init() {
-            setupPWA();
-            loadData();
-            history.pushState('app-trap', '', '');
-
-            if (!appData.sortPreference) appData.sortPreference = 'default';
-            if (!appData.balanceSortDir) appData.balanceSortDir = 'desc'; 
-            if (!appData.multiSort) appData.multiSort = {l1: 'type-default', l2: 'balance-desc', l3: 'none', l4: 'none'};
-            
-            document.getElementById('card-sort-select').value = appData.sortPreference;
-            toggleJcbUI('new-card');
-            updateHistorySelect();
-            initMultiSortOptions();
-            renderCards();
-            renderHistory();
-            
-            const installBtn = document.getElementById('install-app-btn');
-            if (isPWA()) { installBtn.style.display = 'none'; } else {
-                if (isIOS()) { installBtn.style.display = 'block'; installBtn.onclick = () => { document.getElementById('ios-install-modal').style.display = 'flex'; }; } 
-                else { window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'block'; installBtn.onclick = async () => { if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; installBtn.style.display = 'none'; } }; }); }
-            }
-            window.addEventListener('appinstalled', () => { deferredPrompt = null; installBtn.style.display = 'none'; });
-
-            checkRemindersOnStartup();
-        }
-
-        window.addEventListener('popstate', function(e) {
-            if (allowAppExit) return;
-            history.pushState('app-trap', '', ''); 
-
-            const openModals = Array.from(document.querySelectorAll('.modal-overlay')).filter(el => window.getComputedStyle(el).display === 'flex' || el.style.display === 'flex');
-            if (openModals.length > 0) { openModals.forEach(m => closeModal(m.id)); return; }
-
-            const cardsTab = document.getElementById('tab-cards');
-            if (!cardsTab.classList.contains('active-tab')) {
-                const historyTab = document.getElementById('tab-history');
-                if (historyTab.classList.contains('active-tab')) {
-                    const selId = document.getElementById('history-card-select').value;
-                    if (selId && selId !== 'all' && !selId.startsWith('stats-')) { switchTab('cards', document.querySelectorAll('.nav-btn')[0], true); setTimeout(() => scrollToCard(selId), 50); return; }
-                }
-                switchTab('cards', document.querySelectorAll('.nav-btn')[0]);
-                window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); return;
-            }
-
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-            if (scrollTop > 5) { window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); return; }
-
-            showDialog('確定要離開電子票證管家嗎？', '離開程式', true, (res) => { if (res) confirmExitApp(); });
+        let newH = {};
+        
+        ["01-01:元旦", "02-28:和平紀念日", "04-04:兒童節", "05-01:勞動節", "10-10:國慶日"].forEach(item => {
+            let p = item.split(":"); 
+            if (!appSettings.holidays[`${y}-${p[0]}`]) newH[`${y}-${p[0]}`] = p[1];
         });
 
-        function confirmExitApp() { allowAppExit = true; history.go(-2); }
+        let userAlreadySet = Object.keys(appSettings.holidays).some(k => 
+            k.startsWith(y + "-") && (appSettings.holidays[k].includes("春節") || appSettings.holidays[k].includes("端午") || appSettings.holidays[k].includes("中秋"))
+        );
 
-        const loadData = () => { 
-            const data = localStorage.getItem(DB_KEY); 
-            if (data) {
-                appData = { ...appData, ...JSON.parse(data) }; 
-                if (appData.sortPreference === 'balance-desc') { appData.sortPreference = 'balance'; appData.balanceSortDir = 'desc'; }
-                else if (appData.sortPreference === 'balance-asc') { appData.sortPreference = 'balance'; appData.balanceSortDir = 'asc'; }
-                
-                const now = new Date(); const currentYear = now.getFullYear(); const currentMonthKey = `${currentYear}-${now.getMonth()}`;
-                appData.cards.forEach(c => {
-                    if (c.initRegs > 0 && !c.initRegsYear) c.initRegsYear = currentYear;
-                    if (c.initTopups > 0 && !c.initTopupsMonth) c.initTopupsMonth = currentMonthKey;
-                });
-            }
-        };
+        if (!userAlreadySet) {
+            const vData = {
+                2026: { l: "02-17", q: "04-05", d: "06-19", m: "09-25" },
+                2027: { l: "02-06", q: "04-05", d: "06-09", m: "09-15" },
+                2028: { l: "01-26", q: "04-04", d: "05-28", m: "10-03" },
+                2029: { l: "02-13", q: "04-04", d: "06-16", m: "09-22" },
+                2030: { l: "02-03", q: "04-05", d: "06-05", m: "09-12" },
+                2031: { l: "01-23", q: "04-05", d: "06-24", m: "10-01" },
+                2032: { l: "02-11", q: "04-04", d: "06-12", m: "09-19" },
+                2033: { l: "01-31", q: "04-04", d: "06-01", m: "09-08" },
+                2034: { l: "02-19", q: "04-05", d: "06-20", m: "09-27" },
+                2035: { l: "02-08", q: "04-05", d: "06-10", m: "09-16" },
+                2036: { l: "01-28", q: "04-04", d: "06-28", m: "10-04" },
+                2037: { l: "02-15", q: "04-04", d: "06-18", m: "09-24" },
+                2038: { l: "02-04", q: "04-05", d: "06-07", m: "09-13" },
+                2039: { l: "01-24", q: "04-05", d: "06-26", m: "10-02" },
+                2040: { l: "02-12", q: "04-04", d: "06-14", m: "09-21" },
+                2041: { l: "02-01", q: "04-04", d: "06-03", m: "09-10" },
+                2042: { l: "01-22", q: "04-05", d: "06-22", m: "09-28" },
+                2043: { l: "02-10", q: "04-05", d: "06-11", m: "09-17" },
+                2044: { l: "01-30", q: "04-04", d: "05-31", m: "10-05" },
+                2045: { l: "02-17", q: "04-04", d: "06-19", m: "09-25" },
+                2046: { l: "02-06", q: "04-05", d: "06-08", m: "09-15" },
+                2047: { l: "01-26", q: "04-05", d: "06-27", m: "10-04" },
+                2048: { l: "02-14", q: "04-04", d: "06-15", m: "09-22" },
+                2049: { l: "02-02", q: "04-04", d: "06-05", m: "09-11" },
+                2050: { l: "01-23", q: "04-05", d: "06-24", m: "09-30" }
+            };
 
-        const saveData = () => { localStorage.setItem(DB_KEY, JSON.stringify(appData)); updateHistorySelect(); renderHistory(); };
-        
-        // === 雲端備份變數 ===
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbw0wAnCPZkw3nlyx0Eg08Ejk49oG_itD82PqH9IP4X7S4oR5br1NTCmlUJsNfME2kbZ/exec';
-        let isCloudSyncing = ''; 
-        let cloudBackupTimer = null;
+            let vYearData = vData[y];
+            let isFallback = false;
 
-        // === 1. 自動備份改為：背景推送至雲端 ===
-        const triggerAutoBackup = () => { 
-            appData.lastBackupTime = new Date().toISOString(); 
-            saveData(); 
-            // 防抖機制：延遲 3 秒執行，避免連續輸入時重複呼叫 API
-            if (cloudBackupTimer) clearTimeout(cloudBackupTimer);
-            cloudBackupTimer = setTimeout(() => { cloudBackup(true); }, 3000);
-        };
-
-        // === 2. 本機備份 (保留給手動點擊使用) ===
-        function exportBackup(isManual = true) {
-            appData.lastBackupTime = new Date().toISOString(); saveData(); 
-            const d = new Date(), dateStr = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
-            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(appData)], { type: "application/json" })); a.download = `票證備份_${dateStr}.json`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
-            if(isManual) showDialog('本機備份檔下載程序已啟動！', '備份完成');
-        }
-
-        // === 3. 雲端備份 (GAS) ===
-        async function cloudBackup(isAuto = false) {
-            const btn = document.getElementById('btn-cloud-backup');
-            if (!isAuto) {
-                isCloudSyncing = 'backup';
-                if (btn) { btn.disabled = true; btn.innerHTML = '⏳ 備份中...'; }
-            }
-            try {
-                const payload = {
-                    action: "auto_backup",
-                    fileName: "電子票證管家_雲端備份.json", 
-                    backupData: appData
+            if (!vYearData && y > 2050) {
+                isFallback = true;
+                let prevL = null, prevQ = null, prevD = null, prevM = null;
+                for (const [dateStr, name] of Object.entries(appSettings.holidays)) {
+                    if (dateStr.startsWith((y - 1) + "-")) {
+                        let md = dateStr.substring(5);
+                        if (name.includes("春節") && !name.includes("待確認")) prevL = md;
+                        if (name.includes("清明") && !name.includes("待確認")) prevQ = md;
+                        if (name.includes("端午") && !name.includes("待確認")) prevD = md;
+                        if (name.includes("中秋") && !name.includes("待確認")) prevM = md;
+                    }
+                }
+                vYearData = {
+                    l: prevL || "02-10",
+                    q: prevQ || "04-04",
+                    d: prevD || "06-10",
+                    m: prevM || "09-15"
                 };
-                const response = await fetch(gasUrl, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-                const result = await response.json();
+            }
+
+            if (vYearData) {
+                let lParts = vYearData.l.split('-');
+                let lDate = new Date(y, parseInt(lParts[0]) - 1, parseInt(lParts[1]));
+                let suffix = isFallback ? "(待確認)" : "";
                 
-                if (result.status === 'success') {
-                    appData.lastBackupTime = new Date().toISOString(); saveData(); renderCards();
-                    if (!isAuto) showDialog("✅ 雲端備份成功！\n資料已安全存入 Google Drive。", "備份成功");
-                } else {
-                    throw new Error(result.message);
-                }
-            } catch (e) {
-                if (!isAuto) showDialog("❌ 雲端備份失敗：" + e.message, "錯誤");
-            } finally {
-                if (!isAuto) {
-                    isCloudSyncing = '';
-                    if (btn) { btn.disabled = false; btn.innerHTML = '☁️ 雲端備份'; }
+                [[-2, `小年夜${suffix}`], [-1, `除夕${suffix}`], [0, `春節${suffix}`], [1, `初二${suffix}`], [2, `初三${suffix}`]].forEach(o => {
+                    let d = new Date(lDate); d.setDate(lDate.getDate() + o[0]);
+                    newH[formatDateToYYYYMMDD(d)] = o[1];
+                });
+                
+                let qStr = `${y}-${vYearData.q}`;
+                newH[qStr] = newH[qStr] ? newH[qStr] + `/清明節${suffix}` : `清明節${suffix}`;
+                
+                newH[`${y}-${vYearData.d}`] = `端午節${suffix}`;
+                newH[`${y}-${vYearData.m}`] = `中秋節${suffix}`;
+            }
+            
+            if (isFallback) {
+                setTimeout(() => {
+                    alert(`⚠️ 系統提示\n\n${y} 年的農曆變動假日（春節、清明、端午、中秋）已自動沿用前一年的日期，並標註為「(待確認)」。\n\n因為農曆每年不同，請務必至「系統設定 -> 國定假日管理」修正為 ${y} 年正確的日期！`);
+                }, 300);
+            }
+        }
+        
+        Object.assign(appSettings.holidays, newH);
+        localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
+        
+        if (tempHolidays) Object.assign(tempHolidays, newH);
+        if (el("holidayList")) renderHolidayList();
+    }
+
+    function setToday(inputId) { triggerVibrate(); setVal(inputId, formatDateToYYYYMMDD(getTWDate())); el(inputId).dispatchEvent(new Event('change')); }
+    
+    function switchTab(num) {
+        triggerVibrate();
+        document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
+        el('tab' + num).classList.add('active');
+        document.querySelector(`.tab-bar .tab-btn:nth-child(${num})`).classList.add('active');
+        const headerCtrls = el('headerControls'), mainHeader = el('mainHeaderSection');
+        if (num === 3) { headerCtrls.style.opacity = '0'; setTimeout(() => { headerCtrls.style.display = 'none'; mainHeader.style.paddingBottom = '5px'; }, 150); } 
+        else { headerCtrls.style.display = 'block'; setTimeout(() => { headerCtrls.style.opacity = '1'; mainHeader.style.paddingBottom = '10px'; }, 10); }
+        el('tab' + num).scrollTop = 0;
+    }
+
+    function setMode(mode) { triggerVibrate(); isActualMode = mode; el('btnLogical').className = mode ? 'btn-mode' : 'btn-mode active'; el('btnActual').className = mode ? 'btn-mode active' : 'btn-mode'; renderAppSafe(); }
+    function changeViewTeam() { triggerVibrate(); currentViewTeam = getVal("viewTeamSelect"); renderAppSafe(); }
+    function changeMonthViewTeam() { triggerVibrate(); currentMonthViewTeam = getVal("monthViewSelect"); renderMonthTable(); }
+    
+    function changeCalendarMonth(offset) {
+        triggerVibrate();
+        calendarViewDate.setMonth(calendarViewDate.getMonth() + offset);
+        renderMonthTable();
+    }
+
+    function changeDate(days) { triggerVibrate(); let d = new Date(getVal("queryDate").replace(/-/g, '/')); d.setDate(d.getDate() + days); setVal("queryDate", formatDateToYYYYMMDD(d)); renderAppSafe(); }
+
+    function getLogicalShift(teamId, targetDateStr) {
+        if (appSettings.manualShifts?.[`${targetDateStr}_${teamId}`]) return appSettings.manualShifts[`${targetDateStr}_${teamId}`];
+        const tDate = new Date(targetDateStr.replace(/-/g, '/')), bDate = new Date(appSettings.baseDate.replace(/-/g, '/'));
+        const diffDays = Math.round((tDate - bDate) / 86400000) || 0;
+        const getShift = d => SHIFT_CYCLE[(((appSettings.teams[teamId].offset || 0) + d) % 8 + 8) % 8];
+        let shift = getShift(diffDays);
+
+        if (shift === "晚班1") {
+            let monDate = new Date(tDate); monDate.setDate(tDate.getDate() + (tDate.getDay() === 0 ? -6 : 1 - tDate.getDay()));
+            let restCount = 0;
+            for (let i = 0; i < 7; i++) {
+                let curD = new Date(monDate); curD.setDate(monDate.getDate() + i);
+                let cShift = getShift(Math.round((curD - bDate) / 86400000) || 0);
+                if (cShift === "小休" || cShift === "大休") restCount++;
+            }
+            if (restCount === 1) shift = "$" + shift;
+        }
+        return shift;
+    }
+
+    function getActualShift(logicalShift, teamId, targetDateStr) {
+        if (!logicalShift) return "早班1"; 
+        if (!isActualMode) return logicalShift; 
+        
+        let core = logicalShift.replace("$", "");
+        const isOverride = core.startsWith("調:");
+        let comp = isOverride ? core.replace("調:", "") : core;
+        let resultCore = core;
+        let isOvertime = logicalShift.includes("$");
+
+        if (comp === "小休") {
+            resultCore = (isOverride ? "調:" : "") + "晚班1";
+            if (teamId && targetDateStr) {
+                let tDate = new Date(targetDateStr.replace(/-/g, '/'));
+                tDate.setDate(tDate.getDate() + 1);
+                let tomorrowLogical = getLogicalShift(teamId, formatDateToYYYYMMDD(tDate));
+                if (tomorrowLogical && tomorrowLogical.includes("$")) {
+                    isOvertime = true;
                 }
             }
         }
+        else if (comp === "晚班1") {
+            resultCore = (isOverride ? "調:" : "") + "晚班2";
+            isOvertime = false; 
+        }
+        else if (comp === "晚班2") {
+            resultCore = (isOverride ? "調:" : "") + "小休";
+            isOvertime = false;
+        }
+        
+        return (isOvertime ? "$" : "") + resultCore;
+    }
 
-        // === 4. 雲端還原 (GAS) ===
-        function cloudRestore() {
-            showDialog("⚠️ 警告：雲端還原將會覆蓋您目前的本機資料！\n\n確定要進行還原嗎？", "雲端還原確認", true, async (res) => {
-                if (!res) return;
-                
-                const btn = document.getElementById('btn-cloud-restore');
-                isCloudSyncing = 'restore';
-                if (btn) { btn.disabled = true; btn.innerHTML = '⏳ 還原中...'; }
-                
-                try {
-                    const payload = { action: "restore_from_cloud", fileName: "電子票證管家_雲端備份.json" };
-                    const response = await fetch(gasUrl, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-                    const result = await response.json();
+    const badgeStyles = {
+        "shift-morn": { bg: "var(--morn-color)", fg: "var(--morn-text)" },
+        "shift-mid": { bg: "var(--mid-color)", fg: "var(--mid-text)" },
+        "shift-night": { bg: "var(--night-color)", fg: "var(--night-text)" },
+        "shift-override": { bg: "#FEF2F2", fg: "#991B1B", border: "1px dashed #FCA5A5" },
+        "shift-rest": { bg: "var(--rest-color)", fg: "var(--rest-text)" }
+    };
+    function getBadgeClass(txt) { if (!txt) return "shift-rest"; if (txt.includes("調:") || txt.includes("假") || txt.includes("特休")) return "shift-override"; if (txt.includes("早")) return "shift-morn"; if (txt.includes("中")) return "shift-mid"; if (txt.includes("晚")) return "shift-night"; return "shift-rest"; }
+
+    function renderAppSafe() { try { renderApp(); } catch (err) { el("myTeamName").innerText = "⚠️ 資料發生錯誤"; el("myShiftBadge").innerText = "請恢復預設"; } }
+
+    function renderApp() {
+        const qStr = getVal("queryDate"); if (!qStr) return;
+        const targetDate = new Date(qStr.replace(/-/g, '/'));
+        
+        ensureHolidaysForYear(targetDate.getFullYear()); 
+        
+        const dateKey = formatDateToYYYYMMDD(targetDate);
+        
+        let dayText = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][targetDate.getDay()];
+        if (appSettings.holidays?.[dateKey]) dayText += ` <span style="color:#DC2626; font-size:1.1rem; margin-left:8px;">🎈 ${appSettings.holidays[dateKey]}</span>`;
+        el("dayOfWeekDisplay").innerHTML = dayText;
+
+        // 計算視角班別，如果是 "ALL"，則使用預設班別來計算提醒
+        let viewTeamId = currentViewTeam || appSettings.myTeam;
+        let isAllView = viewTeamId === "ALL";
+        let calcTeamId = isAllView ? appSettings.myTeam : viewTeamId;
+        
+        let myShiftTextForCalc = ""; 
+        let allTeamsHTML = "";
+        
+        TEAMS.forEach(id => {
+            let shiftText = getActualShift(getLogicalShift(id, dateKey), id, dateKey);
+            
+            if (id === calcTeamId) {
+                myShiftTextForCalc = shiftText; // 紀錄給提醒、工作列表用
+            }
+            
+            // 處理單一班別顯示邏輯
+            if (!isAllView && id === viewTeamId) {
+                el("myTeamName").innerText = `${id}班 (${appSettings.teams[id]?.name || "未設定"})`;
+                el("myShiftBadge").innerText = shiftText.replace("調:", ""); 
+                el("myShiftBadge").className = `shift-badge ${getBadgeClass(shiftText)}`;
+            }
+            
+            // 處理全部班別 HTML
+            allTeamsHTML += `<div class="team-row"><span class="team-name">${id}班 (${appSettings.teams[id]?.name || ""})</span><span class="shift-badge ${getBadgeClass(shiftText)}">${shiftText.replace("調:", "")}</span></div>`;
+        });
+        
+        el("allTeamsContainer").innerHTML = allTeamsHTML; // 同步更新下方總覽
+
+        // 切換 UI 顯示模式 (單一 / 全部)
+        if (isAllView) {
+            el("singleTeamView").style.display = "none";
+            el("allTeamsTodayView").innerHTML = allTeamsHTML;
+            el("allTeamsTodayView").style.display = "block";
+        } else {
+            el("singleTeamView").style.display = "flex";
+            el("allTeamsTodayView").style.display = "none";
+        }
+
+        // --- 提醒與工作顯示 (使用 calcTeamId，即退回預設個人班別) ---
+        let cReminders = [], rOvertimes = [], isTodayRestOvertime = false;
+        let sDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1), eDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 2, 0); 
+        for (let d = new Date(sDate); d <= eDate; d.setDate(d.getDate() + 1)) {
+            let k = formatDateToYYYYMMDD(d), lShift = getLogicalShift(calcTeamId, k);
+            if (lShift?.startsWith("$") && appSettings.holidays?.[k] && d >= targetDate) cReminders.push(`${d.getMonth()+1}/${d.getDate()} (${appSettings.holidays[k]})`);
+        }
+        
+        let cY = targetDate.getFullYear(), cM = targetDate.getMonth(), dNum = targetDate.getDate();
+        let cycStart = new Date(cY, dNum >= 16 ? cM : cM - 1, 16), cycEnd = new Date(cY, dNum >= 16 ? cM + 1 : cM, 15);
+        for (let d = new Date(cycStart); d <= cycEnd; d.setDate(d.getDate() + 1)) {
+            let k = formatDateToYYYYMMDD(d);
+            if (getLogicalShift(calcTeamId, k)?.startsWith("$")) {
+                rOvertimes.push(`${d.getMonth()+1}/${d.getDate()}`);
+                if (k === dateKey) isTodayRestOvertime = true;
+            }
+        }
+
+        const cEl = el("holidayConflictContainer"), rEl = el("restDayReminderContainer");
+        let prefix = isAllView ? `[${calcTeamId}班] ` : ""; // 加上標籤提醒使用者目前是誰的提醒
+        
+        if (cReminders.length) { cEl.innerHTML = `<div style="font-weight:bold; color:#B91C1C;">🚨 ${prefix}換班提醒：休息日出勤遇國定假日！</div><ul style="margin:0; padding-left:22px; font-weight:bold;">${cReminders.map(c=>`<li>${c}，請記得換班。</li>`).join("")}</ul>`; cEl.style.display = "block"; } else cEl.style.display = "none";
+        
+        if (rOvertimes.length) { rEl.innerHTML = `${isTodayRestOvertime ? `<div style="font-size:1.15rem; font-weight:bold; margin-bottom:8px; border-bottom:1px solid #FCA5A5; padding-bottom:5px;">🚨 今日為休息日出勤！</div>` : ""}<strong>⚠️ ${prefix}休息日出勤提醒</strong><br><span style="font-size:0.95rem; color:#DC2626;">(結算週期: ${cycStart.getMonth()+1}/16 ~ ${cycEnd.getMonth()+1}/15)</span><br>本週期的休息日出勤：${rOvertimes.join(", ")}<div style="margin-top:8px; font-size:1rem; font-weight:bold; color:#991B1B;">💡 休息日出勤若請假，請記得調整。</div>`; rEl.style.display = "block"; } else rEl.style.display = "none";
+
+        // 更新工作提醒標題的班別提示
+        el("taskTeamLabel").innerText = isAllView ? `(顯示專屬班別 ${calcTeamId}班)` : "";
+        renderTasks(targetDate, calcTeamId, myShiftTextForCalc); 
+        
+        calendarViewDate = new Date(targetDate);
+        renderMonthTable();
+    }
+
+    function renderTasks(date, myTeamId, myShiftText) {
+        let regT = [], perT = [], monT = [], cleanMyShift = (myShiftText || "").replace("$", "").replace("調:", "");
+        
+        let activeShifts = ["全天", cleanMyShift];
+        if (cleanMyShift.startsWith("早")) activeShifts.push("早班");
+        if (cleanMyShift.startsWith("中")) activeShifts.push("中班");
+        if (cleanMyShift.startsWith("晚")) activeShifts.push("晚班");
+
+        const cY = date.getFullYear(), cM = date.getMonth(), cD = date.getDate(), cW = date.getDay();
+        const mDays = new Date(cY, cM + 1, 0).getDate(), tStr = formatDateToYYYYMMDD(date);
+
+        appSettings.tasks.forEach(t => {
+            if (!activeShifts.includes(t.shift)) return;
+            let match = false;
+            switch(t.rule) {
+                case 'every_shift': match = true; break;
+                case 'specific_date': match = t.ruleValue === tStr; break;
+                case 'weekly': match = cW === parseInt(t.ruleValue); break;
+                case 'monthly_day': match = cD === parseInt(t.ruleValue); break;
+                case 'monthly_last': match = cD === mDays; break;
+                case 'last_monday': match = cW === 1 && new Date(cY, cM, cD + 7).getMonth() !== cM; break;
+                case 'yearly_range': let p = t.ruleValue.split('-'); match = (cM+1) >= parseInt(p[0]) && (cM+1) <= parseInt(p[1]); break;
+                case 'odd_months': match = (cM+1) % 2 !== 0; break;
+                case 'even_months': match = (cM+1) % 2 === 0; break;
+            }
+            if (match) t.rule === 'every_shift' ? regT.push(t.text) : perT.push(t.text);
+        });
+
+        let mElapsed = (cY - 2026) * 12 + cM;
+        if (["D", "A", "B", "C"][(Math.floor(mElapsed/2) % 4 + 4) % 4] === myTeamId) monT.push(`輪值：本月做月盤查量油取樣 (營業油槽，20日附近)`);
+        if ((cM + 1) % 2 !== 0 && ["B", "C", "D", "A"][(Math.floor(mElapsed/2) % 4 + 4) % 4] === myTeamId) monT.push(`輪值：本月做全規範取樣 (每月10號前)`);
+
+        let html = `<li style="background:transparent; border:none; padding:0 0 5px; margin:0 0 8px; font-weight:bold; color:var(--primary); border-bottom:2px solid var(--border-color); border-radius:0; font-size:1.15rem;">📅 今日當班工作</li>`;
+        let tTasks = perT.concat(regT);
+        html += tTasks.length ? tTasks.map(t => `<li>📍 ${t}</li>`).join("") : `<li class="no-task">🎉 今日無排程工作。</li>`;
+        html += `<li style="background:transparent; border:none; padding:0 0 5px; margin:15px 0 8px; font-weight:bold; color:#D97706; border-bottom:2px solid var(--border-color); border-radius:0; font-size:1.15rem;">🗓️ 本月輪值任務</li>`;
+        html += monT.length ? monT.map(t => `<li style="background:#FFFBEB; color:#B45309; border-left-color:#F59E0B;">📌 ${t}</li>`).join("") : `<li class="no-task" style="background:#FFFBEB; color:#B45309; border-left-color:#F59E0B;">本月無輪值工作。</li>`;
+        el("taskList").innerHTML = html;
+    }
+
+    function renderMonthTable() {
+        const y = calendarViewDate.getFullYear();
+        const m = calendarViewDate.getMonth();
+        
+        ensureHolidaysForYear(y);
+
+        const days = new Date(y, m + 1, 0).getDate();
+        const fw = new Date(y, m, 1).getDay();
+        const prevMonthDays = new Date(y, m, 0).getDate();
+        
+        if(el("calendarTitle")) el("calendarTitle").innerText = `🗓️ ${y}年${m + 1}月班表總覽`;
+        
+        const qStr = getVal("queryDate"); 
+        const gDate = qStr ? new Date(qStr.replace(/-/g, '/')) : getTWDate();
+
+        let html = ["日", "一", "二", "三", "四", "五", "六"].map(wd => `<div class="cal-header">${wd}</div>`).join("");
+        
+        let viewMode = currentMonthViewTeam || appSettings.myTeam;
+
+        const renderCell = (iterY, iterM, iterDay, isCurrentMonth) => {
+            let iterDate = new Date(iterY, iterM, iterDay);
+            let iterStr = formatDateToYYYYMMDD(iterDate);
+            let hName = appSettings.holidays?.[iterStr];
+            let onClick = hName ? `onclick="showHolidayToast('${iterDate.getMonth()+1}/${iterDate.getDate()}', '${hName.replace(/'/g, "\\'")}')"` : "";
+            let isToday = (iterDate.getFullYear() === gDate.getFullYear() && iterDate.getMonth() === gDate.getMonth() && iterDate.getDate() === gDate.getDate());
+            
+            let cellStyle = isCurrentMonth ? "" : "opacity: 0.45; background: #F9FAFB;";
+            let numColor = isCurrentMonth ? "var(--text-main)" : "#9CA3AF";
+            let todayClass = isToday ? "today" : "";
+            
+            let cellHtml = `<div class="cal-cell ${todayClass}" ${onClick} style="${hName ? "cursor:pointer;" : ""} ${cellStyle}">`;
+            cellHtml += `<div class="cal-day-num" style="color:${numColor}">${iterDate.getDate()}${hName ? `<span style="font-size:0.9rem;">🎈</span>` : ""}</div>`;
+            
+            if (viewMode === "ALL") {
+                cellHtml += `<div class="cal-shift-all">` + TEAMS.map(id => {
+                    let sTxt = getActualShift(getLogicalShift(id, iterStr), id, iterStr), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
+                    let shiftStr = sTxt.replace("班","").replace("調:","✏️");
                     
-                    if (result.status === 'success' && result.data) {
-                        const cloudData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
-                        if (cloudData.cards && cloudData.transactions) {
-                            appData = { ...appData, ...cloudData };
-                            saveData();
-                            showDialog("✅ 雲端資料已成功還原！\n點擊確定後將重新載入頁面。", "還原成功", false, () => {
-                                window.location.reload(); 
-                            });
-                        } else {
-                            throw new Error("備份檔格式不符");
-                        }
-                    } else {
-                        throw new Error(result.message || "雲端找不到備份檔");
-                    }
-                } catch (e) {
-                    showDialog("❌ 還原失敗：" + e.message, "錯誤");
-                } finally {
-                    isCloudSyncing = '';
-                    if (btn) { btn.disabled = false; btn.innerHTML = '☁️ 雲端還原'; }
-                }
-            });
-        }
-        
-
-        // --- 工具函式 ---
-        const pad = n => n.toString().padStart(2, '0');
-        const formatDate = (dateObj, inputFormat = false) => {
-            const d = new Date(dateObj), y = d.getFullYear(), m = pad(d.getMonth() + 1), dt = pad(d.getDate()), h = pad(d.getHours()), mn = pad(d.getMinutes());
-            return inputFormat ? `${y}-${m}-${dt}T${h}:${mn}` : `${y}/${m}/${dt} ${h}:${mn}`;
-        };
-        const formatCardNumber = str => str ? String(str).replace(/[\s-]/g, '').replace(/(.{4})(?!$)/g, '$1-') : '無';
-        
-        const getTxCount = (cardId, type, checkMonth = false) => {
-            const y = new Date().getFullYear(), m = new Date().getMonth();
-            return appData.transactions.filter(t => {
-                const d = new Date(t.timestamp);
-                return t.cardId === cardId && t.type === type && d.getFullYear() === y && (!checkMonth || d.getMonth() === m);
-            }).length;
-        };
-
-        const addTx = (cardId, type, amount, memo, idSuffix = '', timeOffset = 0) => {
-            appData.transactions.push({ id: Date.now() + idSuffix, cardId, timestamp: new Date(Date.now() + timeOffset).toISOString(), type, amount, memo });
-        };
-
-        function getCustomOrder() {
-            appData.customOrder = appData.customOrder || [];
-            const existingIds = new Set(appData.customOrder), currentIds = new Set(appData.cards.map(c => c.id));
-            appData.cards.forEach(c => { if (!existingIds.has(c.id)) appData.customOrder.push(c.id); });
-            return appData.customOrder = appData.customOrder.filter(id => currentIds.has(id));
-        }
-
-        // --- 原生智慧候選詞功能 (利用 datalist) ---
-        function renderNativeSuggestions(type) {
-            const datalist = document.getElementById('memo-datalist');
-            let suggestions = [];
-            
-            // 預設基本候選詞
-            if (type === '扣款') {
-                suggestions = ['捷運', '公車', '台鐵', '超商', '飲料', '便當'];
-            } else if (type === '儲值') {
-                suggestions = ['現金儲值', '信用卡自動加值', '發票中獎', '零錢加值'];
-            }
-            
-            // 加入歷史高頻紀錄 (智慧推薦)
-            if (appData.transactions && appData.transactions.length > 0) {
-                const memoCounts = {};
-                appData.transactions.filter(t => t.type === type && t.memo).forEach(t => {
-                    memoCounts[t.memo] = (memoCounts[t.memo] || 0) + 1;
-                });
-                const sortedMemos = Object.keys(memoCounts).sort((a, b) => memoCounts[b] - memoCounts[a]);
-                if (sortedMemos.length > 0) {
-                    // 將歷史高頻詞放在最前面，自動過濾重複，最多取 8 個交給系統鍵盤
-                    suggestions = [...new Set([...sortedMemos, ...suggestions])].slice(0, 8);
-                }
-            }
-            
-            // 將候選詞塞入 datalist 供系統呼叫
-            datalist.innerHTML = suggestions.map(s => {
-                const safeS = s.replace(/"/g, '&quot;');
-                return `<option value="${safeS}">`;
-            }).join('');
-        }
-
-        // --- UI 控制 ---
-        function toggleJcbUI(prefix) {
-            const isYoyo = document.getElementById(`${prefix}-type`).value === '悠遊卡';
-            document.getElementById(`${prefix}-jcb-group`).style.display = isYoyo ? 'block' : 'none';
-            document.getElementById(`${prefix}-regcount-group`).style.display = (isYoyo && document.getElementById(`${prefix}-is-jcb`).checked) ? 'block' : 'none';
-        }
-
-        function toggleStar(e, id) { e.stopPropagation(); const c = appData.cards.find(c => c.id === id); if (c) { c.isStarred = !c.isStarred; saveData(); renderCards(); triggerAutoBackup(); } }
-        function scrollToCard(id) { const el = document.getElementById('card-view-' + id); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.boxShadow = '0 0 0 3px var(--primary-color)'; setTimeout(() => el.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.06)', 1500); } }
-        
-        function switchTab(id, btn, preventScroll = false) { 
-            document.querySelectorAll('.tab-content, .nav-btn').forEach(el => el.classList.remove('active-tab', 'active')); 
-            document.getElementById(`tab-${id}`).classList.add('active-tab'); 
-            if(btn) btn.classList.add('active'); 
-            if(id === 'cards' && !preventScroll) window.scrollTo(0,0); 
-        }
-        
-        function closeModal(id) { const el = document.getElementById(id); if(el) el.style.display = 'none'; }
-        
-        function toggleOverview() {
-            appData.isOverviewCollapsed = !appData.isOverviewCollapsed; saveData(); // 介面狀態不觸發備份下載
-            const content = document.getElementById('overview-content'), icon = document.getElementById('overview-toggle-icon');
-            if (appData.isOverviewCollapsed) { content.style.display = 'none'; icon.style.transform = 'rotate(-90deg)'; } 
-            else { content.style.display = 'block'; icon.style.transform = 'rotate(0deg)'; }
-        }
-
-        function handleSortChange() {
-            const sortType = document.getElementById('card-sort-select').value;
-            appData.sortPreference = sortType;
-            saveData(); renderCards();
-        }
-
-        function resetCustomSort() {
-            showDialog('確定要將自訂排序回復成「預設新增順序」嗎？', '重置確認', true, (res) => {
-                if(res) { appData.customOrder = []; getCustomOrder(); saveData(); renderCards(); }
-            });
-        }
-        
-        function toggleBalanceSort() {
-            appData.balanceSortDir = appData.balanceSortDir === 'desc' ? 'asc' : 'desc';
-            saveData(); renderCards(); 
-        }
-
-        // --- 進階疊加排序邏輯 ---
-        function initMultiSortOptions() {
-            const options = `
-                <option value="none">(無)</option>
-                <option value="type-default">🏷️ 卡片種類 (預設: 悠/愛/一)</option>
-                <option value="type-easy">🏷️ 卡片種類 (悠遊卡優先)</option>
-                <option value="type-ipass">🏷️ 卡片種類 (一卡通優先)</option>
-                <option value="type-icash">🏷️ 卡片種類 (愛金卡優先)</option>
-                <option value="balance-desc">💰 餘額 (高到低)</option>
-                <option value="balance-asc">💰 餘額 (低到高)</option>
-                <option value="smart">🧠 智慧推薦 (需登錄/儲值優先)</option>
-                <option value="time-asc">🕒 新增順序 (舊到新)</option>
-                <option value="time-desc">🕒 新增順序 (新到舊)</option>
-            `;
-            for (let i = 1; i <= 4; i++) document.getElementById(`ms-l${i}`).innerHTML = options;
-        }
-
-        function openMultiSortModal() {
-            const ms = appData.multiSort;
-            let l1 = ms.l1 || 'none', l2 = ms.l2 || 'none', l3 = ms.l3 || 'none', l4 = ms.l4 || 'none';
-            if(l1 === 'type') l1 = 'type-default'; if(l2 === 'type') l2 = 'type-default';
-            if(l3 === 'type') l3 = 'type-default'; if(l4 === 'type') l4 = 'type-default';
-
-            document.getElementById('ms-l1').value = l1;
-            document.getElementById('ms-l2').value = l2;
-            document.getElementById('ms-l3').value = l3;
-            document.getElementById('ms-l4').value = l4;
-            document.getElementById('multi-sort-modal').style.display = 'flex';
-        }
-
-        function cancelMultiSort() {
-            closeModal('multi-sort-modal');
-        }
-
-        function saveMultiSort() {
-            appData.multiSort = {
-                l1: document.getElementById('ms-l1').value,
-                l2: document.getElementById('ms-l2').value,
-                l3: document.getElementById('ms-l3').value,
-                l4: document.getElementById('ms-l4').value
-            };
-            appData.sortPreference = 'multi';
-            document.getElementById('card-sort-select').value = 'multi'; 
-            closeModal('multi-sort-modal');
-            saveData(); renderCards();
-        }
-        
-        function getTypeWeight(cardType, sortStrategy) {
-            if (sortStrategy === 'type-easy') return cardType === '悠遊卡' ? 1 : (cardType === '一卡通' ? 2 : 3);
-            if (sortStrategy === 'type-ipass') return cardType === '一卡通' ? 1 : (cardType === '悠遊卡' ? 2 : 3);
-            if (sortStrategy === 'type-icash') return cardType === '愛金卡' ? 1 : (cardType === '悠遊卡' ? 2 : 3);
-            return cardType === '悠遊卡' ? 1 : (cardType === '愛金卡' ? 2 : 3);
-        }
-
-        // --- 核心功能 ---
-        function checkRemindersOnStartup() {
-            if (sessionStorage.getItem('startupReminderShown')) return; 
-            const now = new Date(); const currentYear = now.getFullYear(); const currentMonthKey = `${currentYear}-${now.getMonth()}`;
-            let reminderCards = [];
-
-            appData.cards.forEach(c => {
-                const effectiveInitTopups = (c.initTopupsMonth === currentMonthKey) ? (c.initTopups || 0) : 0;
-                const realThisMonthTopups = getTxCount(c.id, '儲值', true);
-                const realThisMonthRegs = getTxCount(c.id, '登錄', true);
-                const displayTopups = effectiveInitTopups + realThisMonthTopups;
-                if (realThisMonthRegs > 0 && displayTopups === 0) reminderCards.push(c);
-            });
-
-            if (reminderCards.length > 0) {
-                const listHtml = reminderCards.map(c => `<div style="background:#fef3c7; border:1px solid #fde68a; border-left:4px solid var(--warning-color); padding:10px 14px; margin-bottom:10px; border-radius:8px; text-align:left; color:#b45309; font-weight:bold;">💳 ${c.name}</div>`).join('');
-                document.getElementById('startup-reminder-list').innerHTML = listHtml;
-                document.getElementById('startup-reminder-modal').style.display = 'flex';
-                sessionStorage.setItem('startupReminderShown', 'true');
-            }
-        }
-
-        function addCard() {
-            const name = document.getElementById('new-card-name').value.trim(), type = document.getElementById('new-card-type').value;
-            if (!name) return showDialog('請輸入卡片名稱');
-            const isJCB = type === '悠遊卡' ? document.getElementById('new-card-is-jcb').checked : false;
-            const now = new Date();
-            appData.cards.push({
-                id: Date.now().toString(), type, isJCB, isStarred: false, name,
-                balance: parseInt(document.getElementById('new-card-balance').value) || 0,
-                creditNum: document.getElementById('new-card-credit').value.trim(),
-                transitNum: document.getElementById('new-card-transit').value.trim(),
-                initRegs: parseInt(document.getElementById('new-card-regcount').value) || 0,
-                initTopups: parseInt(document.getElementById('new-card-topup-count').value) || 0,
-                initRegsYear: now.getFullYear(),
-                initTopupsMonth: `${now.getFullYear()}-${now.getMonth()}`
-            });
-            getCustomOrder(); saveData(); renderCards(); triggerAutoBackup();
-            ['name', 'credit', 'transit', 'balance', 'topup-count', 'regcount'].forEach(f => document.getElementById(`new-card-${f}`).value = '');
-            document.getElementById('new-card-type').value = '悠遊卡'; document.getElementById('new-card-is-jcb').checked = true; toggleJcbUI('new-card');
-            switchTab('cards', document.querySelectorAll('.nav-btn')[0]);
-        }
-
-        function openEditCardModal(id) {
-            const c = appData.cards.find(c => c.id === id); if (!c) return;
-            const now = new Date(); const currentYear = now.getFullYear(); const currentMonthKey = `${currentYear}-${now.getMonth()}`;
-            const effectiveInitRegs = (c.initRegsYear === currentYear) ? (c.initRegs || 0) : 0;
-            const effectiveInitTopups = (c.initTopupsMonth === currentMonthKey) ? (c.initTopups || 0) : 0;
-
-            document.getElementById('edit-card-id').value = c.id;
-            ['name', 'balance', 'type', 'credit', 'transit'].forEach(f => document.getElementById(`edit-card-${f}`).value = c[`${f}Num`] || c[f] || '');
-            document.getElementById('edit-card-is-jcb').checked = c.isJCB !== false;
-            document.getElementById('edit-card-regcount').value = effectiveInitRegs;
-            document.getElementById('edit-card-topup-count').value = effectiveInitTopups;
-            toggleJcbUI('edit-card'); document.getElementById('edit-card-modal').style.display = 'flex';
-        }
-
-        function submitEditCard() {
-            const id = document.getElementById('edit-card-id').value, c = appData.cards.find(c => c.id === id);
-            if (!c || !document.getElementById('edit-card-name').value.trim()) return showDialog('請輸入卡片名稱');
-            
-            c.name = document.getElementById('edit-card-name').value.trim(); c.type = document.getElementById('edit-card-type').value;
-            c.isJCB = c.type === '悠遊卡' ? document.getElementById('edit-card-is-jcb').checked : false;
-            c.creditNum = document.getElementById('edit-card-credit').value.trim(); c.transitNum = document.getElementById('edit-card-transit').value.trim();
-
-            const now = new Date();
-            const newRegs = parseInt(document.getElementById('edit-card-regcount').value) || 0;
-            const newTopups = parseInt(document.getElementById('edit-card-topup-count').value) || 0;
-            if (c.initRegs !== newRegs) { c.initRegs = newRegs; c.initRegsYear = now.getFullYear(); }
-            if (c.initTopups !== newTopups) { c.initTopups = newTopups; c.initTopupsMonth = `${now.getFullYear()}-${now.getMonth()}`; }
-
-            const newBal = parseInt(document.getElementById('edit-card-balance').value);
-            if (!isNaN(newBal) && newBal >= 0 && newBal !== c.balance) { addTx(c.id, '校正', newBal - c.balance, '系統手動校正餘額'); c.balance = newBal; }
-            
-            saveData(); renderCards(); triggerAutoBackup(); closeModal('edit-card-modal');
-        }
-
-        function deleteCardFromEdit() {
-            const id = document.getElementById('edit-card-id').value, c = appData.cards.find(c => c.id === id);
-            if (!c) return;
-            showDialog(`確定刪除「${c.name}」與所有紀錄且無法復原？`, '刪除警告', true, (res) => {
-                if(res) {
-                    appData.transactions = appData.transactions.filter(t => t.cardId !== id);
-                    appData.cards = appData.cards.filter(c => c.id !== id);
-                    getCustomOrder(); saveData(); renderCards(); triggerAutoBackup(); closeModal('edit-card-modal');
-                    if(document.getElementById('history-card-select').value === id) { document.getElementById('history-card-select').value = 'all'; renderHistory(); }
-                }
-            });
-        }
-
-        function openActionModal(id, type) {
-            currentAction = { cardId: id, type };
-            if (type === '登錄') {
-                const c = appData.cards.find(card => card.id === id);
-                const effectiveInitRegs = (c.initRegsYear === new Date().getFullYear()) ? (c.initRegs || 0) : 0;
-                const displayRegs = effectiveInitRegs + getTxCount(id, '登錄', false);
-                
-                if (displayRegs >= 3) return showDialog('⛔ 本年度登錄已達 3 次上限！');
-                if (getTxCount(id, '登錄', true) > 0) return showDialog('⛔ 本月已登錄過！每月限登錄1次。');
-                
-                showDialog('確認新增今日登錄記錄？', '新增登錄', true, (res) => { if (res) executeAction(id, type, 0, ''); });
-            } else if (type === '儲值') {
-                document.getElementById('topup-option-modal').style.display = 'flex';
+                    return `<span style="background:${s.bg}; color:${s.fg}; border-left:3px solid ${s.fg};"><span class="shift-prefix">${id}:</span><span class="shift-name">${shiftStr}</span></span>`;
+                }).join("") + `</div>`;
             } else {
-                document.getElementById('modal-title').innerText = '輸入扣款';
-                document.getElementById('modal-amount').value = ''; document.getElementById('modal-memo').value = '';
-                
-                renderNativeSuggestions('扣款'); // 渲染原生 datalist 候選詞
-                
-                document.getElementById('action-modal').style.display = 'flex'; setTimeout(()=>document.getElementById('modal-amount').focus(), 100);
+                let sTxt = getActualShift(getLogicalShift(viewMode, iterStr), viewMode, iterStr), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
+                cellHtml += `<div class="cal-shift-single" style="background:${s.bg}; color:${s.fg}; ${s.border||""}">${sTxt.replace("班","").replace("調:","✏️")}</div>`;
             }
-        }
+            cellHtml += `</div>`;
+            return cellHtml;
+        };
 
-        function quickTopup500() { executeAction(currentAction.cardId, '儲值', 500, '手動儲值 500 元'); closeModal('topup-option-modal'); }
-
-        function openCustomTopup() {
-            closeModal('topup-option-modal');
-            document.getElementById('modal-title').innerText = '輸入手動儲值';
-            document.getElementById('modal-amount').value = ''; document.getElementById('modal-memo').value = '';
-            
-            renderNativeSuggestions('儲值'); // 渲染原生 datalist 儲值專用候選詞
-            
-            document.getElementById('action-modal').style.display = 'flex'; setTimeout(()=>document.getElementById('modal-amount').focus(), 100);
-        }
-
-        function submitAction() {
-            const amt = parseInt(document.getElementById('modal-amount').value);
-            if (!amt || amt <= 0) return showDialog('請輸入有效金額');
-            executeAction(currentAction.cardId, currentAction.type, amt, document.getElementById('modal-memo').value.trim());
-            closeModal('action-modal');
-        }
-
-        function executeAction(id, type, amount, memo) {
-            const c = appData.cards.find(c => c.id === id); if (!c) return;
-            if (type === '扣款') {
-                if (c.balance < amount) { const topupAmt = Math.ceil((amount - c.balance) / 500) * 500; c.balance += topupAmt; addTx(id, '儲值', topupAmt, '餘額不足自動儲值', '_topup', -1); }
-                c.balance -= amount;
-            } else if (type === '儲值') { c.balance += amount; }
-            addTx(id, type, amount, memo); saveData(); renderCards(); triggerAutoBackup();
-        }
-
-        function openEditModal(id) {
-            const t = appData.transactions.find(t => t.id === id); if(!t) return;
-            document.getElementById('edit-tx-id').value = t.id;
-            document.getElementById('edit-datetime').value = formatDate(t.timestamp, true);
-            document.getElementById('edit-amount').value = t.amount || 0;
-            document.getElementById('edit-amount').disabled = ['登錄', '校正'].includes(t.type);
-            document.getElementById('edit-memo').value = t.memo || '';
-            document.getElementById('edit-modal').style.display = 'flex';
-        }
-
-        function submitEdit() {
-            const t = appData.transactions.find(t => t.id === document.getElementById('edit-tx-id').value), c = appData.cards.find(c => c.id === t.cardId);
-            const amt = parseInt(document.getElementById('edit-amount').value) || 0, dt = document.getElementById('edit-datetime').value;
-            if (!dt || (!['登錄', '校正'].includes(t.type) && amt < 0)) return showDialog('輸入無效');
-            
-            if (c) {
-                if (t.type === '扣款') c.balance += t.amount; else if (['儲值', '校正'].includes(t.type)) c.balance -= t.amount;
-                if (t.type === '扣款') {
-                    if (c.balance < amt) { const topup = Math.ceil((amt - c.balance)/500)*500; c.balance += topup; addTx(c.id, '儲值', topup, '自動儲值', '_topup_edit'); }
-                    c.balance -= amt;
-                } else if (t.type === '儲值') c.balance += amt;
-            }
-            t.amount = amt; t.timestamp = new Date(dt).toISOString(); t.memo = document.getElementById('edit-memo').value.trim();
-            saveData(); renderCards(); triggerAutoBackup(); closeModal('edit-modal');
-        }
-
-        function deleteTransaction(id) {
-            const idx = appData.transactions.findIndex(t => t.id === id); if (idx === -1) return;
-            showDialog('確定刪除此記錄？\n(系統將自動回復餘額)', '刪除紀錄', true, (res) => {
-                if(res){
-                    const t = appData.transactions[idx], c = appData.cards.find(c => c.id === t.cardId);
-                    if (c) { if (t.type === '扣款') c.balance += t.amount; else if (['儲值', '校正'].includes(t.type)) c.balance -= t.amount; }
-                    appData.transactions.splice(idx, 1); saveData(); renderCards(); triggerAutoBackup();
-                }
-            });
-        }
-
-        // --- 渲染 ---
-        function updateHistorySelect() {
-            const sel = document.getElementById('history-card-select'), val = sel.value;
-            let optionsHtml = `<optgroup label="統計視圖"><option value="all">📜 所有最新紀錄</option><option value="stats-reg">📊 登錄次數統計</option><option value="stats-topup">📊 儲值次數統計</option></optgroup><optgroup label="個別卡片">`;
-            optionsHtml += appData.cards.map(c => `<option value="${c.id}">${c.name} (${c.type})</option>`).join('');
-            optionsHtml += `</optgroup>`;
-            sel.innerHTML = optionsHtml;
-            if(val === 'all' || val === 'stats-reg' || val === 'stats-topup' || appData.cards.find(c => c.id === val)) sel.value = val; else sel.value = 'all';
+        for (let i = 0; i < fw; i++) {
+            let pDay = prevMonthDays - fw + i + 1;
+            html += renderCell(y, m - 1, pDay, false);
         }
         
-        function viewHistory(id) { document.getElementById('history-card-select').value = id; document.getElementById('history-search').value = ''; switchTab('history', document.querySelectorAll('.nav-btn')[1]); renderHistory(); }
-
-        function renderCards() {
-            const backupInfo = document.getElementById('last-backup-info'), cont = document.getElementById('cards-container'), over = document.getElementById('overview-container'), tool = document.getElementById('sort-toolbar');
-            backupInfo.innerHTML = appData.lastBackupTime ? `✅ 已於 <b>${formatDate(appData.lastBackupTime)}</b> 下載備份` : '';
-            backupInfo.style.display = appData.lastBackupTime ? 'block' : 'none';
-            
-            if (!appData.cards.length) { over.style.display = 'none'; tool.style.display = 'none'; cont.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding: 50px 20px;"><div style="font-size:40px; margin-bottom:10px;">💳</div>無卡片紀錄，請至系統設定建立</div>'; return; }
-            over.style.display = 'block'; tool.style.display = 'flex';
-            
-            if (appData.isOverviewCollapsed) { document.getElementById('overview-content').style.display = 'none'; document.getElementById('overview-toggle-icon').style.transform = 'rotate(-90deg)'; } 
-            else { document.getElementById('overview-content').style.display = 'block'; document.getElementById('overview-toggle-icon').style.transform = 'rotate(0deg)'; }
-
-            let sortType = appData.sortPreference;
-            
-            const sortSelect = document.getElementById('card-sort-select');
-            let hasOption = Array.from(sortSelect.options).some(opt => opt.value === sortType);
-            if (!hasOption && sortType === 'multi') {
-                const opt = document.createElement('option'); opt.value = 'multi'; opt.text = '🎛️ (已啟用多重疊加排序)'; opt.style.display = 'none'; sortSelect.add(opt);
-            }
-            sortSelect.value = sortType;
-            
-            const multiBtn = document.getElementById('multi-sort-btn');
-            if (sortType === 'multi') {
-                multiBtn.classList.add('btn-multi-active');
-            } else {
-                multiBtn.classList.remove('btn-multi-active');
-            }
-
-            document.getElementById('reset-sort-btn').style.display = sortType === 'custom' ? 'block' : 'none';
-            const balBtn = document.getElementById('balance-sort-btn');
-            if (balBtn) { balBtn.style.display = sortType === 'balance' ? 'block' : 'none'; if (sortType === 'balance') balBtn.innerHTML = appData.balanceSortDir === 'asc' ? '⬆️ 低到高' : '⬇️ 高到低'; }
-
-            const searchQ = document.getElementById('card-search').value.toLowerCase().trim();
-            let filteredCards = appData.cards;
-            if (searchQ) {
-                filteredCards = appData.cards.filter(c => c.name.toLowerCase().includes(searchQ) || (c.creditNum && c.creditNum.includes(searchQ)) || (c.transitNum && c.transitNum.includes(searchQ)));
-            }
-
-            let sorted = [...filteredCards];
-            const now = new Date(); const currentYear = now.getFullYear(); const currentMonthKey = `${currentYear}-${now.getMonth()}`;
-            const getSortRegs = id => { const c = appData.cards.find(card => card.id===id); return (c.initRegsYear === currentYear ? (c.initRegs || 0) : 0) + getTxCount(id, '登錄', false); };
-            
-            if (sortType === 'smart') sorted.sort((a,b) => { const rA = (a.type === '悠遊卡' && a.isJCB !== false) ? getSortRegs(a.id) : 999, rB = (b.type === '悠遊卡' && b.isJCB !== false) ? getSortRegs(b.id) : 999; return rA !== rB ? rA - rB : a.balance - b.balance; });
-            else if (sortType === 'balance') { if (appData.balanceSortDir === 'desc') sorted.sort((a,b) => b.balance - a.balance); else sorted.sort((a,b) => a.balance - b.balance); }
-            else if (sortType === 'type') sorted.sort((a,b) => getTypeWeight(a.type, 'type-default') - getTypeWeight(b.type, 'type-default')); 
-            else if (sortType === 'custom') { const o = getCustomOrder(); sorted.sort((a,b) => o.indexOf(a.id) - o.indexOf(b.id)); }
-            else if (sortType === 'multi') {
-                const criteria = appData.multiSort;
-                sorted.sort((a, b) => {
-                    for (let i = 1; i <= 4; i++) {
-                        const crit = criteria[`l${i}`];
-                        if (!crit || crit === 'none') continue;
-                        let res = 0;
-                        if (crit.startsWith('type')) res = getTypeWeight(a.type, crit) - getTypeWeight(b.type, crit);
-                        else if (crit === 'balance-desc') res = b.balance - a.balance;
-                        else if (crit === 'balance-asc') res = a.balance - b.balance;
-                        else if (crit === 'time-asc') res = parseInt(a.id) - parseInt(b.id);
-                        else if (crit === 'time-desc') res = parseInt(b.id) - parseInt(a.id);
-                        else if (crit === 'smart') {
-                            const rA = (a.type === '悠遊卡' && a.isJCB !== false) ? getSortRegs(a.id) : 999;
-                            const rB = (b.type === '悠遊卡' && b.isJCB !== false) ? getSortRegs(b.id) : 999;
-                            res = rA - rB;
-                        }
-                        if (res !== 0) return res;
-                    }
-                    return 0; 
-                });
-            }
-
-            const viewData = sorted.map(c => {
-                const isJCB = c.type === '悠遊卡' && c.isJCB !== false;
-                const isTruncated = c.name.length > 10;
-                const displayName = isTruncated ? c.name.substring(0, 10) + '...' : c.name;
-                const effectiveInitRegs = (c.initRegsYear === currentYear) ? (c.initRegs || 0) : 0;
-                const effectiveInitTopups = (c.initTopupsMonth === currentMonthKey) ? (c.initTopups || 0) : 0;
-                const realThisYearRegs = getTxCount(c.id, '登錄', false);
-                const realThisMonthTopups = getTxCount(c.id, '儲值', true);
-                const realThisMonthRegs = getTxCount(c.id, '登錄', true);
-                const displayTopups = effectiveInitTopups + realThisMonthTopups;
-                const displayRegs = isJCB ? (effectiveInitRegs + realThisYearRegs) : null;
-                const needsTopup = realThisMonthRegs > 0 && displayTopups === 0;
-                const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-                const isUrgent = needsTopup && (daysInMonth - now.getDate() <= 3);
-                return { ...c, isJCB, displayTopups, displayRegs, needsTopup, isUrgent, cls: c.type === '悠遊卡' ? 'type-easy' : (c.type === '一卡通' ? 'type-ipass' : 'type-icash'), starCls: c.isStarred ? 'active' : '', cred: formatCardNumber(c.creditNum), trans: formatCardNumber(c.transitNum), displayName, isTruncated };
-            });
-
-            document.getElementById('overview-table-body').innerHTML = `<tr><th>名稱</th><th style="width:23%;text-align:right;">餘額</th><th style="width:23%;text-align:center;">本月儲值</th><th style="width:23%;text-align:center;">本年登錄</th></tr>` + 
-                viewData.map(v => {
-                    const rowSpecialCls = v.isUrgent ? 'table-urgent' : (v.needsTopup ? 'table-warning' : '');
-                    const warningIcon = v.isUrgent ? ' <span title="月底將至！請盡速儲值" style="font-size:14px; animation: alertPulse 1.5s infinite;">⚠️</span>' : (v.needsTopup ? ' <span title="請記得儲值" style="font-size:14px;">💡</span>' : '');
-                    return `<tr class="clickable-row sortable-row ${rowSpecialCls}" data-id="${v.id}" draggable="true" onclick="if(!window.isDragging) scrollToCard('${v.id}')">
-                    <td style="white-space:nowrap;"><span class="drag-handle">☰</span><span class="star-btn ${v.starCls}" onclick="toggleStar(event, '${v.id}')">${v.isStarred ? '★' : '☆'}</span><span class="card-type ${v.cls}" style="font-size:11px; padding:3px 5px; vertical-align:middle; display:inline-block;">${v.type.substring(0,2)}</span> <span style="vertical-align:middle; font-weight:500;" title="${v.name}">${v.displayName}${warningIcon}</span></td>
-                    <td class="val-num" style="text-align:right; vertical-align:middle;">$${v.balance.toLocaleString()}</td><td class="val-num" style="text-align:center; vertical-align:middle;">${v.displayTopups}</td>
-                    <td class="val-num" style="text-align:center; color:var(--purple-dark); vertical-align:middle;">${v.displayRegs !== null ? v.displayRegs : '<span style="color:var(--text-muted);">-</span>'}</td></tr>`;
-                }).join('');
-
-            document.querySelectorAll('.sortable-row').forEach(row => {
-                row.addEventListener('dragstart', e => { window.isDragging = true; row.classList.add('dragging'); e.dataTransfer.setData('text/plain', row.dataset.id); });
-                row.addEventListener('dragend', () => { row.classList.remove('dragging'); setTimeout(() => window.isDragging = false, 100); });
-                row.addEventListener('dragover', e => { e.preventDefault(); const drg = document.querySelector('.dragging'); if (!drg || drg === row) return; const rect = row.getBoundingClientRect(); row.style.borderTop = (e.clientY - rect.y - rect.height/2 < 0) ? '2px solid var(--primary-color)' : ''; row.style.borderBottom = (e.clientY - rect.y - rect.height/2 > 0) ? '2px solid var(--primary-color)' : ''; });
-                row.addEventListener('dragleave', () => { row.style.borderTop = ''; row.style.borderBottom = ''; });
-                row.addEventListener('drop', e => { e.preventDefault(); row.style.borderTop = ''; row.style.borderBottom = ''; const drg = document.querySelector('.dragging'); if (!drg || drg === row) return; const rect = row.getBoundingClientRect(); if(e.clientY - rect.y - rect.height/2 > 0) row.after(drg); else row.before(drg); appData.customOrder = Array.from(document.querySelectorAll('.sortable-row')).map(r => r.dataset.id); document.getElementById('card-sort-select').value = 'custom'; appData.sortPreference = 'custom'; saveData(); renderCards(); }); // 拖曳只存狀態，不下載
-                const handle = row.querySelector('.drag-handle');
-                handle.addEventListener('touchstart', e => { e.preventDefault(); window.isDragging = true; row.classList.add('dragging'); }, {passive: false});
-                handle.addEventListener('touchmove', e => { if (!row.classList.contains('dragging')) return; e.preventDefault(); const touch = e.touches[0]; const target = document.elementFromPoint(touch.clientX, touch.clientY); if (!target) return; const targetRow = target.closest('.sortable-row'); if (targetRow && targetRow !== row) { const rect = targetRow.getBoundingClientRect(); const mid = rect.y + rect.height / 2; if (touch.clientY > mid) targetRow.after(row); else targetRow.before(row); } }, {passive: false});
-                handle.addEventListener('touchend', e => { if (!row.classList.contains('dragging')) return; row.classList.remove('dragging'); setTimeout(() => window.isDragging = false, 100); appData.customOrder = Array.from(document.querySelectorAll('.sortable-row')).map(r => r.dataset.id); document.getElementById('card-sort-select').value = 'custom'; appData.sortPreference = 'custom'; saveData(); renderCards(); }); // 觸控拖曳只存狀態，不下載
-                handle.addEventListener('touchcancel', e => { row.classList.remove('dragging'); window.isDragging = false; });
-            });
-
-            if (viewData.length === 0 && searchQ) { cont.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding: 30px;">找不到符合「${searchQ}」的卡片</div>`; return; }
-
-            cont.innerHTML = viewData.map(v => {
-                const specialCardCls = v.isUrgent ? 'card-urgent' : (v.needsTopup ? 'card-warning' : '');
-                const bannerHtml = v.isUrgent ? `<div class="banner-urgent">⚠️ 月底將至！本月已登錄，請盡速完成儲值</div>` : (v.needsTopup ? `<div class="banner-warning">💡 溫馨提示：本月已登錄，請記得去儲值</div>` : '');
-
-                return `
-                <div class="card-item ${specialCardCls}" id="card-view-${v.id}">
-                    <div class="card-top-row">
-                        <div style="display:flex; align-items:center; gap:6px; flex:1; margin-right:4px; min-width:0;">
-                            <div class="card-type ${v.cls}" style="flex-shrink:0;">${v.type}</div>
-                            <div class="card-title" style="display:flex; align-items:center; gap:6px; flex:1; min-width:0;">
-                                <span class="${v.isTruncated ? 'name-truncated' : ''}" ${v.isTruncated ? `onclick="showDialog('${v.name}','完整名稱')"` : ''} title="${v.name}">${v.displayName}</span>
-                                <button class="btn-gear" style="font-size:18px; padding:0; flex-shrink:0;" onclick="viewHistory('${v.id}')">📜</button>
-                                <!-- 在這裡加入了星號按鈕，並設定 flex-shrink:0 確保它不會被擠壓變形 -->
-                                <span class="star-btn ${v.starCls}" style="font-size:20px; margin:0; padding:0; flex-shrink:0;" onclick="toggleStar(event, '${v.id}')">${v.isStarred ? '★' : '☆'}</span>
-                            </div>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
-                            <div class="card-balance-compact">$${v.balance.toLocaleString()}</div>
-                            <button class="btn-gear" style="flex-shrink:0;" onclick="openEditCardModal('${v.id}')">⚙️</button>
-                        </div>
-                    </div>
-                    ${bannerHtml}
-                    <div class="card-numbers"><div>💳 信: <span>${v.cred}</span></div><div>🎫 票: <span>${v.trans}</span></div></div>
-                    <div class="card-info">
-                        ${v.displayTopups > 0 ? `<div style="color:var(--success-color); font-weight:bold;">⚡本月儲值: ${v.displayTopups} 次</div>` : `<div style="color:var(--text-muted);">本月無儲值紀錄</div>`} 
-                        ${v.isJCB ? `<div style="border-left:1px solid var(--border-color); padding-left:10px;">🔖本年登錄: <b style="color:var(--purple-dark);">${v.displayRegs}</b> 次</div>` : ''}
-                    </div>
-                    <div class="card-actions-compact">
-                        <button class="btn-sm btn-sm-deduct btn-3d" onclick="openActionModal('${v.id}', '扣款')">扣款</button>
-                        <button class="btn-sm btn-sm-topup btn-3d" onclick="openActionModal('${v.id}', '儲值')">儲值</button>
-                        ${v.isJCB ? `<button class="btn-sm btn-sm-reg btn-3d" onclick="openActionModal('${v.id}', '登錄')">登錄</button>` : ''}
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        function renderStatsView(targetType, searchQ) {
-            const cont = document.getElementById('history-container');
-            let txs = appData.transactions.filter(t => t.type === targetType);
-            
-            let initTotal = 0;
-            appData.cards.forEach(c => {
-                if (targetType === '登錄' && c.initRegs) initTotal += c.initRegs;
-                if (targetType === '儲值' && c.initTopups) initTotal += c.initTopups;
-            });
-
-            if (searchQ) {
-                txs = txs.filter(t => {
-                    const c = appData.cards.find(card => card.id === t.cardId);
-                    return (t.memo && t.memo.toLowerCase().includes(searchQ)) || (c && c.name.toLowerCase().includes(searchQ));
-                });
-            }
-
-            const groups = {};
-            txs.forEach(t => {
-                const d = new Date(t.timestamp); const key = `${d.getFullYear()}年${pad(d.getMonth()+1)}月`;
-                if (!groups[key]) groups[key] = { count: 0, items: [] };
-                groups[key].count++; groups[key].items.push(t);
-            });
-
-            let html = `
-                <div style="background:var(--card-bg); padding:16px; border-radius:12px; margin-bottom:20px; text-align:center; border:2px solid var(--primary-light);">
-                    <div style="font-size:15px; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">所有年份全卡片累積${targetType}總計</div>
-                    <div style="font-size:26px; color:var(--primary-color); font-weight:bold; font-family:'Orbitron', sans-serif;">${initTotal + txs.length} <span style="font-size:16px;">次</span></div>
-                    ${initTotal > 0 && !searchQ ? `<div style="font-size:13px; color:var(--text-muted); margin-top:5px;">(包含手動建檔的 ${initTotal} 次)</div>` : ''}
-                </div>
-            `;
-
-            const sortedKeys = Object.keys(groups).sort((a,b) => b.localeCompare(a));
-            if (sortedKeys.length === 0) { html += `<p style="text-align:center; color:var(--text-muted); font-size:15px; margin-top:30px;">尚無紀錄</p>`; }
-
-            sortedKeys.forEach(k => {
-                const g = groups[k]; g.items.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-                const typeColor = targetType === '儲值' ? 'var(--primary-color)' : 'var(--purple-color)';
-                html += `<div class="stats-month-group"><div class="stats-month-title"><span>📅 ${k}</span><span style="color:${typeColor};">${targetType} ${g.count} 次</span></div>
-                    ${g.items.map(t => {
-                        const c = appData.cards.find(c => c.id === t.cardId); const cardName = c ? c.name : '已刪除的卡片';
-                        return `<div class="stats-item"><div style="flex:1;"><div style="color:var(--text-main); font-weight:bold; font-size:15px;">${cardName}</div><div style="color:var(--text-muted); font-size:13px; margin-top:4px;">${formatDate(t.timestamp)}${t.memo ? ` | 📝 ${t.memo}` : ''}</div></div><div style="color:${typeColor}; font-weight:bold; font-size:16px; font-family:'Orbitron', sans-serif;">${targetType === '儲值' ? `+$${t.amount.toLocaleString()}` : '✓ 完成'}</div></div>`;
-                    }).join('')}</div>`;
-            });
-            cont.innerHTML = html;
-        }
-
-        function renderHistory() {
-            const cont = document.getElementById('history-container');
-            const selId = document.getElementById('history-card-select').value;
-            const searchQ = document.getElementById('history-search').value.toLowerCase().trim();
-            
-            if (selId === 'stats-reg' || selId === 'stats-topup') { renderStatsView(selId === 'stats-reg' ? '登錄' : '儲值', searchQ); return; }
-
-            let list = selId && selId !== 'all' ? appData.transactions.filter(t => t.cardId === selId) : appData.transactions;
-            
-            if (searchQ) {
-                list = list.filter(t => {
-                    const c = appData.cards.find(card => card.id === t.cardId);
-                    return (t.memo && t.memo.toLowerCase().includes(searchQ)) || (t.type && t.type.toLowerCase().includes(searchQ)) || (c && c.name.toLowerCase().includes(searchQ));
-                });
-            }
-
-            if (!list || !list.length) { cont.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:15px; margin-top:30px;">查無資料</p>'; return; }
-
-            cont.innerHTML = list.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(t => {
-                const isD = t.type === '扣款', isT = t.type === '儲值', isC = t.type === '校正';
-                const cls = isD ? 'hist-deduct' : (isT ? 'hist-topup' : (isC ? 'hist-calib' : 'hist-reg'));
-                const amtCls = isD ? 'amt-deduct' : (isT ? 'amt-topup' : (isC ? 'amt-calib' : 'amt-reg'));
-                const amtStr = isD ? `- $${t.amount.toLocaleString()}` : (isT ? `+ $${t.amount.toLocaleString()}` : (isC ? `${t.amount>0?'+':'-'} $${Math.abs(t.amount).toLocaleString()}` : '[系統紀錄]'));
-                const c = appData.cards.find(c => c.id === t.cardId);
-                const nameTag = (selId === 'all' && c) ? `<div style="font-size:12px; font-weight:bold; color:var(--text-main); background:var(--bg-color); display:inline-block; padding:4px 8px; border-radius:6px; margin-bottom:6px;">💳 ${c.name}</div><br>` : '';
-
-                return `<div class="history-item ${cls}"><div class="history-left">${nameTag}<div class="history-time">${formatDate(t.timestamp)}</div><div class="history-desc">${t.type}${t.memo ? `<br><span style="font-size:14px; color:var(--text-muted); font-weight:normal; display:inline-block; margin-top:4px;">📝 ${t.memo}</span>` : ''}</div></div><div class="history-right"><span class="history-amount ${amtCls}" ${!isD&&!isT&&!isC ? 'style="font-size:14px;"' : ''}>${amtStr}</span><div><button class="btn-edit-hist btn-3d" onclick="openEditModal('${t.id}')">編輯</button><button class="btn-delete-hist btn-3d" onclick="deleteTransaction('${t.id}')">刪除</button></div></div></div>`;
-            }).join('');
-        }
-
-        function exportTxt() {
-            const now = new Date(); const currentYear = now.getFullYear(); const currentMonthKey = `${currentYear}-${now.getMonth()}`;
-            let txt = `【電子票證卡片資訊】\n產出時間：${formatDate(now)}\n\n`;
-
-            appData.cards.forEach(c => {
-                const isJCB = c.type === '悠遊卡' && c.isJCB !== false;
-                const displayRegs = isJCB ? ((c.initRegsYear === currentYear ? (c.initRegs || 0) : 0) + getTxCount(c.id, '登錄', false)) : null;
-                const displayTopups = (c.initTopupsMonth === currentMonthKey ? (c.initTopups || 0) : 0) + getTxCount(c.id, '儲值', true);
-
-                let lastTopupStr = '無紀錄';
-                const topupTxs = appData.transactions.filter(t => t.cardId === c.id && t.type === '儲值').sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                let latestDate = null;
-                if (topupTxs.length > 0) latestDate = new Date(topupTxs[0].timestamp);
-                if (c.initTopups > 0 && c.initTopupsMonth) {
-                    const [initY, initM] = c.initTopupsMonth.split('-');
-                    const initDate = new Date(initY, initM, 1);
-                    if (!latestDate || initDate > latestDate) latestDate = initDate;
-                }
-                if (latestDate) lastTopupStr = `${latestDate.getFullYear()}/${pad(latestDate.getMonth() + 1)}`;
-
-                txt += `========================================\n💳 卡片：${c.name} (${c.type})\n💰 餘額：$${c.balance.toLocaleString()}\n⚡ 儲值：本月 ${displayTopups} 次 (最後儲值：${lastTopupStr})\n`;
-                if (isJCB) txt += `🔖 登錄：本年 ${displayRegs} 次\n`;
-            });
-            txt += `========================================\n`;
-
-            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: "text/plain;charset=utf-8" })); 
-            a.download = `卡片資訊匯出_${currentYear}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.txt`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
-            
-            showDialog('卡片純文字資訊已成功匯出！', '匯出完成');
+        for (let day = 1; day <= days; day++) {
+            html += renderCell(y, m, day, true);
         }
         
-        function importBackup(e) {
-            const f = e.target.files[0]; if (!f) return; const r = new FileReader();
-            r.onload = ev => { 
-                try { 
-                    const d = JSON.parse(ev.target.result); 
-                    if (d.cards && d.transactions) { appData = { ...appData, ...d }; saveData(); showDialog('還原成功！', '提示', false, () => { switchTab('cards', document.querySelectorAll('.nav-btn')[0]); }); } 
-                    else throw new Error('格式錯誤'); 
-                } catch (err) { showDialog('失敗：' + err.message); } 
-                e.target.value = ''; 
-            };
-            r.readAsText(f);
+        let extraCells = (7 - (fw + days) % 7) % 7;
+        for (let i = 0; i < extraCells; i++) {
+            let nDay = i + 1;
+            html += renderCell(y, m + 1, nDay, false);
         }
+        
+        if(el("monthCalendar")) el("monthCalendar").innerHTML = html;
+    }
 
-        function setupPWA() {
-            let iconUrl = "icon.png";
-            try { let base = window.location.href; if (base.startsWith('blob:') || base.startsWith('data:')) { base = window.location.origin + '/'; } iconUrl = new URL("icon.png", base).href; } catch (e) { iconUrl = "icon.png"; }
-            const m = { name: "電子票證管家", short_name: "電子票證管家", display: "standalone", background_color: "#f0f4f8", theme_color: "#f0f4f8", icons: [{ src: iconUrl, sizes: "192x192 512x512", type: "image/png", purpose: "any maskable" }, { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230ea5e9'/%3E%3Ctext x='50' y='65' font-size='50' font-weight='bold' font-family='sans-serif' text-anchor='middle' fill='%23ffffff'%3E卡%3C/text%3E%3C/svg%3E", sizes: "512x512", type: "image/svg+xml" }], start_url: window.location.href };
-            const l = document.createElement('link'); l.rel = 'manifest'; l.href = URL.createObjectURL(new Blob([JSON.stringify(m)], {type: 'application/json'})); document.head.appendChild(l);
-            if ('serviceWorker' in navigator) navigator.serviceWorker.register(URL.createObjectURL(new Blob([`self.addEventListener('fetch', e => e.respondWith(fetch(e.request).then(r => caches.open('transit-pwa').then(c => { c.put(e.request, r.clone()); return r; })).catch(() => caches.match(e.request))));`], {type: 'application/javascript'}))).catch(console.log);
+    let toastTimeout;
+    function showHolidayToast(d, name) { triggerVibrate(); let t = el("holidayToast"); if(!t) return; t.innerHTML = `📅 <strong>${d}</strong><br>🎈 ${name}`; t.classList.add("show"); clearTimeout(toastTimeout); toastTimeout = setTimeout(() => t.classList.remove("show"), 3000); }
+
+    function updateBasePreview() {
+        const dVal = getVal("setBaseDate"), rTeam = getVal("setRefTeam"), rShift = parseInt(getVal("setRefShift")) || 0; 
+        if (!dVal) return el("basePreview").innerHTML = "請先選擇基準日。";
+        let offsets = {}, pos = {'C':0, 'D':2, 'A':4, 'B':6}, bPos = pos[rTeam];
+        TEAMS.forEach(t => offsets[t] = (rShift + (pos[t] - bPos + 8) % 8) % 8);
+        el("basePreview").innerHTML = `<strong style="display:block; margin-bottom:4px;">✨ 推算：${dVal}</strong><span style="color:#DC2626; font-weight:bold;">${rTeam}班</span> 為「${SHIFT_CYCLE[rShift]}」 ➜<br><span style="color:#4B5563;">${TEAMS.filter(t=>t!==rTeam).map(t=>`${t}班「${SHIFT_CYCLE[offsets[t]]}」`).join(" / ")}</span>`;
+    }
+
+    function loadSettingsToForm() {
+        setVal("setBaseDate", appSettings.baseDate); setVal("setMyTeam", appSettings.myTeam); setVal("setDefaultMode", appSettings.defaultMode ? "true" : "false");
+        setVal("setRefTeam", appSettings.myTeam); setVal("setRefShift", isNaN(appSettings.teams[appSettings.myTeam].offset) ? 0 : appSettings.teams[appSettings.myTeam].offset);
+        TEAMS.forEach(t => setVal(`setTeam${t}`, appSettings.teams[t].name || ""));
+        
+        populateDropdowns(); // 確保下拉選單能抓到最新設定的名字
+
+        tempHolidays = JSON.parse(JSON.stringify(appSettings.holidays||{})); tempTasks = JSON.parse(JSON.stringify(appSettings.tasks||[])); tempManualShifts = JSON.parse(JSON.stringify(appSettings.manualShifts||{})); 
+        updateBasePreview(); cancelEditHoliday(); cancelEditCustomTask(); renderHolidayList(); renderTaskList(); renderManualShiftList();
+    }
+
+    const renderList = (id, data, emptyTxt, htmlFn) => { el(id).innerHTML = data.length ? data.map(htmlFn).join("") : `<div style='color:var(--text-muted); text-align:center; padding:10px; font-size:1.05rem;'>${emptyTxt}</div>`; };
+
+    function renderManualShiftList() { renderList("manualShiftList", Object.keys(tempManualShifts).sort(), "目前無紀錄", k => `<div class="list-item"><span><strong>${k.split("_")[0]}</strong> (${k.split("_")[1]}班) - <span style="color:#DC2626; font-weight:bold;">${tempManualShifts[k]}</span></span><div><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { delete tempManualShifts['${k}']; renderManualShiftList(); }">✖</span></div></div>`); }
+    function addManualShift() { triggerVibrate(); const d = getVal("addManualDate"), t = getVal("addManualTeam"), s = getVal("addManualShift"); if (!d) return alert("請選日期"); tempManualShifts[`${d}_${t}`] = s; renderManualShiftList(); setVal("addManualDate", ""); }
+
+    function renderHolidayList() { renderList("holidayList", Object.keys(tempHolidays).sort(), "無設定", d => `<div class="list-item ${d===editingHolidayDate?"editing-item":""}"><span><strong>${d}</strong> - ${tempHolidays[d]}</span><div><span class="list-action-btn btn-edit" onclick="startEditHoliday('${d}')">✎</span><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { if('${d}'===editingHolidayDate) cancelEditHoliday(); delete tempHolidays['${d}']; renderHolidayList(); }">✖</span></div></div>`); }
+    function startEditHoliday(d) { triggerVibrate(); editingHolidayDate = d; setVal("addHolidayDate", d); setVal("addHolidayName", tempHolidays[d]); el("holidayAddLabel").innerText = "✏️ 編輯假日"; el("btnSubmitHoliday").innerText = "✅ 更新"; el("btnCancelHoliday").style.display = "inline-block"; renderHolidayList(); }
+    function cancelEditHoliday() { triggerVibrate(); editingHolidayDate = null; setVal("addHolidayDate", ""); setVal("addHolidayName", ""); el("holidayAddLabel").innerText = "🎈 國定假日"; el("btnSubmitHoliday").innerText = "新增"; el("btnCancelHoliday").style.display = "none"; renderHolidayList(); }
+    function addHoliday() { triggerVibrate(); const d = getVal("addHolidayDate"), n = getVal("addHolidayName"); if (!d || !n) return alert("填寫完整"); if (editingHolidayDate && d!==editingHolidayDate) delete tempHolidays[editingHolidayDate]; else if (!editingHolidayDate && tempHolidays[d] && !confirm("覆蓋?")) return; tempHolidays[d] = n; cancelEditHoliday(); }
+
+    function toggleTaskInputs() {
+        const r = getVal("addTaskRule"); ['inputWrap_date', 'inputWrap_week', 'inputWrap_monthDay', 'inputWrap_monthRange'].forEach(i => el(i).style.display = 'none'); el('btnTaskToday').style.display = r === 'specific_date' ? 'inline-block' : 'none';
+        if (r === 'specific_date') el("inputWrap_date").style.display = 'block'; else if (r === 'weekly') el("inputWrap_week").style.display = 'block'; else if (r === 'monthly_day') el("inputWrap_monthDay").style.display = 'block'; else if (r === 'yearly_range') el("inputWrap_monthRange").style.display = 'flex';
+    }
+    const getRuleLbl = (r, v) => ({'every_shift':"每次當班", 'specific_date':v, 'weekly':`每週${["日","一","二","三","四","五","六"][v]}`, 'monthly_day':`每月${v}日`, 'monthly_last':"每月底", 'last_monday':"月底週一", 'yearly_range':`${v}月區間`, 'odd_months':"單數月", 'even_months':"雙數月"}[r] || "自訂");
+    function renderTaskList() { renderList("customTaskList", tempTasks, "無設定", t => `<div class="list-item ${t.id===editingTaskId?"editing-item":""}" style="flex-wrap:wrap; gap:5px;"><div style="flex:1; min-width:220px;"><span class="task-badge">${t.shift}</span><span class="task-badge" style="background:#DBEAFE; color:#1E3A8A;">${getRuleLbl(t.rule,t.ruleValue)}</span><span>${t.text}</span></div><div><span class="list-action-btn btn-edit" onclick="startEditCustomTask('${t.id}')">✎</span><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { if('${t.id}'===editingTaskId) cancelEditCustomTask(); tempTasks = tempTasks.filter(x=>x.id!=='${t.id}'); renderTaskList(); }">✖</span></div></div>`); }
+    function startEditCustomTask(id) { triggerVibrate(); const t = tempTasks.find(x => x.id === id); if(!t) return; editingTaskId = id; setVal("addTaskShift", t.shift); setVal("addTaskRule", t.rule); setVal("addTaskText", t.text); toggleTaskInputs(); if(t.rule==='specific_date') setVal("addTaskDate", t.ruleValue); else if(t.rule==='weekly') setVal("addTaskWeek", t.ruleValue); else if(t.rule==='monthly_day') setVal("addTaskMonthDay", t.ruleValue); else if(t.rule==='yearly_range') { let p = t.ruleValue.split('-'); setVal("addTaskRangeStart", p[0]); setVal("addTaskRangeEnd", p[1]); } el("taskAddLabel").innerText = "✏️ 編輯提醒"; el("btnSubmitTask").innerText = "✅ 更新"; el("btnCancelTask").style.display = "inline-block"; renderTaskList(); el("taskAddLabel").scrollIntoView({behavior:'smooth'}); }
+    function cancelEditCustomTask() { triggerVibrate(); editingTaskId = null; setVal("addTaskShift", "早班"); setVal("addTaskRule", "every_shift"); setVal("addTaskText", ""); setVal("addTaskDate", ""); setVal("addTaskWeek", "1"); setVal("addTaskMonthDay", ""); setVal("addTaskRangeStart", ""); setVal("addTaskRangeEnd", ""); toggleTaskInputs(); el("taskAddLabel").innerText = "➕ 新增提醒"; el("btnSubmitTask").innerText = "新增"; el("btnCancelTask").style.display = "none"; renderTaskList(); }
+    function addCustomTask() { triggerVibrate(); const s=getVal("addTaskShift"), r=getVal("addTaskRule"), txt=getVal("addTaskText"); let v=""; if(!txt) return alert("輸入內容"); if(r==='specific_date'){v=getVal("addTaskDate"); if(!v) return alert("選日期");} else if(r==='weekly') v=getVal("addTaskWeek"); else if(r==='monthly_day'){v=getVal("addTaskMonthDay"); if(!v||v<1||v>31) return alert("錯誤");} else if(r==='yearly_range'){const st=getVal("addTaskRangeStart"), e=getVal("addTaskRangeEnd"); if(!st||!e||st<1||e>12) return alert("錯誤"); v=`${st}-${e}`;} if(editingTaskId){let idx=tempTasks.findIndex(t=>t.id===editingTaskId); if(idx!==-1) tempTasks[idx]={id:editingTaskId,shift:s,rule:r,ruleValue:v,text:txt};} else tempTasks.push({id:"t_"+Date.now(),shift:s,rule:r,ruleValue:v,text:txt}); cancelEditCustomTask(); }
+
+    function saveSettings() {
+        triggerVibrate(); appSettings.baseDate = getVal("setBaseDate"); appSettings.myTeam = getVal("setMyTeam"); appSettings.defaultMode = getVal("setDefaultMode") === "true"; 
+        if(!appSettings.baseDate) return alert("請設定基準日");
+        let pos={'C':0,'D':2,'A':4,'B':6}, bPos=pos[getVal("setRefTeam")], rS=parseInt(getVal("setRefShift"))||0;
+        TEAMS.forEach(t => { appSettings.teams[t].offset = (rS + (pos[t]-bPos+8)%8)%8; appSettings.teams[t].name = getVal(`setTeam${t}`); });
+        appSettings.holidays = JSON.parse(JSON.stringify(tempHolidays)); appSettings.tasks = JSON.parse(JSON.stringify(tempTasks)); appSettings.manualShifts = JSON.parse(JSON.stringify(tempManualShifts)); 
+        
+        populateDropdowns(); // 儲存後立即更新名稱
+
+        setVal("viewTeamSelect", currentViewTeam = appSettings.myTeam); setVal("monthViewSelect", currentMonthViewTeam = appSettings.myTeam);
+        localStorage.setItem("shiftSettings", JSON.stringify(appSettings)); 
+        localStorage.setItem("pendingSync", "true"); // 標記有新設定需要備份
+        if (typeof silentCloudBackup === 'function') silentCloudBackup(); // 觸發安靜備份
+        alert("已儲存！\n(系統將於背景自動更新雲端備份)"); renderAppSafe(); switchTab(1);
+    }
+    function restoreDefaults() { triggerVibrate(); if (confirm("🚨 清除自訂設定？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); setVal("viewTeamSelect", currentViewTeam = appSettings.myTeam); setVal("monthViewSelect", currentMonthViewTeam = appSettings.myTeam); loadSettingsToForm(); renderAppSafe(); alert("已恢復"); switchTab(1); } }
+
+    // ==========================================
+    // --- 備份與還原共用邏輯 ---
+    // ==========================================
+    function processImportData(importedData, sourceName) {
+        if (importedData && importedData.baseDate && importedData.teams) {
+            const now = getTWDate();
+            const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+            
+            const mergedHolidays = JSON.parse(JSON.stringify(defaultSettings.holidays)); 
+            if (importedData.holidays) {
+                for (const [dateStr, name] of Object.entries(importedData.holidays)) {
+                    if (new Date(dateStr.replace(/-/g, '/')) >= oneMonthAgo) mergedHolidays[dateStr] = name; 
+                }
+            }
+            importedData.holidays = mergedHolidays;
+
+            const cleanedManualShifts = {};
+            if (importedData.manualShifts) {
+                for (const [key, shift] of Object.entries(importedData.manualShifts)) {
+                    if (new Date(key.split('_')[0].replace(/-/g, '/')) >= oneMonthAgo) cleanedManualShifts[key] = shift;
+                }
+            }
+            importedData.manualShifts = cleanedManualShifts;
+
+            let mergedTasks = JSON.parse(JSON.stringify(defaultTasks)); 
+            if (importedData.tasks && Array.isArray(importedData.tasks)) {
+                importedData.tasks.forEach(impTask => {
+                    if (!defaultTasks.find(dt => dt.id === impTask.id)) mergedTasks.push(impTask);
+                });
+            }
+            importedData.tasks = mergedTasks;
+
+            localStorage.setItem("shiftSettings", JSON.stringify(importedData));
+            localStorage.setItem("pendingSync", "true"); // 標記需要備份
+
+            alert(`✅ ${sourceName}資料還原成功！(已自動清除過期歷史紀錄)`);
+            window.location.reload();
+        } else { 
+            alert(`❌ ${sourceName}檔案格式不正確，無法還原！`); 
         }
+    }
 
-        window.onload = init;
-    </script>
+    function exportData() {
+        triggerVibrate();
+        const now = getTWDate();
+        const pad = n => String(n).padStart(2, '0');
+        const timeString = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appSettings));
+        const dlAnchorElem = document.createElement('a');
+        dlAnchorElem.setAttribute("href", dataStr);
+        dlAnchorElem.setAttribute("download", `供油班表_本機備份_${timeString}.json`);
+        document.body.appendChild(dlAnchorElem);
+        dlAnchorElem.click();
+        document.body.removeChild(dlAnchorElem);
+    }
+    
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try { processImportData(JSON.parse(e.target.result), "本機"); } 
+            catch (err) { alert("❌ 讀取檔案失敗！請確認檔案格式。"); }
+            el('importDataInput').value = ""; 
+        };
+        reader.readAsText(file);
+    }
+
+    // ==========================================
+    // --- GAS 雲端備份與自動安靜備份 ---
+    // ==========================================
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw0wAnCPZkw3nlyx0Eg08Ejk49oG_itD82PqH9IP4X7S4oR5br1NTCmlUJsNfME2kbZ/exec";
+    const CLOUD_FILE_NAME = "供油班表_雲端備份.json";
+
+    function silentCloudBackup() {
+        if (localStorage.getItem("pendingSync") !== "true") return; 
+        fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: "auto_backup", fileName: CLOUD_FILE_NAME, backupData: appSettings })
+        })
+        .then(r => r.json())
+        .then(res => { if (res.status === 'success') localStorage.removeItem("pendingSync"); })
+        .catch(e => { /* 失敗則安靜忽略，pendingSync 標記會保留，下次有機會再傳 */ });
+    }
+
+    function cloudBackup(event) {
+        triggerVibrate();
+        const btn = event.target;
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ 備份中..."; 
+        btn.disabled = true;
+
+        fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: "auto_backup", fileName: CLOUD_FILE_NAME, backupData: appSettings })
+        })
+        .then(r => r.json())
+        .then(res => {
+            const now = getTWDate();
+            const pad = n => String(n).padStart(2, '0');
+            const timeStr = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            
+            if (res.status === 'success') {
+                localStorage.removeItem("pendingSync");
+                alert(`✅ 雲端備份成功！\n時間：${timeStr}`);
+            } else alert("❌ 備份失敗：" + (res.message || "未知錯誤"));
+        })
+        .catch(e => alert("❌ 連線錯誤，請確認網路連線。"))
+        .finally(() => { btn.innerText = originalText; btn.disabled = false; });
+    }
+
+    function cloudRestore(event) {
+        if (!confirm("⚠️ 警告：雲端還原將覆蓋手機資料，確定繼續嗎？")) return;
+        triggerVibrate();
+        const btn = event.target; 
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ 還原中..."; 
+        btn.disabled = true;
+
+        fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: "restore_from_cloud", fileName: CLOUD_FILE_NAME })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.data) {
+                const importedData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+                processImportData(importedData, "雲端");
+            } else alert("❌ 還原失敗：" + (res.message || "雲端找不到資料")); 
+        })
+        .catch(e => alert("❌ 連線錯誤，請確認網路連線。"))
+        .finally(() => { btn.innerText = originalText; btn.disabled = false; });
+    }
+</script>
 </body>
 </html>
