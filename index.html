@@ -496,10 +496,7 @@
     <hr style="border:0; border-top:1px solid var(--border-color); margin:14px 0;">
     <strong>排班時間基準</strong>
     <div class="journal-note" style="margin:5px 0 8px;">
-      早班 07:00–15:00；午班 15:00–23:00；晚班是前一天 23:00 上班、選定日期當天 07:00 下班。公假視為工作日，以下先以 07:00–15:00 作為檢查預設，可依實際受訓／出差時間修改。
-    </div>
-    <div class="time-grid">
-      <div style="grid-column:1/-1;"><label class="field-label">公假開始／結束時間</label><div style="display:flex;gap:6px;"><input type="time" id="timePublicStart"><input type="time" id="timePublicEnd"></div></div>
+      早班 07:00–15:00；午班 15:00–23:00；晚班以前一天 23:00 上班、選定日期當天 07:00 下班計算；公假視為工作日，固定以正常班時間 08:30–17:00 檢查，不需另外設定。
     </div>
     <button type="button" class="btn" style="background:#0F766E; font-size:1rem; padding:9px; margin-top:10px;" onclick="checkTrialShiftPlan()">執行排班檢查</button>
     <div id="trialShiftCheckResults" style="margin-top:10px;"></div>
@@ -1291,16 +1288,15 @@
     appSettings.workJournals = Array.isArray(appSettings.workJournals) ? appSettings.workJournals : [];
     appSettings.shiftSwapOverrides = appSettings.shiftSwapOverrides || {};
     appSettings.shiftSwapRecords = Array.isArray(appSettings.shiftSwapRecords) ? appSettings.shiftSwapRecords : [];
-    // 使用者確認的固定班別時間：早班 07:00-15:00、午班 15:00-23:00。
+    // 固定班別時間：早班 07:00-15:00、午班 15:00-23:00。
     // 晚班以「所選日期」為下班日：前一天 23:00 上班、所選日期 07:00 下班。
-    // 公假沒有固定時段，先以 07:00-15:00 作為可調整的檢查預設。
+    // 公假視為工作日，檢查時間固定採正常班 08:30-17:00，不提供個別調整。
     function normalizeShiftTimeRules(value) {
-        var v = value && typeof value === "object" ? value : {};
         return {
             early: { start: "07:00", end: "15:00" },
             mid:   { start: "15:00", end: "23:00" },
             late:  { start: "23:00", end: "07:00" },
-            public:{ start: (v.public && v.public.start) || "07:00", end: (v.public && v.public.end) || "15:00" }
+            public:{ start: "08:30", end: "17:00" }
         };
     }
     appSettings.shiftTimeRules = normalizeShiftTimeRules(appSettings.shiftTimeRules);
@@ -1598,9 +1594,8 @@
         setVal("swapShiftA","早班");
         setVal("swapShiftB","早班");
         setVal("swapReason","");
-        var publicRules=appSettings.shiftTimeRules.public||{start:"07:00",end:"15:00"};
-        setVal("timePublicStart",publicRules.start||"07:00");
-        setVal("timePublicEnd",publicRules.end||"15:00");
+        // 公假時間固定為正常班 08:30-17:00，不提供調整欄位。
+        appSettings.shiftTimeRules=normalizeShiftTimeRules(appSettings.shiftTimeRules);
         renderTrialPairs();renderShiftSwapHistory();renderTrialCheck(null);el("shiftSwapModal").classList.add("show");
     }
     function closeShiftSwapModal(){el("shiftSwapModal").classList.remove("show");}
@@ -1709,12 +1704,10 @@
         if(badWeeks.length){failed=true;items.push({type:"fail",text:`一例一休：不符合，以下星期缺少大休或小休：${badWeeks.join("；")}`});}
         else items.push({type:"pass",text:"一例一休：符合。每個受影響的星期一至星期日均至少有一個大休及一個小休；公假不抵休。"});
 
-        // 8 小時間隔：將排班日期轉成實際工作區間；晚班固定以前一天 23:00 至當天 07:00 計算。
-        var publicRules={start:getVal("timePublicStart")||"07:00",end:getVal("timePublicEnd")||"15:00"};
-        if(parseClock(publicRules.start)===null||parseClock(publicRules.end)===null||publicRules.start===publicRules.end){
-            waiting=true;items.push({type:"wait",text:"公假時間設定無效，請設定不同的開始及結束時間。"});
-        }
-        appSettings.shiftTimeRules=normalizeShiftTimeRules(Object.assign({},appSettings.shiftTimeRules,{public:publicRules}));
+        // 8 小時間隔：將排班日期轉成實際工作區間；晚班以前一天 23:00 至當天 07:00 計算。
+        // 公假固定採正常班時間 08:30-17:00，不讀取舊版備份中的自訂時間。
+        var publicRules={start:"08:30",end:"17:00"};
+        appSettings.shiftTimeRules=normalizeShiftTimeRules(appSettings.shiftTimeRules);
         var intervals=[],unknown=[];
         // 前後多取三日，以涵蓋晚班跨日及鄰接班別。
         for(var day=dateAdd(min,-3);day<=dateAdd(max,3);day=dateAdd(day,1)){
@@ -1734,7 +1727,7 @@
         }
         if(intervalProblems.length){failed=true;items.push({type:"fail",text:"8小時間隔：不符合。"+intervalProblems.slice(0,6).join("；")});}
         else if(unknown.length){waiting=true;items.push({type:"wait",text:`8小時間隔：有班別無法換算時間，尚不能判定：${unknown.slice(0,5).join("、")}`});}
-        else items.push({type:"pass",text:`8小時間隔：符合。已依班別實際上下班時間檢查；晚班以前一天 23:00 至當天 07:00 計算。公假時段採 ${publicRules.start}～${publicRules.end}。`});
+        else items.push({type:"pass",text:`8小時間隔：符合。已依班別實際上下班時間檢查；晚班以前一天 23:00 至當天 07:00 計算；公假固定採正常班 ${publicRules.start}～${publicRules.end}。`});
         return {ok:!failed&&!waiting,failed,waiting,items,team};
     }
     function checkTrialShiftPlan(){
