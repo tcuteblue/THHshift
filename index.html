@@ -169,6 +169,9 @@
         .trial-swap-entry:hover { background:#CCFBF1; border-color:#0D9488; }
         .trial-swap-entry:active { background:#99F6E4; color:#115E59; }
         .calendar-toolbar-row select { flex:0 1 auto; width:auto; max-width:58%; min-width:0; padding:4px 9px; font-size:1rem; margin:0; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; color:#1E3A8A; font-weight:bold; }
+        .trial-date-assignment { margin-top:12px; padding:12px; border:1px solid var(--border-color); border-radius:10px; background:#F8FAFC; }
+        .trial-date-assignment > strong { display:block; margin-bottom:7px; color:var(--text-main); }
+        .trial-date-assignment input, .trial-date-assignment select { margin-bottom:8px; }
         .date-detail-task-title { text-align:center; font-weight:700; margin-bottom:8px; }
         .date-detail-task-action { display:flex; justify-content:flex-end; align-items:center; margin:0 0 8px; }
         .cal-cell { cursor:pointer; }
@@ -455,26 +458,48 @@
   </div>
 </div>
 
-<!-- 試挪班別視窗 -->
+<!-- 試挪班別視窗：先選日期，再選該日預排班別；接著選第二日期及班別 -->
 <div id="shiftSwapModal" class="modal-overlay" onclick="if(event.target===this) closeShiftSwapModal()">
   <div class="app-modal">
     <div class="modal-head"><h3>⇄ 試挪班別</h3><button class="modal-close" onclick="closeShiftSwapModal()">×</button></div>
-    <div class="journal-note">以標準班表進行預排。新增的互調只先放在試算清單，不會立即更動正式班表；通過檢查後才可套用。班別時間已預設為早班 07:00–15:00、午班 15:00–23:00、晚班 23:00–07:00。</div>
-    <label class="field-label">挪移班別</label><select id="swapTeam"><option value="A">A班</option><option value="B">B班</option><option value="C">C班</option><option value="D">D班</option></select>
-    <div class="setting-grid" style="margin-top:8px;">
-      <div><label class="field-label">日期 A</label><input type="date" id="swapDateA"></div>
-      <div><label class="field-label">日期 B</label><input type="date" id="swapDateB"></div>
+    <div class="journal-note">以標準班表預排，不讀取實際出勤。請依序選擇第一個日期及班別，再選第二個日期及班別。完成後由系統檢查；通過後才會正式套用，標準循環及隔年班表不會被改寫。</div>
+    <label class="field-label" for="swapTeam">所屬班別</label>
+    <select id="swapTeam"><option value="A">A班</option><option value="B">B班</option><option value="C">C班</option><option value="D">D班</option></select>
+
+    <div class="trial-date-assignment">
+      <strong>第一個日期</strong>
+      <label class="field-label" for="swapDateA">選擇日期</label>
+      <input type="date" id="swapDateA">
+      <label class="field-label" for="swapShiftA">調整為哪一個班別</label>
+      <select id="swapShiftA">
+        <option value="早班">早班</option><option value="午班">午班</option><option value="晚班">晚班</option>
+        <option value="公假">公假</option><option value="大休">大休</option><option value="小休">小休</option>
+      </select>
     </div>
-    <label class="field-label" for="swapReason">調整原因</label><input type="text" id="swapReason" placeholder="例如：出差、受訓">
-    <button type="button" class="btn" style="background:#2563EB; padding:9px; font-size:1rem;" onclick="addTrialSwapPair()">加入預排互調</button>
+
+    <div class="trial-date-assignment">
+      <strong>第二個日期</strong>
+      <label class="field-label" for="swapDateB">選擇日期</label>
+      <input type="date" id="swapDateB">
+      <label class="field-label" for="swapShiftB">調整為哪一個班別</label>
+      <select id="swapShiftB">
+        <option value="早班">早班</option><option value="午班">午班</option><option value="晚班">晚班</option>
+        <option value="公假">公假</option><option value="大休">大休</option><option value="小休">小休</option>
+      </select>
+    </div>
+
+    <label class="field-label" for="swapReason">調整原因（選填）</label>
+    <input type="text" id="swapReason" placeholder="例如：出差、受訓、工作調度">
+    <button type="button" class="btn" style="background:#0F766E; padding:9px; font-size:1rem;" onclick="addTrialSwapPair()">加入預排調整</button>
     <div id="trialSwapPairs" style="margin-top:12px;"></div>
+
     <hr style="border:0; border-top:1px solid var(--border-color); margin:14px 0;">
-    <strong>8 小時間隔設定</strong>
-    <div class="journal-note" style="margin:5px 0 8px;">請依實際班別上下班時間設定。系統班表的「中班」在此以「午班」標示；未設定時間時，間隔檢查會顯示無法判定，不會假裝通過。</div>
+    <strong>排班時間基準</strong>
+    <div class="journal-note" style="margin:5px 0 8px;">
+      早班 07:00–15:00；午班 15:00–23:00；晚班是前一天 23:00 上班、選定日期當天 07:00 下班。公假視為工作日，以下先以 07:00–15:00 作為檢查預設，可依實際受訓／出差時間修改。
+    </div>
     <div class="time-grid">
-      <div><label>早班 開始／結束</label><div style="display:flex;gap:4px;"><input type="time" id="timeEarlyStart"><input type="time" id="timeEarlyEnd"></div></div>
-      <div><label>午班（中班）開始／結束</label><div style="display:flex;gap:4px;"><input type="time" id="timeMidStart"><input type="time" id="timeMidEnd"></div></div>
-      <div><label>晚班 開始／結束</label><div style="display:flex;gap:4px;"><input type="time" id="timeLateStart"><input type="time" id="timeLateEnd"></div></div>
+      <div style="grid-column:1/-1;"><label class="field-label">公假開始／結束時間</label><div style="display:flex;gap:6px;"><input type="time" id="timePublicStart"><input type="time" id="timePublicEnd"></div></div>
     </div>
     <button type="button" class="btn" style="background:#0F766E; font-size:1rem; padding:9px; margin-top:10px;" onclick="checkTrialShiftPlan()">執行排班檢查</button>
     <div id="trialShiftCheckResults" style="margin-top:10px;"></div>
@@ -826,7 +851,7 @@
         "shift-override": { bg: "#FEF2F2", fg: "#991B1B", border: "1px dashed #FCA5A5" },
         "shift-rest": { bg: "var(--rest-color)", fg: "var(--rest-text)" }
     };
-    function getBadgeClass(txt) { if (!txt) return "shift-rest"; if (txt.includes("調:") || txt.includes("假") || txt.includes("特休")) return "shift-override"; if (txt.includes("早")) return "shift-morn"; if (txt.includes("中")) return "shift-mid"; if (txt.includes("晚")) return "shift-night"; return "shift-rest"; }
+    function getBadgeClass(txt) { if (!txt) return "shift-rest"; if (txt.includes("調:") || txt.includes("假") || txt.includes("特休")) return "shift-override"; if (txt.includes("早")) return "shift-morn"; if (txt.includes("中") || txt.includes("午")) return "shift-mid"; if (txt.includes("晚")) return "shift-night"; return "shift-rest"; }
 
     function renderAppSafe() { try { renderApp(); } catch (err) { el("myTeamName").innerText = "⚠️ 資料發生錯誤"; el("myShiftBadge").innerText = "請恢復預設"; } }
 
@@ -1266,14 +1291,16 @@
     appSettings.workJournals = Array.isArray(appSettings.workJournals) ? appSettings.workJournals : [];
     appSettings.shiftSwapOverrides = appSettings.shiftSwapOverrides || {};
     appSettings.shiftSwapRecords = Array.isArray(appSettings.shiftSwapRecords) ? appSettings.shiftSwapRecords : [];
-    // 固定班別時間：早班 07:00-15:00、午班 15:00-23:00、晚班 23:00-隔日 07:00。
-    // 舊備份沒有時間設定或欄位為空時，自動補入此預設值。
+    // 使用者確認的固定班別時間：早班 07:00-15:00、午班 15:00-23:00。
+    // 晚班以「所選日期」為下班日：前一天 23:00 上班、所選日期 07:00 下班。
+    // 公假沒有固定時段，先以 07:00-15:00 作為可調整的檢查預設。
     function normalizeShiftTimeRules(value) {
         var v = value && typeof value === "object" ? value : {};
         return {
-            early: { start: (v.early && v.early.start) || "07:00", end: (v.early && v.early.end) || "15:00" },
-            mid:   { start: (v.mid && v.mid.start) || "15:00", end: (v.mid && v.mid.end) || "23:00" },
-            late:  { start: (v.late && v.late.start) || "23:00", end: (v.late && v.late.end) || "07:00" }
+            early: { start: "07:00", end: "15:00" },
+            mid:   { start: "15:00", end: "23:00" },
+            late:  { start: "23:00", end: "07:00" },
+            public:{ start: (v.public && v.public.start) || "07:00", end: (v.public && v.public.end) || "15:00" }
         };
     }
     appSettings.shiftTimeRules = normalizeShiftTimeRules(appSettings.shiftTimeRules);
@@ -1355,7 +1382,7 @@
         var regT=[], perT=[], monT=[], cleanShift=(shiftText||"").replace("$","").replace("調:","");
         var activeShifts=["全天",cleanShift];
         if(cleanShift.startsWith("早")) activeShifts.push("早班");
-        if(cleanShift.startsWith("中")) activeShifts.push("中班");
+        if(cleanShift.startsWith("中") || cleanShift.startsWith("午")) activeShifts.push("中班");
         if(cleanShift.startsWith("晚")) activeShifts.push("晚班");
         var y=date.getFullYear(), m=date.getMonth(), d=date.getDate(), w=date.getDay(), mDays=new Date(y,m+1,0).getDate(), dateStr=formatDateToYYYYMMDD(date);
         (appSettings.tasks||[]).forEach(t=>{
@@ -1482,7 +1509,7 @@
             if(photos.length)html+=`<div class="journal-photo-grid">${photos.map(ph=>`<div class="journal-photo"><img data-drive-file="${htmlEscape(ph.fileId)}" alt="${sh}工作日誌照片" onclick="openDrivePhoto('${htmlEscape(ph.url||"")}')"></div>`).join("")}</div>`;
             html+=`<input type="file" id="journalFiles_${sh}" accept="image/*" multiple style="display:none" onchange="uploadJournalPhotos('${date}','${sh}',this)">`;
             html+=`<button type="button" class="subtle-btn" onclick="el('journalFiles_${sh}').click()">📷 拍照／選擇圖片</button>`;
-            html+=`<label class="field-label">OCR 辨識文字（待實際照片測試後接入）</label><textarea id="journalText_${sh}" placeholder="OCR 功能接入後，辨識文字會自動放在這裡；目前可先留空。">${htmlEscape(text)}</textarea>`;
+            html+=`<label class="field-label">OCR 辨識文字（自動辨識後可自行修正）</label><textarea id="journalText_${sh}" placeholder="選擇照片後會自動辨識並放在這裡，也可以自行修正或補充。">${htmlEscape(text)}</textarea>`;
             html+=`<button type="button" class="subtle-btn" style="margin-top:6px;" onclick="saveJournalText('${date}','${sh}')">儲存文字</button></div>`;
         });
         el("workJournalShiftList").innerHTML=html; loadDriveImagePreviews();
@@ -1490,16 +1517,24 @@
     function saveJournalText(date,shift){var r=getJournalRecord(date,shift,true);r.text=getVal("journalText_"+shift).trim();r.updatedAt=new Date().toISOString();saveExtendedAppData();searchWorkJournals();alert("工作日誌文字已儲存。");}
     async function uploadJournalPhotos(date,shift,input){
         var files=Array.from(input.files||[]);if(!files.length)return;
-        var record=getJournalRecord(date,shift,true),status=promptStatusLine(shift),failed=0;
+        var record=getJournalRecord(date,shift,true),status=promptStatusLine(shift),failed=0,ocrFailed=0;
         saveExtendedAppData();
         for(var i=0;i<files.length;i++){
-            status.innerText=`${shift}照片上傳中：${i+1}/${files.length}`;
-            var uploaded=await uploadImageFiles([files[i]],"work_journal",msg=>status.innerText=msg);
-            if(uploaded.saved.length){record.photos.push(uploaded.saved[0]);record.updatedAt=new Date().toISOString();saveExtendedAppData();}
-            failed+=uploaded.errors.length;
+            status.innerText=`${shift}照片上傳與 OCR 辨識中：${i+1}/${files.length}`;
+            var uploaded=await uploadImageFiles([files[i]],"work_journal",msg=>status.innerText=msg,true);
+            if(uploaded.saved.length){
+                var photo=uploaded.saved[0];record.photos.push(photo);
+                if(photo.ocrText){
+                    var separator=record.text?"\n\n":"";
+                    record.text=(record.text||"")+separator+`【${shift}照片 ${record.photos.length} OCR】\n`+photo.ocrText;
+                }
+                record.updatedAt=new Date().toISOString();saveExtendedAppData();
+            }
+            failed+=uploaded.errors.length;ocrFailed+=(uploaded.ocrErrors||[]).length;
         }
-        status.innerText=failed?`已完成部分上傳；${failed} 張失敗，請重新選取失敗照片。`:"照片上傳處理完成。";
+        status.innerText=failed?`上傳完成但有 ${failed} 張圖片失敗；OCR 失敗 ${ocrFailed} 張。`:ocrFailed?`照片已全部保存，OCR 有 ${ocrFailed} 張失敗。`:`照片上傳及 OCR 辨識完成。`;
         input.value="";renderWorkJournal();
+        if(failed||ocrFailed)alert(`照片處理完成。\n圖片上傳失敗：${failed} 張\nOCR 辨識失敗：${ocrFailed} 張\n已成功上傳的原始照片仍保留在雲端。請確認 GAS 已啟用 Drive API v2 後再測試 OCR。`);
     }
     function promptStatusLine(shift){var id="journalStatus_"+shift, box=el(id);if(!box){box=document.createElement("div");box.id=id;box.className="journal-note";var card=el("workJournalShiftList").querySelectorAll(".journal-shift-card")[ ["晚班","早班","午班"].indexOf(shift) ];if(card)card.appendChild(box);}return box;}
     function searchWorkJournals(){
@@ -1523,17 +1558,25 @@
         var response=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
         var data=await response.json();if(!response.ok||data.status!=="success")throw new Error(data.message||"圖片服務尚未安裝或回應失敗");return data;
     }
-    async function uploadImageFiles(files,category,onProgress){
-        var saved=[],errors=[];
+    async function uploadImageFiles(files,category,onProgress,doOcr){
+        var saved=[],errors=[],ocrErrors=[];
         for(var i=0;i<files.length;i++){
             try{
                 if(onProgress)onProgress(`圖片壓縮／上傳中 ${i+1}/${files.length}：${files[i].name}`);
                 var payload=await compressImageToData(files[i]);
                 var result=await callScheduleImageApi({action:"schedule_image_upload",category:category,fileName:payload.fileName,mimeType:payload.mimeType,base64:payload.base64});
-                saved.push({fileId:result.fileId,name:result.fileName||payload.fileName,url:result.url||"",thumbnailUrl:result.thumbnailUrl||"",uploadedAt:new Date().toISOString()});
+                var photo={fileId:result.fileId,name:result.fileName||payload.fileName,url:result.url||"",thumbnailUrl:result.thumbnailUrl||"",uploadedAt:new Date().toISOString()};
+                if(doOcr){
+                    try{
+                        if(onProgress)onProgress(`照片已上傳，正在辨識繁體中文 ${i+1}/${files.length}：${files[i].name}`);
+                        var ocrResult=await callScheduleImageApi({action:"schedule_image_ocr",fileId:result.fileId,language:"zh-TW"});
+                        photo.ocrText=String(ocrResult.text||"").trim();
+                    }catch(ocrErr){photo.ocrError=String(ocrErr.message||ocrErr);ocrErrors.push({fileName:files[i].name,error:photo.ocrError});}
+                }
+                saved.push(photo);
             }catch(err){errors.push({fileName:files[i].name,error:String(err.message||err)});}
         }
-        return {saved,errors};
+        return {saved,errors,ocrErrors};
     }
     function loadDriveImagePreviews(){
         document.querySelectorAll("img[data-drive-file]").forEach(img=>{
@@ -1544,82 +1587,159 @@
         });
     }
 
-    // 試挪班別：只先試算標準循環，正式套用後以指定日期的覆蓋值保存。
+    // 試挪班別：一組預排包含兩個日期，各自指定新的班別，不再自動交換原班別。
+    // 七休一與一例一休讀取標準排班（含本次預排），不讀取「實際出勤」模式。
     function openShiftSwapModal(){
-        trialSwapPairs=[];lastTrialCheck=null;var team=currentMonthViewTeam&&currentMonthViewTeam!=="ALL"?currentMonthViewTeam:appSettings.myTeam;
-        setVal("swapTeam",team);setVal("swapDateA",formatDateToYYYYMMDD(getTWDate()));setVal("swapDateB","");setVal("swapReason","");
-        setVal("timeEarlyStart",appSettings.shiftTimeRules.early?.start||"");setVal("timeEarlyEnd",appSettings.shiftTimeRules.early?.end||"");
-        setVal("timeMidStart",appSettings.shiftTimeRules.mid?.start||"");setVal("timeMidEnd",appSettings.shiftTimeRules.mid?.end||"");
-        setVal("timeLateStart",appSettings.shiftTimeRules.late?.start||"");setVal("timeLateEnd",appSettings.shiftTimeRules.late?.end||"");
+        trialSwapPairs=[];lastTrialCheck=null;
+        var team=currentMonthViewTeam&&currentMonthViewTeam!=="ALL"?currentMonthViewTeam:appSettings.myTeam;
+        setVal("swapTeam",team);
+        setVal("swapDateA",formatDateToYYYYMMDD(getTWDate()));
+        setVal("swapDateB","");
+        setVal("swapShiftA","早班");
+        setVal("swapShiftB","早班");
+        setVal("swapReason","");
+        var publicRules=appSettings.shiftTimeRules.public||{start:"07:00",end:"15:00"};
+        setVal("timePublicStart",publicRules.start||"07:00");
+        setVal("timePublicEnd",publicRules.end||"15:00");
         renderTrialPairs();renderShiftSwapHistory();renderTrialCheck(null);el("shiftSwapModal").classList.add("show");
     }
     function closeShiftSwapModal(){el("shiftSwapModal").classList.remove("show");}
     function trialKey(team,date){return `${date}_${team}`;}
-    function trialCoreShiftForDate(team,date){
-        var value=String(appSettings.shiftSwapOverrides?.[trialKey(team,date)]||getBaseCoreShift(team,date)).replace(/^\$/,"");
-        trialSwapPairs.forEach(pair=>{if(pair.team===team&&pair.dateA===date)value=String(pair.afterA).replace(/^\$/,"");else if(pair.team===team&&pair.dateB===date)value=String(pair.afterB).replace(/^\$/,"");});
-        return value;
-    }
     function trialShiftForDate(team,date){
-        return addWeeklyRestMarker(team,date,trialCoreShiftForDate(team,date),trialCoreShiftForDate);
+        for(var i=0;i<trialSwapPairs.length;i++){
+            var p=trialSwapPairs[i];
+            if(p.team===team&&p.dateA===date)return String(p.afterA||"");
+            if(p.team===team&&p.dateB===date)return String(p.afterB||"");
+        }
+        // getLogicalShift 取標準排班與既有正式日期覆蓋，不會取實際出勤結果。
+        return String(getLogicalShift(team,date)||"").replace(/^調:/,"");
     }
     function addTrialSwapPair(){
-        var team=getVal("swapTeam"),a=getVal("swapDateA"),b=getVal("swapDateB"),reason=getVal("swapReason").trim();
-        if(!a||!b||a===b)return alert("請選擇兩個不同日期。");
-        if(trialSwapPairs.length && trialSwapPairs.some(p=>p.team!==team))return alert("同一份試挪預排請先只選擇一個班別。");
-        if(trialSwapPairs.some(p=>p.team===team&&[p.dateA,p.dateB].some(d=>d===a||d===b)))return alert("同一個日期在本次預排中只能使用一次，請先移除重複日期的互調。");
-        if(appSettings.manualShifts?.[trialKey(team,a)]||appSettings.manualShifts?.[trialKey(team,b)])return alert("其中一個日期已有手動改班或請假設定。為避免覆蓋既有設定，請先處理該日期後再試挪。");
-        var oldA=trialShiftForDate(team,a),oldB=trialShiftForDate(team,b);
-        trialSwapPairs.push({team,dateA:a,dateB:b,beforeA:oldA,beforeB:oldB,afterA:String(oldB).replace(/^\$/, ""),afterB:String(oldA).replace(/^\$/, ""),reason:reason||"未填寫"});
+        var team=getVal("swapTeam"),a=getVal("swapDateA"),b=getVal("swapDateB"),
+            afterA=getVal("swapShiftA"),afterB=getVal("swapShiftB"),reason=getVal("swapReason").trim();
+        if(!a||!afterA)return alert("請先選擇第一個日期及要調整的班別。");
+        if(!b||!afterB)return alert("請再選擇第二個日期及要調整的班別。");
+        if(a===b)return alert("兩個日期不可相同。");
+        if(trialSwapPairs.length&&trialSwapPairs.some(p=>p.team!==team))return alert("同一份預排請先只選擇一個班別。");
+        if(trialSwapPairs.some(p=>p.team===team&&[p.dateA,p.dateB].some(d=>d===a||d===b)))return alert("同一個日期在本次預排中只能調整一次，請先移除重複日期。");
+        if(appSettings.manualShifts?.[trialKey(team,a)]||appSettings.manualShifts?.[trialKey(team,b)])return alert("其中一個日期已有系統手動改班設定。為避免覆蓋既有設定，請先處理該日期後再試挪。");
+        var oldA=String(getLogicalShift(team,a)||"").replace(/^調:/,"");
+        var oldB=String(getLogicalShift(team,b)||"").replace(/^調:/,"");
+        trialSwapPairs.push({team,dateA:a,dateB:b,beforeA:oldA,beforeB:oldB,afterA:afterA,afterB:afterB,reason:reason||"未填寫"});
         lastTrialCheck=null;renderTrialPairs();renderTrialCheck(null);
     }
     function removeTrialSwapPair(index){trialSwapPairs.splice(index,1);lastTrialCheck=null;renderTrialPairs();renderTrialCheck(null);}
     function renderTrialPairs(){
-        var box=el("trialSwapPairs");if(!trialSwapPairs.length){box.innerHTML='<div class="journal-note">尚未加入互調日期。</div>';return;}
-        box.innerHTML='<strong>預排互調清單</strong>'+trialSwapPairs.map((p,i)=>`<div class="trial-pair"><div style="display:flex;justify-content:space-between;gap:8px;"><strong>${htmlEscape(p.team)}班</strong><button class="subtle-btn" onclick="removeTrialSwapPair(${i})">移除</button></div><div>${htmlEscape(p.dateA)}：${htmlEscape(formatShiftLabel(p.beforeA))} → <strong>${htmlEscape(formatShiftLabel(p.afterA))}</strong></div><div>${htmlEscape(p.dateB)}：${htmlEscape(formatShiftLabel(p.beforeB))} → <strong>${htmlEscape(formatShiftLabel(p.afterB))}</strong></div><div class="journal-note">原因：${htmlEscape(p.reason)}</div></div>`).join("");
+        var box=el("trialSwapPairs");
+        if(!trialSwapPairs.length){box.innerHTML='<div class="journal-note">尚未加入預排調整。</div>';return;}
+        box.innerHTML='<strong>預排調整清單</strong>'+trialSwapPairs.map((p,i)=>`<div class="trial-pair"><div style="display:flex;justify-content:space-between;gap:8px;"><strong>${htmlEscape(p.team)}班</strong><button class="subtle-btn" onclick="removeTrialSwapPair(${i})">移除</button></div><div>${htmlEscape(p.dateA)}：${htmlEscape(formatShiftLabel(p.beforeA))} → <strong>${htmlEscape(formatShiftLabel(p.afterA))}</strong></div><div>${htmlEscape(p.dateB)}：${htmlEscape(formatShiftLabel(p.beforeB))} → <strong>${htmlEscape(formatShiftLabel(p.afterB))}</strong></div><div class="journal-note">原因：${htmlEscape(p.reason)}</div></div>`).join("");
     }
-    function parseClock(s){if(!/^\d{2}:\d{2}$/.test(s||""))return null;var p=s.split(":").map(Number);return p[0]*60+p[1];}
-    function getShiftGroup(shift){var s=String(shift||"").replace(/^\$/ ,"").replace(/^調:/,"");if(s.includes("休"))return "rest";if(s.includes("早"))return "early";if(s.includes("中")||s.includes("午"))return "mid";if(s.includes("晚"))return "late";return "unknown";}
-    function shiftIsWork(shift){return getShiftGroup(shift)!=="rest";}
+    function parseClock(s){if(!/^\d{2}:\d{2}$/.test(s||""))return null;var p=s.split(":").map(Number);if(p[0]>23||p[1]>59)return null;return p[0]*60+p[1];}
+    function getShiftGroup(shift){
+        var s=String(shift||"").replace(/^\$/ ,"").replace(/^調:/,"");
+        if(s==="大休"||s==="小休")return "rest";
+        if(s.includes("公假"))return "public";
+        if(s.includes("早"))return "early";
+        if(s.includes("中")||s.includes("午"))return "mid";
+        if(s.includes("晚"))return "late";
+        return "unknown";
+    }
+    // 七休一只看排班標籤：公假算工作；只有大休、小休才算休息日。
+    function shiftIsWork(shift){
+        var s=String(shift||"").replace(/^\$/ ,"").replace(/^調:/,"").trim();
+        return s!=="大休"&&s!=="小休";
+    }
+    function makeLocalDateTime(dateStr,clock,dayOffset){
+        var mins=parseClock(clock);if(mins===null)return null;
+        var d=new Date(dateStr.replace(/-/g,"/")+" 00:00:00");
+        d.setDate(d.getDate()+(dayOffset||0));d.setMinutes(mins);return d;
+    }
+    function formatDateTimeForCheck(d){return d.toLocaleString("zh-TW",{timeZone:"Asia/Taipei",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false});}
+    function makeShiftIntervalForDate(dateStr,shift,publicRules){
+        var group=getShiftGroup(shift),start=null,end=null;
+        if(group==="rest")return null;
+        if(group==="early"){
+            start=makeLocalDateTime(dateStr,"07:00",0);end=makeLocalDateTime(dateStr,"15:00",0);
+        }else if(group==="mid"){
+            start=makeLocalDateTime(dateStr,"15:00",0);end=makeLocalDateTime(dateStr,"23:00",0);
+        }else if(group==="late"){
+            // 使用者特別確認：選定日期的晚班，前一天 23:00 上班，選定日期 07:00 下班。
+            start=makeLocalDateTime(dateStr,"23:00",-1);end=makeLocalDateTime(dateStr,"07:00",0);
+        }else if(group==="public"){
+            var ps=parseClock(publicRules.start),pe=parseClock(publicRules.end);
+            if(ps===null||pe===null||ps===pe)return {unknown:true,date:dateStr,shift:shift,reason:"公假時間尚未正確設定"};
+            start=makeLocalDateTime(dateStr,publicRules.start,0);end=makeLocalDateTime(dateStr,publicRules.end,pe<=ps?1:0);
+        }else{
+            return {unknown:true,date:dateStr,shift:shift,reason:"班別無法辨識"};
+        }
+        return {date:dateStr,shift:shift,start:start,end:end,group:group};
+    }
     function runShiftCompliance(){
-        if(!trialSwapPairs.length)return {ok:false,items:[{type:"wait",text:"請先加入至少一組日期互調。"}]};
-        var team=trialSwapPairs[0].team;if(trialSwapPairs.some(p=>p.team!==team))return {ok:false,items:[{type:"fail",text:"同一次試挪請先只處理同一個班別。"}]};
+        if(!trialSwapPairs.length)return {ok:false,items:[{type:"wait",text:"請先加入至少一組兩日期班別預排。"}]};
+        var team=trialSwapPairs[0].team;
+        if(trialSwapPairs.some(p=>p.team!==team))return {ok:false,items:[{type:"fail",text:"同一次試挪請先只處理同一個班別。"}]};
         var dates=trialSwapPairs.flatMap(p=>[p.dateA,p.dateB]).sort(),min=dates[0],max=dates[dates.length-1];
         var items=[],failed=false,waiting=false;
-        // 7休1：檢查所有跨週連續七日區段，任何區段不得七天全是工作日。
-        var scanStart=dateAdd(min,-6), scanEnd=max, badRuns=[];
+
+        // 7休1：以標準班表的班別標籤（套用本次預排後）跨週檢查，不讀取實際出勤。
+        var scanStart=dateAdd(min,-6),scanEnd=max,badRuns=[];
         for(var cur=scanStart;cur<=scanEnd;cur=dateAdd(cur,1)){
-            var allWork=true;for(var k=0;k<7;k++){if(!shiftIsWork(trialShiftForDate(team,dateAdd(cur,k)))){allWork=false;break;}}
+            var allWork=true;
+            for(var k=0;k<7;k++){
+                if(!shiftIsWork(trialShiftForDate(team,dateAdd(cur,k)))){allWork=false;break;}
+            }
             if(allWork)badRuns.push(`${cur}～${dateAdd(cur,6)}`);
         }
-        if(badRuns.length){failed=true;items.push({type:"fail",text:`7休1：不符合，發現連續七天工作：${badRuns.slice(0,5).join("、")}${badRuns.length>5?"…":""}`});}
-        else items.push({type:"pass",text:"7休1：符合，已跨週檢查連續工作日數，沒有連續七天上班。"});
-        // 一例一休：檢查每個被調動日期所屬的星期一至星期日，至少各有一大休及一小休。
-        var weeks=new Set();dates.forEach(ds=>{var d=new Date(ds.replace(/-/g,"/")+" 00:00:00");d.setDate(d.getDate()-(d.getDay()===0?6:d.getDay()-1));weeks.add(formatDateToYYYYMMDD(d));});
-        var badWeeks=[];weeks.forEach(mon=>{var big=0,small=0;for(var j=0;j<7;j++){var sh=String(trialShiftForDate(team,dateAdd(mon,j))).replace(/^\$/ ,"").replace(/^調:/,"");if(sh.includes("大休"))big++;if(sh.includes("小休"))small++;}if(!big||!small)badWeeks.push(`${mon}～${dateAdd(mon,6)}（大休 ${big} 日、小休 ${small} 日）`);});
-        if(badWeeks.length){failed=true;items.push({type:"fail",text:`一例一休：不符合，以下週次缺少大休或小休：${badWeeks.join("；")}`});}
-        else items.push({type:"pass",text:"一例一休：符合，所有受影響的星期一至星期日均至少有一個大休及一個小休。"});
-        // 8 小時間隔：採各班實際開始／結束時間計算相鄰工作日的休息時數。
-        var cfg={early:{start:getVal("timeEarlyStart"),end:getVal("timeEarlyEnd")},mid:{start:getVal("timeMidStart"),end:getVal("timeMidEnd")},late:{start:getVal("timeLateStart"),end:getVal("timeLateEnd")}};
-        appSettings.shiftTimeRules=cfg;
-        var intervalProblems=[],unknown=[];
-        for(var day=dateAdd(min,-1);day<=dateAdd(max,1);day=dateAdd(day,1)){
-            var next=dateAdd(day,1),prevShift=trialShiftForDate(team,day),nextShift=trialShiftForDate(team,next),pg=getShiftGroup(prevShift),ng=getShiftGroup(nextShift);
-            if(pg==="rest"||ng==="rest"||pg==="unknown"||ng==="unknown")continue;
-            var pStart=parseClock(cfg[pg].start),pEnd=parseClock(cfg[pg].end),nStart=parseClock(cfg[ng].start);
-            if(pStart===null||pEnd===null||nStart===null){unknown.push(`${day}（${pg}）→ ${next}（${ng}）`);continue;}
-            var prevEnd=new Date(day.replace(/-/g,"/")+" 00:00:00");prevEnd.setMinutes(pEnd);if(pEnd<=pStart)prevEnd.setDate(prevEnd.getDate()+1);
-            var currentStart=new Date(next.replace(/-/g,"/")+" 00:00:00");currentStart.setMinutes(nStart);
-            var hours=(currentStart-prevEnd)/3600000;
-            if(hours<8)intervalProblems.push(`${day} ${formatShiftLabel(prevShift)} → ${next} ${formatShiftLabel(nextShift)}：間隔 ${hours.toFixed(1)} 小時`);
+        if(badRuns.length){failed=true;items.push({type:"fail",text:`7休1：不符合，發現連續七天都是工作班別（公假也計入）：${badRuns.slice(0,5).join("、")}${badRuns.length>5?"…":""}`});}
+        else items.push({type:"pass",text:"7休1：符合。以標準班表檢查，已跨週計算連續工作日；公假計入工作日，只有大休、小休算休息。"});
+
+        // 一例一休：每個受影響的星期一至星期日，至少各有一個大休及一個小休；公假不抵休。
+        var weeks=new Set();
+        dates.forEach(ds=>{var d=new Date(ds.replace(/-/g,"/")+" 00:00:00");d.setDate(d.getDate()-(d.getDay()===0?6:d.getDay()-1));weeks.add(formatDateToYYYYMMDD(d));});
+        var badWeeks=[];
+        weeks.forEach(mon=>{
+            var big=0,small=0;
+            for(var j=0;j<7;j++){
+                var sh=String(trialShiftForDate(team,dateAdd(mon,j))).replace(/^\$/ ,"").replace(/^調:/,"");
+                if(sh.includes("大休"))big++;
+                if(sh.includes("小休"))small++;
+            }
+            if(!big||!small)badWeeks.push(`${mon}～${dateAdd(mon,6)}（大休 ${big} 日、小休 ${small} 日）`);
+        });
+        if(badWeeks.length){failed=true;items.push({type:"fail",text:`一例一休：不符合，以下星期缺少大休或小休：${badWeeks.join("；")}`});}
+        else items.push({type:"pass",text:"一例一休：符合。每個受影響的星期一至星期日均至少有一個大休及一個小休；公假不抵休。"});
+
+        // 8 小時間隔：將排班日期轉成實際工作區間；晚班固定以前一天 23:00 至當天 07:00 計算。
+        var publicRules={start:getVal("timePublicStart")||"07:00",end:getVal("timePublicEnd")||"15:00"};
+        if(parseClock(publicRules.start)===null||parseClock(publicRules.end)===null||publicRules.start===publicRules.end){
+            waiting=true;items.push({type:"wait",text:"公假時間設定無效，請設定不同的開始及結束時間。"});
+        }
+        appSettings.shiftTimeRules=normalizeShiftTimeRules(Object.assign({},appSettings.shiftTimeRules,{public:publicRules}));
+        var intervals=[],unknown=[];
+        // 前後多取三日，以涵蓋晚班跨日及鄰接班別。
+        for(var day=dateAdd(min,-3);day<=dateAdd(max,3);day=dateAdd(day,1)){
+            var sh=trialShiftForDate(team,day),iv=makeShiftIntervalForDate(day,sh,publicRules);
+            if(!iv)continue;
+            if(iv.unknown){unknown.push(`${day}（${formatShiftLabel(sh)}：${iv.reason}）`);continue;}
+            intervals.push(iv);
+        }
+        intervals.sort((a,b)=>a.start-b.start||a.end-b.end);
+        var intervalProblems=[];
+        for(var z=1;z<intervals.length;z++){
+            var prev=intervals[z-1],next=intervals[z],hours=(next.start-prev.end)/3600000;
+            if(hours<8){
+                var gapText=hours<0?`重疊 ${Math.abs(hours).toFixed(1)} 小時`:`僅 ${hours.toFixed(1)} 小時`;
+                intervalProblems.push(`${formatDateTimeForCheck(prev.start)}～${formatDateTimeForCheck(prev.end)}（${formatShiftLabel(prev.shift)}）→ ${formatDateTimeForCheck(next.start)}～${formatDateTimeForCheck(next.end)}（${formatShiftLabel(next.shift)}）：間隔${gapText}`);
+            }
         }
         if(intervalProblems.length){failed=true;items.push({type:"fail",text:"8小時間隔：不符合。"+intervalProblems.slice(0,6).join("；")});}
-        else if(unknown.length){waiting=true;items.push({type:"wait",text:`8小時間隔：尚無法判定，請補齊相關班別的上下班時間（目前有 ${unknown.length} 組相鄰班別需要時間資料）。`});}
-        else items.push({type:"pass",text:"8小時間隔：符合，已檢查相鄰工作日的班別間隔均不少於 8 小時。"});
+        else if(unknown.length){waiting=true;items.push({type:"wait",text:`8小時間隔：有班別無法換算時間，尚不能判定：${unknown.slice(0,5).join("、")}`});}
+        else items.push({type:"pass",text:`8小時間隔：符合。已依班別實際上下班時間檢查；晚班以前一天 23:00 至當天 07:00 計算。公假時段採 ${publicRules.start}～${publicRules.end}。`});
         return {ok:!failed&&!waiting,failed,waiting,items,team};
     }
     function checkTrialShiftPlan(){
-        var result=runShiftCompliance();lastTrialCheck=result;saveExtendedAppData();renderTrialCheck(result);
+        var result=runShiftCompliance();lastTrialCheck=result;
+        saveExtendedAppData();renderTrialCheck(result);
     }
     function renderTrialCheck(result){
         var box=el("trialShiftCheckResults"),btn=el("applyShiftSwapBtn");
@@ -1630,18 +1750,18 @@
     function applyTrialShiftPlan(){
         if(!lastTrialCheck||!lastTrialCheck.ok)return alert("請先完成並通過全部排班檢查。");
         var team=trialSwapPairs[0].team;
-        if(!confirm(`確定正式套用 ${team} 班的 ${trialSwapPairs.length} 組日期互調？\n只會覆蓋指定日期，不會改變隔年的標準循環。`))return;
+        if(!confirm(`確定正式套用 ${team} 班的 ${trialSwapPairs.length} 組日期班別調整？\n只會覆蓋指定日期，不會改變標準循環及隔年班表。`))return;
         var now=new Date().toISOString();
         trialSwapPairs.forEach(p=>{
             appSettings.shiftSwapOverrides[trialKey(team,p.dateA)]=p.afterA;
             appSettings.shiftSwapOverrides[trialKey(team,p.dateB)]=p.afterB;
             appSettings.shiftSwapRecords.push({id:"swap_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),team:p.team,dateA:p.dateA,dateB:p.dateB,beforeA:p.beforeA,beforeB:p.beforeB,afterA:p.afterA,afterB:p.afterB,reason:p.reason,adjustedAt:now});
         });
-        saveExtendedAppData();trialSwapPairs=[];lastTrialCheck=null;renderAppSafe();renderMonthTable();renderShiftSwapHistory();renderTrialPairs();renderTrialCheck(null);alert("班別互調已正式套用。標準循環未更動，調整紀錄已保存。");closeShiftSwapModal();
+        saveExtendedAppData();trialSwapPairs=[];lastTrialCheck=null;renderAppSafe();renderMonthTable();renderShiftSwapHistory();renderTrialPairs();renderTrialCheck(null);alert("班別調整已正式套用。標準循環及隔年班表未更動，調整紀錄已保存。");closeShiftSwapModal();
     }
     function renderShiftSwapHistory(){
         var box=el("shiftSwapHistory"),rows=(appSettings.shiftSwapRecords||[]).slice().reverse().slice(0,30);
-        box.innerHTML=rows.length?rows.map(r=>`<div class="trial-pair"><strong>${htmlEscape(r.team)}班</strong>　${htmlEscape(r.dateA)} ${htmlEscape(formatShiftLabel(r.beforeA))} ⇄ ${htmlEscape(r.dateB)} ${htmlEscape(formatShiftLabel(r.beforeB))}<div>調整後：${htmlEscape(formatShiftLabel(r.afterA))}／${htmlEscape(formatShiftLabel(r.afterB))}</div><div>原因：${htmlEscape(r.reason)}</div><div class="journal-note">調整時間：${htmlEscape(new Date(r.adjustedAt).toLocaleString("zh-TW"))}</div></div>`).join(""):'尚無調班紀錄。';
+        box.innerHTML=rows.length?rows.map(r=>`<div class="trial-pair"><strong>${htmlEscape(r.team)}班</strong><div>${htmlEscape(r.dateA)}：${htmlEscape(formatShiftLabel(r.beforeA))} → <strong>${htmlEscape(formatShiftLabel(r.afterA))}</strong></div><div>${htmlEscape(r.dateB)}：${htmlEscape(formatShiftLabel(r.beforeB))} → <strong>${htmlEscape(formatShiftLabel(r.afterB))}</strong></div><div>原因：${htmlEscape(r.reason)}</div><div class="journal-note">調整時間：${htmlEscape(new Date(r.adjustedAt).toLocaleString("zh-TW"))}</div></div>`).join(""):'尚無調班紀錄。';
     }
 
     // 導覽列第四頁為系統設定；工作日誌固定在第三頁。
