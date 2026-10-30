@@ -156,9 +156,21 @@
         .ios-icon { font-size: 1.5rem; margin: 0 10px; }
 
         /* 新增：臨時工作、工作日誌、日期詳情與試挪班別 */
-        .task-card-title { position: relative; padding-right: 124px; }
-        .temp-task-entry { position:absolute; right:0; top:50%; transform:translateY(-50%); border:0; background:transparent; color:#6B7280; font-size:.78rem; font-weight:600; padding:5px 0 5px 8px; cursor:pointer; white-space:nowrap; }
-        .temp-task-entry:active { color:var(--primary); }
+        /* 工作提醒標題獨立置中；新增臨時工作按鈕另起一行靠右，使用臨時工作區塊相同配色。 */
+        .task-card-title { display:block; width:100%; padding-right:0; text-align:center; margin-bottom:12px; }
+        .task-card-heading { display:flex; justify-content:center; align-items:center; gap:8px; width:100%; text-align:center; }
+        .task-card-action-row { display:flex; justify-content:flex-end; align-items:center; margin-top:9px; width:100%; }
+        .temp-task-entry { position:static; transform:none; border:1px solid #14B8A6; background:#F0FDFA; color:#0F766E; border-radius:8px; font-size:.82rem; font-weight:700; padding:6px 10px; cursor:pointer; white-space:nowrap; line-height:1.35; }
+        .temp-task-entry:hover { background:#CCFBF1; border-color:#0D9488; }
+        .temp-task-entry:active { background:#99F6E4; color:#115E59; }
+        /* 班表總覽工具列：試挪按鈕與班別選單並排，節省垂直空間。 */
+        .calendar-toolbar-row { display:flex; justify-content:space-between; align-items:center; gap:8px; min-width:0; margin:0 0 9px; padding:0 0 8px; border-bottom:2px solid var(--border-color); }
+        .trial-swap-entry { flex:0 0 auto; border:1px solid #14B8A6; background:#F0FDFA; color:#0F766E; border-radius:8px; font-size:.82rem; font-weight:700; padding:6px 10px; cursor:pointer; white-space:nowrap; line-height:1.35; }
+        .trial-swap-entry:hover { background:#CCFBF1; border-color:#0D9488; }
+        .trial-swap-entry:active { background:#99F6E4; color:#115E59; }
+        .calendar-toolbar-row select { flex:0 1 auto; width:auto; max-width:58%; min-width:0; padding:4px 9px; font-size:1rem; margin:0; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; color:#1E3A8A; font-weight:bold; }
+        .date-detail-task-title { text-align:center; font-weight:700; margin-bottom:8px; }
+        .date-detail-task-action { display:flex; justify-content:flex-end; align-items:center; margin:0 0 8px; }
         .cal-cell { cursor:pointer; }
         .cal-cell:active { filter:brightness(.97); }
         .modal-overlay { display:none; position:fixed; inset:0; z-index:5000; background:rgba(15,23,42,.55); align-items:center; justify-content:center; padding:16px; box-sizing:border-box; }
@@ -195,8 +207,11 @@
         @media(max-width:480px) {
             .app-modal { padding:14px; max-height:92vh; }
             .journal-photo-grid { grid-template-columns:repeat(3,1fr); }
-            .temp-task-entry { font-size:.72rem; }
-            .task-card-title { padding-right:112px; }
+            .temp-task-entry { font-size:.76rem; padding:6px 9px; }
+            .trial-swap-entry { font-size:.76rem; padding:6px 8px; }
+            .calendar-toolbar-row { gap:6px; }
+            .calendar-toolbar-row select { max-width:56%; font-size:.9rem; padding:5px 6px; }
+            .task-card-title { padding-right:0; }
             .time-grid { grid-template-columns:1fr; }
         }
 
@@ -252,7 +267,10 @@
             <div id="restDayReminderContainer" style="display: none; margin-top: 15px; padding: 10px; background: #FEF2F2; border-radius: 8px; border: 1px dashed #FCA5A5; color: #B91C1C; font-size: 1.05rem;"></div>
         </div>
         <div class="card">
-            <div class="card-title task-card-title">🛠️ 工作提醒 <span id="taskTeamLabel" style="font-size:0.9rem; color:#4F46E5; margin-left:8px; font-weight:normal;"></span><button type="button" class="temp-task-entry" onclick="openTemporaryTaskModal()">＋新增臨時工作</button></div>
+            <div class="card-title task-card-title">
+                <div class="task-card-heading"><span>🛠️ 工作提醒</span><span id="taskTeamLabel" style="font-size:0.9rem; color:#4F46E5; font-weight:normal;"></span></div>
+                <div class="task-card-action-row"><button type="button" class="temp-task-entry" onclick="openTemporaryTaskModal()">＋新增臨時工作</button></div>
+            </div>
             <ul class="task-list" id="taskList"></ul>
         </div>
         <div id="installButtonContainer" class="install-button-container"><button id="btnInstall" class="btn-install">📥 安裝為手機 APP</button><div class="install-explanation">以便離線使用和更快載入</div></div>
@@ -267,13 +285,12 @@
                 <button type="button" class="btn-icon" style="padding: 4px 15px; font-size: 1.1rem; box-shadow: none; border: 1px solid var(--border-color); cursor: pointer; background: #F9FAFB;" onclick="changeCalendarMonth(1)">▶</button>
             </div>
             <!-- 第二行：顯示視角選單 (靠右對齊) -->
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;">
-                <select id="monthViewSelect" onchange="changeMonthViewTeam()" style="width: auto; padding: 4px 10px; font-size: 1rem; margin: 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; color: #1E3A8A; font-weight: bold;">
+            <!-- 班別視角與試挪班別共用同一列，避免多占一整行把月曆往下推。 -->
+            <div class="calendar-toolbar-row">
+                <button type="button" class="trial-swap-entry" onclick="openShiftSwapModal()">⇄ 試挪班別</button>
+                <select id="monthViewSelect" onchange="changeMonthViewTeam()" aria-label="選擇班表總覽班別">
                     <!-- 動態載入選單選項 -->
                 </select>
-            </div>
-            <div style="display:flex; justify-content:flex-end; margin:-2px 0 9px;">
-                <button type="button" class="subtle-btn" onclick="openShiftSwapModal()">⇄ 試挪班別</button>
             </div>
             <div id="monthCalendar" class="cal-grid"></div>
         </div>
@@ -431,9 +448,8 @@
   <div class="app-modal">
     <div class="modal-head"><h3 id="dateDetailTitle">日期詳情</h3><button class="modal-close" onclick="closeDateDetail()">×</button></div>
     <div id="dateDetailShift" style="margin-bottom:12px;"></div>
-    <div class="card-title" style="justify-content:space-between; margin-bottom:8px;">
-      <span>工作提醒</span><button class="subtle-btn" onclick="openTemporaryTaskModal(dateDetailDate, dateDetailTeam)">＋新增臨時工作</button>
-    </div>
+    <div class="date-detail-task-title">工作提醒</div>
+    <div class="date-detail-task-action"><button type="button" class="temp-task-entry" onclick="openTemporaryTaskModal(dateDetailDate, dateDetailTeam)">＋新增臨時工作</button></div>
     <div id="dateDetailTasks"></div>
     <div class="modal-actions"><button class="btn" style="background:#6B7280;" onclick="closeDateDetail()">返回班表總覽</button></div>
   </div>
@@ -1136,17 +1152,59 @@
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw0wAnCPZkw3nlyx0Eg08Ejk49oG_itD82PqH9IP4X7S4oR5br1NTCmlUJsNfME2kbZ/exec";
     const CLOUD_FILE_NAME = "供油班表_雲端備份.json";
 
-    function silentCloudBackup() {
-        if (localStorage.getItem("pendingSync") !== "true") return; 
-        fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: "auto_backup", fileName: CLOUD_FILE_NAME, backupData: appSettings })
-        })
-        .then(r => r.json())
-        .then(res => { if (res.status === 'success') localStorage.removeItem("pendingSync"); })
-        .catch(e => { /* 失敗則安靜忽略，pendingSync 標記會保留，下次有機會再傳 */ });
+    // 自動雲端備份採單一佇列，避免連續編輯／多張照片上傳時，較舊請求晚回來而覆蓋新資料。
+    var silentBackupInFlight = false;
+    var silentBackupRequested = false;
+    async function silentCloudBackup() {
+        if (localStorage.getItem("pendingSync") !== "true") return;
+        if (silentBackupInFlight) {
+            silentBackupRequested = true;
+            return;
+        }
+        silentBackupInFlight = true;
+        try {
+            while (localStorage.getItem("pendingSync") === "true") {
+                silentBackupRequested = false;
+                // 使用本機已保存的完整快照，確保送出的內容與本次版本一致。
+                var snapshot = localStorage.getItem("shiftSettings") || JSON.stringify(appSettings);
+                var backupData = JSON.parse(snapshot);
+                try {
+                    var response = await fetch(GAS_WEB_APP_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: "auto_backup", fileName: CLOUD_FILE_NAME, backupData: backupData })
+                    });
+                    if (!response.ok) throw new Error("HTTP " + response.status);
+                    var result = await response.json();
+                    if (result.status !== 'success') throw new Error(result.message || "雲端備份未成功");
+                    // 傳送期間若又有新增／編輯，保留 pendingSync 並再傳一次最新快照。
+                    if (localStorage.getItem("shiftSettings") === snapshot) {
+                        localStorage.removeItem("pendingSync");
+                        break;
+                    }
+                    localStorage.setItem("pendingSync", "true");
+                } catch (error) {
+                    // 失敗不清除標記；下次開啟程式、網路恢復或再次儲存時再重試。
+                    console.warn("自動雲端備份失敗，資料仍保留在本機待重試：", error);
+                    break;
+                }
+            }
+        } finally {
+            silentBackupInFlight = false;
+            if (silentBackupRequested && localStorage.getItem("pendingSync") === "true") {
+                silentBackupRequested = false;
+                silentCloudBackup();
+            }
+        }
     }
+
+    // 網路恢復或使用者切回程式時，重試尚未完成的備份。
+    window.addEventListener("online", function () {
+        if (localStorage.getItem("pendingSync") === "true") silentCloudBackup();
+    });
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden && localStorage.getItem("pendingSync") === "true") silentCloudBackup();
+    });
 
     function cloudBackup(event) {
         triggerVibrate();
