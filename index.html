@@ -195,6 +195,14 @@
         .journal-photo img { width:100%; height:100%; object-fit:cover; display:block; }
         .journal-photo button { position:absolute; right:4px; top:4px; border:0; border-radius:50%; width:25px; height:25px; background:rgba(17,24,39,.75); color:#fff; cursor:pointer; }
         .journal-note { color:#6B7280; font-size:.82rem; line-height:1.45; }
+        .settings-status-bar { display:none; position:fixed; left:50%; bottom:calc(65px + env(safe-area-inset-bottom)); transform:translateX(-50%); width:min(500px, calc(100vw - 20px)); box-sizing:border-box; z-index:900; background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:10px 12px; box-shadow:0 5px 18px rgba(15,23,42,.16); }
+        .settings-status-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+        .settings-status-title { font-weight:700; font-size:.92rem; }
+        .settings-status-detail { color:var(--text-muted); font-size:.78rem; margin-top:3px; line-height:1.35; }
+        .settings-core-pending { display:none; color:#92400E; background:#FFFBEB; border:1px solid #FDE68A; border-radius:7px; padding:7px 9px; margin-top:8px; font-size:.82rem; }
+        .settings-apply-btn { display:none; width:100%; margin-top:8px; padding:9px 12px; font-size:.95rem; background:#2563EB; }
+        #tab4 { padding-bottom:170px; }
+        @media(max-width:480px) { .settings-status-bar { padding:9px 10px; } }
         .cal-date-detail { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid var(--border-color); }
         .cal-date-detail:last-child { border-bottom:0; }
         .trial-pair { background:#F9FAFB; border:1px solid var(--border-color); padding:10px; border-radius:9px; margin:8px 0; }
@@ -320,32 +328,32 @@
         <div class="card">
             <div class="card-title">系統設定 (自動儲存)</div>
             <label style="font-weight:bold; font-size:1.05rem;">我的專屬班別：</label>
-            <select id="setMyTeam" onchange="updateBasePreview()">
+            <select id="setMyTeam" onchange="saveGeneralSettings()">
                 <option value="A">A班</option><option value="B">B班</option><option value="C" selected>C班</option><option value="D">D班</option>
             </select>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
             <label style="font-weight:bold; color: var(--primary); font-size:1.05rem;">預設顯示模式：</label>
-            <select id="setDefaultMode"><option value="false">📅 標準班表</option><option value="true">🏃 實際出勤</option></select>
+            <select id="setDefaultMode" onchange="saveGeneralSettings()"><option value="false">📅 標準班表</option><option value="true">🏃 實際出勤</option></select>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
             
             <label style="font-weight:bold; font-size:1.05rem;">基準日設定：</label>
             <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                <input type="date" id="setBaseDate" onchange="updateBasePreview()">
+                <input type="date" id="setBaseDate" onchange="markCoreSettingsDirty()">
                 <button type="button" class="btn" onclick="setToday('setBaseDate')" style="width:auto; white-space:nowrap; background:#E5E7EB; color:#4B5563; padding:8px 12px; font-size:1rem;">📅 今天</button>
             </div>
             <label style="font-weight:bold; display:block; margin-top:10px; font-size:1.05rem;">指定基準班別與當天班表：</label>
             <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px;">系統將自動精準推算其他三班狀態。</div>
             <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                <select id="setRefTeam" style="flex:1;" onchange="updateBasePreview()"><option value="A">A班</option><option value="B">B班</option><option value="C" selected>C班</option><option value="D">D班</option></select>
-                <select id="setRefShift" style="flex:2;" onchange="updateBasePreview()"><option value="0">早班1</option><option value="1">早班2</option><option value="2">中班1</option><option value="3">中班2</option><option value="4">小休</option><option value="5">晚班1</option><option value="6">晚班2</option><option value="7">大休</option></select>
+                <select id="setRefTeam" style="flex:1;" onchange="markCoreSettingsDirty()"><option value="A">A班</option><option value="B">B班</option><option value="C" selected>C班</option><option value="D">D班</option></select>
+                <select id="setRefShift" style="flex:2;" onchange="markCoreSettingsDirty()"><option value="0">早班1</option><option value="1">早班2</option><option value="2">中班1</option><option value="3">中班2</option><option value="4">小休</option><option value="5">晚班1</option><option value="6">晚班2</option><option value="7">大休</option></select>
             </div>
             <div id="basePreview" style="background: #EFF6FF; border: 1px dashed #93C5FD; padding: 10px; border-radius: 8px; font-size: 1rem; color: #1E3A8A; margin-bottom: 15px; line-height:1.4;">系統推算：請先選擇設定。</div>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
             
             <label style="font-weight:bold; display:block; margin-bottom: 5px; font-size:1.05rem;">各班領班名稱：</label>
             <div class="setting-grid">
-                <div><label>A班</label><input type="text" id="setTeamA"></div><div><label>B班</label><input type="text" id="setTeamB"></div>
-                <div><label>C班</label><input type="text" id="setTeamC"></div><div><label>D班</label><input type="text" id="setTeamD"></div>
+                <div><label>A班</label><input type="text" id="setTeamA" onchange="saveGeneralSettings()"></div><div><label>B班</label><input type="text" id="setTeamB" onchange="saveGeneralSettings()"></div>
+                <div><label>C班</label><input type="text" id="setTeamC" onchange="saveGeneralSettings()"></div><div><label>D班</label><input type="text" id="setTeamD" onchange="saveGeneralSettings()"></div>
             </div>
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
             
@@ -400,7 +408,7 @@
             
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
             <label style="font-weight:bold; color: #10B981; margin:0; font-size:1.05rem;">💾 系統備份與還原</label>
-            <div style="font-size: 0.9rem; color: #6B7280; margin: 5px 0 10px 0;">支援 Google 雲端同步與本機匯出入，變更設定將自動安靜雲端備份。</div>
+            <div style="font-size: 0.9rem; color: #6B7280; margin: 5px 0 10px 0;">雲端與本機皆備份完整資料；自動雲端備份只更新同一份雲端檔案。</div>
             
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" onclick="cloudBackup(event)" style="background:#0284C7; font-size:1rem; padding:10px; margin:0;">☁️ 雲端備份</button>
@@ -410,13 +418,26 @@
             </div>
             <input type="file" id="importDataInput" style="display:none;" accept=".json" onchange="importData(event)">
 
-            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 18px 0;">
 
-            <div class="action-buttons" style="display:flex; gap:15px; margin-bottom:10px;">
-                <button class="btn btn-danger" onclick="restoreDefaults()" style="flex:1; margin-top:0;">🔄 恢復預設</button>
-                <button class="btn" onclick="saveSettings()" style="flex:1; margin-top:0;">💾 儲存設定</button>
-            </div>
+            <section style="border:1px solid #FECACA; background:#FFFDFD; border-radius:10px; padding:12px; margin-bottom:8px;">
+                <label style="display:block; color:#B91C1C; font-weight:bold; font-size:1.02rem; margin-bottom:5px;">⚠️ 重設系統設定</label>
+                <div style="font-size:.86rem; color:#6B7280; line-height:1.5; margin-bottom:10px;">恢復基準日期、班別循環、班別名稱、個人班別及預設顯示模式。手動改班、假日、工作提醒、臨時工作、工作日誌及調班紀錄都會保留。</div>
+                <button class="btn btn-danger" onclick="restoreDefaults()" style="width:auto; margin:0; padding:9px 14px; font-size:.95rem;">🔄 恢復系統設定預設值</button>
+            </section>
 </div>
+</div>
+
+<div id="settingsStatusBar" class="settings-status-bar" aria-live="polite">
+    <div class="settings-status-top">
+        <div>
+            <div id="settingsStatusText" class="settings-status-title">本機資料已儲存</div>
+            <div id="settingsCloudStatus" class="settings-status-detail">雲端同步狀態確認中</div>
+        </div>
+        <span id="settingsStatusIcon" aria-hidden="true" style="font-size:1.25rem;">💾</span>
+    </div>
+    <div id="settingsCorePending" class="settings-core-pending">⚠️ 核心排班設定有尚未套用的修改。</div>
+    <button id="applyCoreSettingsBtn" class="btn settings-apply-btn" onclick="applyCoreSettings()">確認並套用排班設定</button>
 </div>
 
 <div class="tab-bar">
@@ -541,8 +562,13 @@
     let isActualMode = false; 
     let currentViewTeam = null, currentMonthViewTeam = null;
     let calendarViewDate = getTWDate(); 
-    let tempHolidays = {}, tempTasks = [], tempManualShifts = {}; 
+    let tempHolidays = {}, tempTasks = [], tempManualShifts = {};
     let editingHolidayDate = null, editingTaskId = null;
+    let coreSettingsDirty = false;
+    let cloudSyncState = localStorage.getItem("pendingSync") === "true" ? "pending" : "idle";
+    let autoBackupTimer = null;
+    let silentBackupPromise = null;
+    let silentBackupRequested = false;
 
     const defaultTasks = [
         { id: "t1", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：登錄MI系統的各型泵浦運轉前暨啟動時檢點表" },
@@ -756,8 +782,10 @@
             }
         }
         
+        const generatedHolidayCount = Object.keys(newH).length;
         Object.assign(appSettings.holidays, newH);
-        localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
+        if (generatedHolidayCount) persistSettingsToLocal(true);
+        else persistSettingsToLocal(false);
         
         if (tempHolidays) Object.assign(tempHolidays, newH);
         if (el("holidayList")) renderHolidayList();
@@ -765,17 +793,6 @@
 
     function setToday(inputId) { triggerVibrate(); setVal(inputId, formatDateToYYYYMMDD(getTWDate())); el(inputId).dispatchEvent(new Event('change')); }
     
-    function switchTab(num) {
-        triggerVibrate();
-        document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
-        el('tab' + num).classList.add('active');
-        document.querySelector(`.tab-bar .tab-btn:nth-child(${num})`).classList.add('active');
-        const headerCtrls = el('headerControls'), mainHeader = el('mainHeaderSection');
-        if (num === 3) { headerCtrls.style.opacity = '0'; setTimeout(() => { headerCtrls.style.display = 'none'; mainHeader.style.paddingBottom = '5px'; }, 150); } 
-        else { headerCtrls.style.display = 'block'; setTimeout(() => { headerCtrls.style.opacity = '1'; mainHeader.style.paddingBottom = '10px'; }, 10); }
-        el('tab' + num).scrollTop = 0;
-    }
-
     function setMode(mode) { triggerVibrate(); isActualMode = mode; el('btnLogical').className = mode ? 'btn-mode' : 'btn-mode active'; el('btnActual').className = mode ? 'btn-mode active' : 'btn-mode'; renderAppSafe(); }
     function changeViewTeam() { triggerVibrate(); currentViewTeam = getVal("viewTeamSelect"); renderAppSafe(); }
     function changeMonthViewTeam() { triggerVibrate(); currentMonthViewTeam = getVal("monthViewSelect"); renderMonthTable(); }
@@ -1045,125 +1062,272 @@
     function showHolidayToast(d, name) { triggerVibrate(); let t = el("holidayToast"); if(!t) return; t.innerHTML = `📅 <strong>${d}</strong><br>🎈 ${name}`; t.classList.add("show"); clearTimeout(toastTimeout); toastTimeout = setTimeout(() => t.classList.remove("show"), 3000); }
 
     function updateBasePreview() {
-        const dVal = getVal("setBaseDate"), rTeam = getVal("setRefTeam"), rShift = parseInt(getVal("setRefShift")) || 0; 
+        const dVal = getVal("setBaseDate"), rTeam = getVal("setRefTeam"), rShift = parseInt(getVal("setRefShift"), 10) || 0;
         if (!dVal) return el("basePreview").innerHTML = "請先選擇基準日。";
         let offsets = {}, pos = {'C':0, 'D':2, 'A':4, 'B':6}, bPos = pos[rTeam];
         TEAMS.forEach(t => offsets[t] = (rShift + (pos[t] - bPos + 8) % 8) % 8);
-        el("basePreview").innerHTML = `<strong style="display:block; margin-bottom:4px;">✨ 推算：${dVal}</strong><span style="color:#DC2626; font-weight:bold;">${rTeam}班</span> 為「${SHIFT_CYCLE[rShift]}」 ➜<br><span style="color:#4B5563;">${TEAMS.filter(t=>t!==rTeam).map(t=>`${t}班「${SHIFT_CYCLE[offsets[t]]}」`).join(" / ")}</span>`;
+        const previewTitle = coreSettingsDirty ? "預覽（尚未套用）" : "目前基準設定";
+        el("basePreview").innerHTML = `<strong style="display:block; margin-bottom:4px;">✨ ${previewTitle}：${dVal}</strong><span style="color:#DC2626; font-weight:bold;">${rTeam}班</span> 為「${SHIFT_CYCLE[rShift]}」 ➜<br><span style="color:#4B5563;">${TEAMS.filter(t=>t!==rTeam).map(t=>`${t}班「${SHIFT_CYCLE[offsets[t]]}」`).join(" / ")}</span>`;
     }
 
     function loadSettingsToForm() {
-        setVal("setBaseDate", appSettings.baseDate); setVal("setMyTeam", appSettings.myTeam); setVal("setDefaultMode", appSettings.defaultMode ? "true" : "false");
-        setVal("setRefTeam", appSettings.myTeam); setVal("setRefShift", isNaN(appSettings.teams[appSettings.myTeam].offset) ? 0 : appSettings.teams[appSettings.myTeam].offset);
+        setVal("setBaseDate", appSettings.baseDate);
+        setVal("setMyTeam", appSettings.myTeam);
+        setVal("setDefaultMode", appSettings.defaultMode ? "true" : "false");
+        // 以目前個人班別及其已儲存的循環位置，重建等效的基準參照。
+        setVal("setRefTeam", appSettings.myTeam);
+        setVal("setRefShift", isNaN(appSettings.teams[appSettings.myTeam].offset) ? 0 : appSettings.teams[appSettings.myTeam].offset);
         TEAMS.forEach(t => setVal(`setTeam${t}`, appSettings.teams[t].name || ""));
-        
-        populateDropdowns(); // 確保下拉選單能抓到最新設定的名字
+        populateDropdowns();
+        tempHolidays = JSON.parse(JSON.stringify(appSettings.holidays || {}));
+        tempTasks = JSON.parse(JSON.stringify(appSettings.tasks || []));
+        tempManualShifts = JSON.parse(JSON.stringify(appSettings.manualShifts || {}));
+        coreSettingsDirty = false;
+        updateBasePreview();
+        cancelEditHoliday();
+        cancelEditCustomTask();
+        renderHolidayList(); renderTaskList(); renderManualShiftList();
+        updateSettingsStatus();
+    }
 
-        tempHolidays = JSON.parse(JSON.stringify(appSettings.holidays||{})); tempTasks = JSON.parse(JSON.stringify(appSettings.tasks||[])); tempManualShifts = JSON.parse(JSON.stringify(appSettings.manualShifts||{})); 
-        updateBasePreview(); cancelEditHoliday(); cancelEditCustomTask(); renderHolidayList(); renderTaskList(); renderManualShiftList();
+    function persistSettingsToLocal(syncCloud) {
+        try {
+            localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
+            if (syncCloud) {
+                localStorage.setItem("pendingSync", "true");
+                cloudSyncState = "pending";
+                scheduleSilentCloudBackup();
+            }
+            updateSettingsStatus();
+            return true;
+        } catch (error) {
+            cloudSyncState = "localError";
+            updateSettingsStatus();
+            alert("本機儲存失敗！可能是裝置儲存空間不足，請先執行本機備份並檢查儲存空間。\n\n" + (error.message || error));
+            return false;
+        }
+    }
+
+    function updateSettingsStatus() {
+        if (!el("settingsStatusText")) return;
+        const pending = localStorage.getItem("pendingSync") === "true";
+        let title = "本機資料已儲存", cloud = "雲端：尚未記錄最近一次同步時間", icon = "💾";
+        if (cloudSyncState === "localError") { title = "本機儲存失敗"; cloud = "請先確認裝置儲存空間。"; icon = "⚠️"; }
+        else if (cloudSyncState === "syncing") { cloud = "雲端：正在同步最新資料…"; icon = "☁️"; }
+        else if (cloudSyncState === "error") { cloud = "雲端：同步失敗，資料仍保留在本機，等待重試。"; icon = "⚠️"; }
+        else if (pending || cloudSyncState === "pending") { cloud = navigator.onLine ? "雲端：等待同步，系統會自動處理。" : "雲端：目前離線，網路恢復後自動重試。"; icon = "⏳"; }
+        else {
+            const last = localStorage.getItem("lastCloudSyncAt");
+            if (last) {
+                const d = new Date(last);
+                cloud = "雲端：最近同步成功 " + d.toLocaleString("zh-TW", {hour12:false});
+            } else cloud = "雲端：尚未執行過備份";
+        }
+        el("settingsStatusText").innerText = title;
+        el("settingsCloudStatus").innerText = cloud;
+        el("settingsStatusIcon").innerText = icon;
+        el("settingsCorePending").style.display = coreSettingsDirty ? "block" : "none";
+        el("applyCoreSettingsBtn").style.display = coreSettingsDirty ? "block" : "none";
+    }
+
+    function saveGeneralSettings() {
+        const nextMyTeam = getVal("setMyTeam");
+        const nextMode = getVal("setDefaultMode") === "true";
+        const nextNames = {};
+        TEAMS.forEach(t => nextNames[t] = (getVal(`setTeam${t}`) || "").trim());
+        let changed = appSettings.myTeam !== nextMyTeam || appSettings.defaultMode !== nextMode || TEAMS.some(t => (appSettings.teams[t].name || "") !== nextNames[t]);
+        if (!changed) return;
+        appSettings.myTeam = nextMyTeam;
+        appSettings.defaultMode = nextMode;
+        TEAMS.forEach(t => appSettings.teams[t].name = nextNames[t]);
+        isActualMode = nextMode;
+        currentViewTeam = currentMonthViewTeam = nextMyTeam;
+        populateDropdowns();
+        setVal("viewTeamSelect", nextMyTeam); setVal("monthViewSelect", nextMyTeam);
+        el("btnLogical").className = nextMode ? "btn-mode" : "btn-mode active";
+        el("btnActual").className = nextMode ? "btn-mode active" : "btn-mode";
+        if (persistSettingsToLocal(true)) {
+            renderAppSafe();
+            if (el("tab2")?.classList.contains("active")) renderMonthTable();
+        }
+    }
+
+    function markCoreSettingsDirty() {
+        coreSettingsDirty = true;
+        updateBasePreview();
+        updateSettingsStatus();
+    }
+
+    function applyCoreSettings() {
+        triggerVibrate();
+        const baseDate = getVal("setBaseDate"), refTeam = getVal("setRefTeam"), refShift = parseInt(getVal("setRefShift"), 10);
+        if (!baseDate) return alert("請設定基準日。");
+        if (!TEAMS.includes(refTeam) || !Number.isInteger(refShift) || refShift < 0 || refShift > 7) return alert("請確認基準班別與當天班表。");
+        const pos = {'C':0, 'D':2, 'A':4, 'B':6}, basePos = pos[refTeam];
+        appSettings.baseDate = baseDate;
+        TEAMS.forEach(t => { appSettings.teams[t].offset = (refShift + (pos[t] - basePos + 8) % 8) % 8; });
+        if (!persistSettingsToLocal(true)) return;
+        coreSettingsDirty = false;
+        updateBasePreview(); updateSettingsStatus();
+        renderAppSafe(); renderMonthTable();
+        alert("✅ 核心排班設定已確認並套用！\n本機已儲存，雲端將於背景自動同步。");
     }
 
     const renderList = (id, data, emptyTxt, htmlFn) => { el(id).innerHTML = data.length ? data.map(htmlFn).join("") : `<div style='color:var(--text-muted); text-align:center; padding:10px; font-size:1.05rem;'>${emptyTxt}</div>`; };
 
-    function renderManualShiftList() { renderList("manualShiftList", Object.keys(tempManualShifts).sort(), "目前無紀錄", k => `<div class="list-item"><span><strong>${k.split("_")[0]}</strong> (${k.split("_")[1]}班) - <span style="color:#DC2626; font-weight:bold;">${tempManualShifts[k]}</span></span><div><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { delete tempManualShifts['${k}']; renderManualShiftList(); }">✖</span></div></div>`); }
-    function addManualShift() { triggerVibrate(); const d = getVal("addManualDate"), t = getVal("addManualTeam"), s = getVal("addManualShift"); if (!d) return alert("請選日期"); tempManualShifts[`${d}_${t}`] = s; renderManualShiftList(); setVal("addManualDate", ""); }
+    function commitManagementSettings() {
+        appSettings.holidays = JSON.parse(JSON.stringify(tempHolidays));
+        appSettings.tasks = JSON.parse(JSON.stringify(tempTasks));
+        appSettings.manualShifts = JSON.parse(JSON.stringify(tempManualShifts));
+        return persistSettingsToLocal(true);
+    }
 
-    function renderHolidayList() { renderList("holidayList", Object.keys(tempHolidays).sort(), "無設定", d => `<div class="list-item ${d===editingHolidayDate?"editing-item":""}"><span><strong>${d}</strong> - ${tempHolidays[d]}</span><div><span class="list-action-btn btn-edit" onclick="startEditHoliday('${d}')">✎</span><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { if('${d}'===editingHolidayDate) cancelEditHoliday(); delete tempHolidays['${d}']; renderHolidayList(); }">✖</span></div></div>`); }
+    function renderManualShiftList() {
+        renderList("manualShiftList", Object.keys(tempManualShifts).sort(), "目前無紀錄", k => `<div class="list-item"><span><strong>${k.split("_")[0]}</strong> (${k.split("_")[1]}班) - <span style="color:#DC2626; font-weight:bold;">${tempManualShifts[k]}</span></span><div><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { delete tempManualShifts['${k}']; commitManagementSettings(); renderManualShiftList(); renderAppSafe(); }">✖</span></div></div>`);
+    }
+    function addManualShift() {
+        triggerVibrate(); const d = getVal("addManualDate"), t = getVal("addManualTeam"), sh = getVal("addManualShift");
+        if (!d) return alert("請選日期");
+        tempManualShifts[`${d}_${t}`] = sh;
+        if (commitManagementSettings()) { renderManualShiftList(); setVal("addManualDate", ""); renderAppSafe(); alert("手動改班／請假已儲存。"); }
+    }
+
+    function renderHolidayList() {
+        renderList("holidayList", Object.keys(tempHolidays).sort(), "無設定", d => `<div class="list-item ${d===editingHolidayDate?"editing-item":""}"><span><strong>${d}</strong> - ${tempHolidays[d]}</span><div><span class="list-action-btn btn-edit" onclick="startEditHoliday('${d}')">✎</span><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { if('${d}'===editingHolidayDate) cancelEditHoliday(); delete tempHolidays['${d}']; commitManagementSettings(); renderHolidayList(); renderAppSafe(); }">✖</span></div></div>`);
+    }
     function startEditHoliday(d) { triggerVibrate(); editingHolidayDate = d; setVal("addHolidayDate", d); setVal("addHolidayName", tempHolidays[d]); el("holidayAddLabel").innerText = "✏️ 編輯假日"; el("btnSubmitHoliday").innerText = "✅ 更新"; el("btnCancelHoliday").style.display = "inline-block"; renderHolidayList(); }
-    function cancelEditHoliday() { triggerVibrate(); editingHolidayDate = null; setVal("addHolidayDate", ""); setVal("addHolidayName", ""); el("holidayAddLabel").innerText = "🎈 國定假日"; el("btnSubmitHoliday").innerText = "新增"; el("btnCancelHoliday").style.display = "none"; renderHolidayList(); }
-    function addHoliday() { triggerVibrate(); const d = getVal("addHolidayDate"), n = getVal("addHolidayName"); if (!d || !n) return alert("填寫完整"); if (editingHolidayDate && d!==editingHolidayDate) delete tempHolidays[editingHolidayDate]; else if (!editingHolidayDate && tempHolidays[d] && !confirm("覆蓋?")) return; tempHolidays[d] = n; cancelEditHoliday(); }
+    function cancelEditHoliday() { triggerVibrate(); editingHolidayDate = null; setVal("addHolidayDate", ""); setVal("addHolidayName", ""); el("holidayAddLabel").innerText = "🎈 國定假日管理："; el("btnSubmitHoliday").innerText = "新增"; el("btnCancelHoliday").style.display = "none"; if (el("holidayList")) renderHolidayList(); }
+    function addHoliday() {
+        triggerVibrate(); const d = getVal("addHolidayDate"), n = (getVal("addHolidayName") || "").trim();
+        if (!d || !n) return alert("請填寫完整日期及假日名稱。");
+        if (editingHolidayDate && d !== editingHolidayDate) delete tempHolidays[editingHolidayDate];
+        else if (!editingHolidayDate && tempHolidays[d] && !confirm("這個日期已有假日設定，要覆蓋嗎？")) return;
+        tempHolidays[d] = n;
+        if (commitManagementSettings()) { cancelEditHoliday(); renderHolidayList(); renderAppSafe(); alert("國定假日已儲存。"); }
+    }
 
     function toggleTaskInputs() {
         const r = getVal("addTaskRule"); ['inputWrap_date', 'inputWrap_week', 'inputWrap_monthDay', 'inputWrap_monthRange'].forEach(i => el(i).style.display = 'none'); el('btnTaskToday').style.display = r === 'specific_date' ? 'inline-block' : 'none';
         if (r === 'specific_date') el("inputWrap_date").style.display = 'block'; else if (r === 'weekly') el("inputWrap_week").style.display = 'block'; else if (r === 'monthly_day') el("inputWrap_monthDay").style.display = 'block'; else if (r === 'yearly_range') el("inputWrap_monthRange").style.display = 'flex';
     }
     const getRuleLbl = (r, v) => ({'every_shift':"每次當班", 'specific_date':v, 'weekly':`每週${["日","一","二","三","四","五","六"][v]}`, 'monthly_day':`每月${v}日`, 'monthly_last':"每月底", 'last_monday':"月底週一", 'yearly_range':`${v}月區間`, 'odd_months':"單數月", 'even_months':"雙數月"}[r] || "自訂");
-    function renderTaskList() { renderList("customTaskList", tempTasks, "無設定", t => `<div class="list-item ${t.id===editingTaskId?"editing-item":""}" style="flex-wrap:wrap; gap:5px;"><div style="flex:1; min-width:220px;"><span class="task-badge">${t.shift}</span><span class="task-badge" style="background:#DBEAFE; color:#1E3A8A;">${getRuleLbl(t.rule,t.ruleValue)}</span><span>${t.text}</span></div><div><span class="list-action-btn btn-edit" onclick="startEditCustomTask('${t.id}')">✎</span><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { if('${t.id}'===editingTaskId) cancelEditCustomTask(); tempTasks = tempTasks.filter(x=>x.id!=='${t.id}'); renderTaskList(); }">✖</span></div></div>`); }
-    function startEditCustomTask(id) { triggerVibrate(); const t = tempTasks.find(x => x.id === id); if(!t) return; editingTaskId = id; setVal("addTaskShift", t.shift); setVal("addTaskRule", t.rule); setVal("addTaskText", t.text); toggleTaskInputs(); if(t.rule==='specific_date') setVal("addTaskDate", t.ruleValue); else if(t.rule==='weekly') setVal("addTaskWeek", t.ruleValue); else if(t.rule==='monthly_day') setVal("addTaskMonthDay", t.ruleValue); else if(t.rule==='yearly_range') { let p = t.ruleValue.split('-'); setVal("addTaskRangeStart", p[0]); setVal("addTaskRangeEnd", p[1]); } el("taskAddLabel").innerText = "✏️ 編輯提醒"; el("btnSubmitTask").innerText = "✅ 更新"; el("btnCancelTask").style.display = "inline-block"; renderTaskList(); el("taskAddLabel").scrollIntoView({behavior:'smooth'}); }
-    function cancelEditCustomTask() { triggerVibrate(); editingTaskId = null; setVal("addTaskShift", "早班"); setVal("addTaskRule", "every_shift"); setVal("addTaskText", ""); setVal("addTaskDate", ""); setVal("addTaskWeek", "1"); setVal("addTaskMonthDay", ""); setVal("addTaskRangeStart", ""); setVal("addTaskRangeEnd", ""); toggleTaskInputs(); el("taskAddLabel").innerText = "➕ 新增提醒"; el("btnSubmitTask").innerText = "新增"; el("btnCancelTask").style.display = "none"; renderTaskList(); }
-    function addCustomTask() { triggerVibrate(); const s=getVal("addTaskShift"), r=getVal("addTaskRule"), txt=getVal("addTaskText"); let v=""; if(!txt) return alert("輸入內容"); if(r==='specific_date'){v=getVal("addTaskDate"); if(!v) return alert("選日期");} else if(r==='weekly') v=getVal("addTaskWeek"); else if(r==='monthly_day'){v=getVal("addTaskMonthDay"); if(!v||v<1||v>31) return alert("錯誤");} else if(r==='yearly_range'){const st=getVal("addTaskRangeStart"), e=getVal("addTaskRangeEnd"); if(!st||!e||st<1||e>12) return alert("錯誤"); v=`${st}-${e}`;} if(editingTaskId){let idx=tempTasks.findIndex(t=>t.id===editingTaskId); if(idx!==-1) tempTasks[idx]={id:editingTaskId,shift:s,rule:r,ruleValue:v,text:txt};} else tempTasks.push({id:"t_"+Date.now(),shift:s,rule:r,ruleValue:v,text:txt}); cancelEditCustomTask(); }
-
-    function saveSettings() {
-        triggerVibrate(); appSettings.baseDate = getVal("setBaseDate"); appSettings.myTeam = getVal("setMyTeam"); appSettings.defaultMode = getVal("setDefaultMode") === "true"; 
-        if(!appSettings.baseDate) return alert("請設定基準日");
-        let pos={'C':0,'D':2,'A':4,'B':6}, bPos=pos[getVal("setRefTeam")], rS=parseInt(getVal("setRefShift"))||0;
-        TEAMS.forEach(t => { appSettings.teams[t].offset = (rS + (pos[t]-bPos+8)%8)%8; appSettings.teams[t].name = getVal(`setTeam${t}`); });
-        appSettings.holidays = JSON.parse(JSON.stringify(tempHolidays)); appSettings.tasks = JSON.parse(JSON.stringify(tempTasks)); appSettings.manualShifts = JSON.parse(JSON.stringify(tempManualShifts)); 
-        
-        populateDropdowns(); // 儲存後立即更新名稱
-
-        setVal("viewTeamSelect", currentViewTeam = appSettings.myTeam); setVal("monthViewSelect", currentMonthViewTeam = appSettings.myTeam);
-        localStorage.setItem("shiftSettings", JSON.stringify(appSettings)); 
-        localStorage.setItem("pendingSync", "true"); // 標記有新設定需要備份
-        if (typeof silentCloudBackup === 'function') silentCloudBackup(); // 觸發安靜備份
-        alert("已儲存！\n(系統將於背景自動更新雲端備份)"); renderAppSafe(); switchTab(1);
+    function renderTaskList() {
+        renderList("customTaskList", tempTasks, "無設定", t => `<div class="list-item ${t.id===editingTaskId?"editing-item":""}" style="flex-wrap:wrap; gap:5px;"><div style="flex:1; min-width:220px;"><span class="task-badge">${t.shift}</span><span class="task-badge" style="background:#DBEAFE; color:#1E3A8A;">${getRuleLbl(t.rule,t.ruleValue)}</span><span>${t.text}</span></div><div><span class="list-action-btn btn-edit" onclick="startEditCustomTask('${t.id}')">✎</span><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { if('${t.id}'===editingTaskId) cancelEditCustomTask(); tempTasks = tempTasks.filter(x=>x.id!=='${t.id}'); commitManagementSettings(); renderTaskList(); renderAppSafe(); }">✖</span></div></div>`);
     }
-    function restoreDefaults() { triggerVibrate(); if (confirm("🚨 清除自訂設定？")) { localStorage.removeItem("shiftSettings"); appSettings = JSON.parse(JSON.stringify(defaultSettings)); appSettings.tasks = JSON.parse(JSON.stringify(defaultTasks)); setVal("viewTeamSelect", currentViewTeam = appSettings.myTeam); setVal("monthViewSelect", currentMonthViewTeam = appSettings.myTeam); loadSettingsToForm(); renderAppSafe(); alert("已恢復"); switchTab(1); } }
+    function startEditCustomTask(id) { triggerVibrate(); const t = tempTasks.find(x => x.id === id); if(!t) return; editingTaskId = id; setVal("addTaskShift", t.shift); setVal("addTaskRule", t.rule); setVal("addTaskText", t.text); toggleTaskInputs(); if(t.rule==='specific_date') setVal("addTaskDate", t.ruleValue); else if(t.rule==='weekly') setVal("addTaskWeek", t.ruleValue); else if(t.rule==='monthly_day') setVal("addTaskMonthDay", t.ruleValue); else if(t.rule==='yearly_range') { let p = t.ruleValue.split('-'); setVal("addTaskRangeStart", p[0]); setVal("addTaskRangeEnd", p[1]); } el("taskAddLabel").innerText = "✏️ 編輯提醒"; el("btnSubmitTask").innerText = "✅ 更新"; el("btnCancelTask").style.display = "inline-block"; renderTaskList(); el("taskAddLabel").scrollIntoView({behavior:'smooth'}); }
+    function cancelEditCustomTask() { triggerVibrate(); editingTaskId = null; setVal("addTaskShift", "早班"); setVal("addTaskRule", "every_shift"); setVal("addTaskText", ""); setVal("addTaskDate", ""); setVal("addTaskWeek", "1"); setVal("addTaskMonthDay", ""); setVal("addTaskRangeStart", ""); setVal("addTaskRangeEnd", ""); toggleTaskInputs(); el("taskAddLabel").innerText = "➕ 新增自訂工作"; el("btnSubmitTask").innerText = "新增"; el("btnCancelTask").style.display = "none"; if (el("customTaskList")) renderTaskList(); }
+    function addCustomTask() {
+        triggerVibrate(); const sh = getVal("addTaskShift"), rule = getVal("addTaskRule"), txt = (getVal("addTaskText") || "").trim(); let value = "";
+        if (!txt) return alert("請輸入工作內容。");
+        if (rule === 'specific_date') { value = getVal("addTaskDate"); if (!value) return alert("請選擇日期。"); }
+        else if (rule === 'weekly') value = getVal("addTaskWeek");
+        else if (rule === 'monthly_day') { value = getVal("addTaskMonthDay"); if (!value || value < 1 || value > 31) return alert("日期設定錯誤。"); }
+        else if (rule === 'yearly_range') { const st = getVal("addTaskRangeStart"), en = getVal("addTaskRangeEnd"); if (!st || !en || st < 1 || en > 12 || Number(st) > Number(en)) return alert("月份區間設定錯誤。"); value = `${st}-${en}`; }
+        if (editingTaskId) { const idx = tempTasks.findIndex(t => t.id === editingTaskId); if (idx !== -1) tempTasks[idx] = {id:editingTaskId,shift:sh,rule,ruleValue:value,text:txt}; }
+        else tempTasks.push({id:"t_" + Date.now(),shift:sh,rule,ruleValue:value,text:txt});
+        if (commitManagementSettings()) { cancelEditCustomTask(); renderTaskList(); renderAppSafe(); alert("工作提醒已儲存。"); }
+    }
+
+    function restoreDefaults() {
+        triggerVibrate();
+        if (!confirm("確定恢復系統設定預設值？\n\n將重設：基準日期、班別循環、班別名稱、個人班別及預設顯示模式。\n\n會保留：手動改班／請假、國定假日、自訂工作提醒、臨時工作、工作日誌及調班紀錄。")) return;
+        const keep = {
+            holidays: JSON.parse(JSON.stringify(appSettings.holidays || {})),
+            manualShifts: JSON.parse(JSON.stringify(appSettings.manualShifts || {})),
+            tasks: JSON.parse(JSON.stringify(appSettings.tasks || defaultTasks)),
+            temporaryTasks: JSON.parse(JSON.stringify(appSettings.temporaryTasks || [])),
+            workJournals: JSON.parse(JSON.stringify(appSettings.workJournals || [])),
+            shiftSwapOverrides: JSON.parse(JSON.stringify(appSettings.shiftSwapOverrides || {})),
+            shiftSwapRecords: JSON.parse(JSON.stringify(appSettings.shiftSwapRecords || [])),
+            shiftTimeRules: JSON.parse(JSON.stringify(appSettings.shiftTimeRules || {}))
+        };
+        appSettings = JSON.parse(JSON.stringify(defaultSettings));
+        Object.assign(appSettings, keep);
+        currentViewTeam = currentMonthViewTeam = appSettings.myTeam;
+        isActualMode = appSettings.defaultMode;
+        setVal("viewTeamSelect", appSettings.myTeam); setVal("monthViewSelect", appSettings.myTeam);
+        coreSettingsDirty = false;
+        loadSettingsToForm();
+        if (!persistSettingsToLocal(true)) return;
+        renderAppSafe(); renderMonthTable(); updateSettingsStatus();
+        alert("已恢復系統設定預設值。手動改班、假日、工作提醒、臨時工作、工作日誌及調班紀錄均已保留。");
+    }
 
     // ==========================================
     // --- 備份與還原共用邏輯 ---
     // ==========================================
     function processImportData(importedData, sourceName) {
-        if (importedData && importedData.baseDate && importedData.teams) {
-            const now = getTWDate();
-            const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-            
-            const mergedHolidays = JSON.parse(JSON.stringify(defaultSettings.holidays)); 
-            if (importedData.holidays) {
-                for (const [dateStr, name] of Object.entries(importedData.holidays)) {
-                    if (new Date(dateStr.replace(/-/g, '/')) >= oneMonthAgo) mergedHolidays[dateStr] = name; 
+        if (typeof importedData === "string") importedData = JSON.parse(importedData);
+        if (!importedData || typeof importedData !== "object" || !importedData.baseDate || !importedData.teams) {
+            alert(`❌ ${sourceName}檔案格式不正確，無法還原！`);
+            return false;
+        }
+        try {
+            const restored = JSON.parse(JSON.stringify(importedData));
+            const restoredTeams = JSON.parse(JSON.stringify(defaultSettings.teams));
+            TEAMS.forEach(t => {
+                if (restored.teams[t] && typeof restored.teams[t] === "object") {
+                    restoredTeams[t] = Object.assign({}, restoredTeams[t], restored.teams[t]);
                 }
-            }
-            importedData.holidays = mergedHolidays;
-
-            const cleanedManualShifts = {};
-            if (importedData.manualShifts) {
-                for (const [key, shift] of Object.entries(importedData.manualShifts)) {
-                    if (new Date(key.split('_')[0].replace(/-/g, '/')) >= oneMonthAgo) cleanedManualShifts[key] = shift;
-                }
-            }
-            importedData.manualShifts = cleanedManualShifts;
-
-            let mergedTasks = JSON.parse(JSON.stringify(defaultTasks)); 
-            if (importedData.tasks && Array.isArray(importedData.tasks)) {
-                importedData.tasks.forEach(impTask => {
-                    if (!defaultTasks.find(dt => dt.id === impTask.id)) mergedTasks.push(impTask);
-                });
-            }
-            importedData.tasks = mergedTasks;
-
-            localStorage.setItem("shiftSettings", JSON.stringify(importedData));
-            localStorage.setItem("pendingSync", "true"); // 標記需要備份
-
-            alert(`✅ ${sourceName}資料還原成功！(已自動清除過期歷史紀錄)`);
+            });
+            restored.teams = restoredTeams;
+            restored.holidays = Object.assign(JSON.parse(JSON.stringify(defaultSettings.holidays)), restored.holidays || {});
+            restored.manualShifts = restored.manualShifts && typeof restored.manualShifts === "object" ? restored.manualShifts : {};
+            restored.tasks = Array.isArray(restored.tasks) ? restored.tasks : JSON.parse(JSON.stringify(defaultTasks));
+            restored.temporaryTasks = Array.isArray(restored.temporaryTasks) ? restored.temporaryTasks : [];
+            restored.workJournals = Array.isArray(restored.workJournals) ? restored.workJournals : [];
+            restored.shiftSwapOverrides = restored.shiftSwapOverrides && typeof restored.shiftSwapOverrides === "object" ? restored.shiftSwapOverrides : {};
+            restored.shiftSwapRecords = Array.isArray(restored.shiftSwapRecords) ? restored.shiftSwapRecords : [];
+            restored.shiftTimeRules = normalizeShiftTimeRules(restored.shiftTimeRules);
+            if (!restored.myTeam || !TEAMS.includes(restored.myTeam)) restored.myTeam = defaultSettings.myTeam;
+            if (!restored.baseDate || isNaN(new Date(restored.baseDate).getTime())) restored.baseDate = defaultSettings.baseDate;
+            TEAMS.forEach(t => {
+                const n = Number(restored.teams[t].offset);
+                restored.teams[t].offset = Number.isFinite(n) ? ((n % 8) + 8) % 8 : defaultSettings.teams[t].offset;
+                restored.teams[t].name = String(restored.teams[t].name || defaultSettings.teams[t].name);
+            });
+            localStorage.setItem("shiftSettings", JSON.stringify(restored));
+            localStorage.setItem("pendingSync", "true");
+            cloudSyncState = "pending";
+            alert(`✅ ${sourceName}資料還原成功！\n所有備份中的歷史假日、手動改班、工作提醒、臨時工作、工作日誌及照片連結均予以保留。\n重新載入後會自動同步雲端。`);
             window.location.reload();
-        } else { 
-            alert(`❌ ${sourceName}檔案格式不正確，無法還原！`); 
+            return true;
+        } catch (error) {
+            alert(`❌ ${sourceName}資料還原失敗：${error.message || error}`);
+            return false;
         }
     }
 
     function exportData() {
         triggerVibrate();
-        const now = getTWDate();
-        const pad = n => String(n).padStart(2, '0');
-        const timeString = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appSettings));
-        const dlAnchorElem = document.createElement('a');
-        dlAnchorElem.setAttribute("href", dataStr);
-        dlAnchorElem.setAttribute("download", `供油班表_本機備份_${timeString}.json`);
-        document.body.appendChild(dlAnchorElem);
-        dlAnchorElem.click();
-        document.body.removeChild(dlAnchorElem);
+        let objectUrl = "";
+        try {
+            const backupJson = JSON.stringify(appSettings, null, 2);
+            const blob = new Blob([backupJson], { type: "application/json;charset=utf-8" });
+            objectUrl = URL.createObjectURL(blob);
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.href = objectUrl;
+            dlAnchorElem.download = "供油班表_本機備份.json";
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            document.body.removeChild(dlAnchorElem);
+            setTimeout(() => { if (objectUrl) URL.revokeObjectURL(objectUrl); }, 1500);
+            alert("✅ 本機備份檔已產生。\n檔名：供油班表_本機備份.json");
+        } catch (error) {
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            alert("❌ 本機備份失敗：" + (error.message || error));
+        }
     }
-    
+
     function importData(event) {
         const file = event.target.files[0];
         if (!file) return;
+        if (!confirm("本機還原會以備份檔完整覆蓋目前資料，確定繼續嗎？")) { el('importDataInput').value = ""; return; }
         const reader = new FileReader();
         reader.onload = function(e) {
-            try { processImportData(JSON.parse(e.target.result), "本機"); } 
-            catch (err) { alert("❌ 讀取檔案失敗！請確認檔案格式。"); }
-            el('importDataInput').value = ""; 
+            try { processImportData(JSON.parse(e.target.result), "本機"); }
+            catch (err) { alert("❌ 讀取檔案失敗！請確認檔案格式。\n" + (err.message || err)); }
+            el('importDataInput').value = "";
         };
         reader.readAsText(file);
     }
@@ -1174,85 +1338,116 @@
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw0wAnCPZkw3nlyx0Eg08Ejk49oG_itD82PqH9IP4X7S4oR5br1NTCmlUJsNfME2kbZ/exec";
     const CLOUD_FILE_NAME = "供油班表_雲端備份.json";
 
-    // 自動雲端備份採單一佇列，避免連續編輯／多張照片上傳時，較舊請求晚回來而覆蓋新資料。
-    var silentBackupInFlight = false;
-    var silentBackupRequested = false;
-    async function silentCloudBackup() {
-        if (localStorage.getItem("pendingSync") !== "true") return;
-        if (silentBackupInFlight) {
+    // 自動雲端備份：資料有變更後等待 4 秒，合併連續操作，只上傳最新完整快照。
+    var cloudBackupDebounceMs = 4000;
+
+    function scheduleSilentCloudBackup() {
+        if (autoBackupTimer) clearTimeout(autoBackupTimer);
+        updateSettingsStatus();
+        autoBackupTimer = setTimeout(function () {
+            autoBackupTimer = null;
+            silentCloudBackup();
+        }, cloudBackupDebounceMs);
+    }
+
+    function silentCloudBackup() {
+        if (localStorage.getItem("pendingSync") !== "true") return Promise.resolve(true);
+        if (!navigator.onLine) { cloudSyncState = "pending"; updateSettingsStatus(); return Promise.resolve(false); }
+        if (autoBackupTimer) { clearTimeout(autoBackupTimer); autoBackupTimer = null; }
+        if (silentBackupPromise) {
             silentBackupRequested = true;
-            return;
+            return silentBackupPromise.then(function () {
+                if (localStorage.getItem("pendingSync") === "true") return silentCloudBackup();
+                return true;
+            });
         }
-        silentBackupInFlight = true;
-        try {
-            while (localStorage.getItem("pendingSync") === "true") {
+
+        const run = async function () {
+            let allSucceeded = true;
+            do {
                 silentBackupRequested = false;
-                // 使用本機已保存的完整快照，確保送出的內容與本次版本一致。
-                var snapshot = localStorage.getItem("shiftSettings") || JSON.stringify(appSettings);
-                var backupData = JSON.parse(snapshot);
+                const snapshot = localStorage.getItem("shiftSettings") || JSON.stringify(appSettings);
+                cloudSyncState = "syncing";
+                updateSettingsStatus();
                 try {
-                    var response = await fetch(GAS_WEB_APP_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    const backupData = JSON.parse(snapshot);
+                    const response = await fetch(GAS_WEB_APP_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
                         body: JSON.stringify({ action: "auto_backup", fileName: CLOUD_FILE_NAME, backupData: backupData })
                     });
                     if (!response.ok) throw new Error("HTTP " + response.status);
-                    var result = await response.json();
-                    if (result.status !== 'success') throw new Error(result.message || "雲端備份未成功");
-                    // 傳送期間若又有新增／編輯，保留 pendingSync 並再傳一次最新快照。
+                    const result = await response.json();
+                    if (result.status !== "success") throw new Error(result.message || "雲端備份未成功");
+
                     if (localStorage.getItem("shiftSettings") === snapshot) {
                         localStorage.removeItem("pendingSync");
+                        localStorage.setItem("lastCloudSyncAt", new Date().toISOString());
+                        cloudSyncState = "synced";
                         break;
                     }
+                    // 上傳期間有新資料，保留待同步標記，下一圈改送最新版本。
                     localStorage.setItem("pendingSync", "true");
                 } catch (error) {
-                    // 失敗不清除標記；下次開啟程式、網路恢復或再次儲存時再重試。
+                    allSucceeded = false;
+                    cloudSyncState = "error";
                     console.warn("自動雲端備份失敗，資料仍保留在本機待重試：", error);
                     break;
                 }
-            }
-        } finally {
-            silentBackupInFlight = false;
-            if (silentBackupRequested && localStorage.getItem("pendingSync") === "true") {
+            } while (localStorage.getItem("pendingSync") === "true");
+            return allSucceeded && localStorage.getItem("pendingSync") !== "true";
+        };
+
+        const activePromise = run();
+        silentBackupPromise = activePromise;
+        return activePromise.finally(function () {
+            if (silentBackupPromise === activePromise) silentBackupPromise = null;
+            updateSettingsStatus();
+            if (silentBackupRequested) {
+                const shouldRetry = localStorage.getItem("pendingSync") === "true";
                 silentBackupRequested = false;
-                silentCloudBackup();
+                // 若另一個動作在上傳期間要求同步，完成目前請求後再讀取最新快照。
+                if (shouldRetry) setTimeout(function () { silentCloudBackup(); }, 0);
             }
-        }
+        });
     }
 
-    // 網路恢復或使用者切回程式時，重試尚未完成的備份。
     window.addEventListener("online", function () {
         if (localStorage.getItem("pendingSync") === "true") silentCloudBackup();
+        updateSettingsStatus();
     });
+    window.addEventListener("offline", updateSettingsStatus);
     document.addEventListener("visibilitychange", function () {
         if (!document.hidden && localStorage.getItem("pendingSync") === "true") silentCloudBackup();
     });
 
-    function cloudBackup(event) {
+    async function cloudBackup(event) {
         triggerVibrate();
-        const btn = event.target;
+        const btn = event.currentTarget || event.target;
         const originalText = btn.innerText;
-        btn.innerText = "⏳ 備份中..."; 
+        btn.innerText = "⏳ 備份中…";
         btn.disabled = true;
-
-        fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: "auto_backup", fileName: CLOUD_FILE_NAME, backupData: appSettings })
-        })
-        .then(r => r.json())
-        .then(res => {
-            const now = getTWDate();
-            const pad = n => String(n).padStart(2, '0');
-            const timeStr = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-            
-            if (res.status === 'success') {
-                localStorage.removeItem("pendingSync");
-                alert(`✅ 雲端備份成功！\n時間：${timeStr}`);
-            } else alert("❌ 備份失敗：" + (res.message || "未知錯誤"));
-        })
-        .catch(e => alert("❌ 連線錯誤，請確認網路連線。"))
-        .finally(() => { btn.innerText = originalText; btn.disabled = false; });
+        try {
+            // 手動備份強制上傳目前完整資料，仍共用固定雲端檔案及同步佇列。
+            if (!persistSettingsToLocal(false)) throw new Error("本機儲存失敗，已取消雲端備份。");
+            localStorage.setItem("pendingSync", "true");
+            cloudSyncState = "pending";
+            updateSettingsStatus();
+            const ok = await silentCloudBackup();
+            if (ok && localStorage.getItem("pendingSync") !== "true") {
+                const d = new Date(localStorage.getItem("lastCloudSyncAt") || Date.now());
+                alert("✅ 雲端備份成功！\n固定檔案：" + CLOUD_FILE_NAME + "\n時間：" + d.toLocaleString("zh-TW", {hour12:false}));
+            } else {
+                alert("❌ 雲端備份尚未完成。資料已保留在本機，系統會在網路恢復或下次切回程式時重試。");
+            }
+        } catch (error) {
+            cloudSyncState = "error"; updateSettingsStatus();
+            alert("❌ 雲端備份失敗：" + (error.message || error));
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+            updateSettingsStatus();
+        }
     }
 
     function cloudRestore(event) {
@@ -1304,9 +1499,7 @@
     var driveImageCache = {};
 
     function saveExtendedAppData() {
-        localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
-        localStorage.setItem("pendingSync", "true");
-        if (typeof silentCloudBackup === "function") silentCloudBackup();
+        return persistSettingsToLocal(true);
     }
     function htmlEscape(value) {
         return String(value == null ? "" : value).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;", "'":"&#39;"}[ch]));
@@ -1731,8 +1924,9 @@
         return {ok:!failed&&!waiting,failed,waiting,items,team};
     }
     function checkTrialShiftPlan(){
+        // 排班檢查只產生暫時計算結果，沒有修改正式資料，不觸發備份。
         var result=runShiftCompliance();lastTrialCheck=result;
-        saveExtendedAppData();renderTrialCheck(result);
+        renderTrialCheck(result);
     }
     function renderTrialCheck(result){
         var box=el("trialShiftCheckResults"),btn=el("applyShiftSwapBtn");
@@ -1759,8 +1953,14 @@
 
     // 導覽列第四頁為系統設定；工作日誌固定在第三頁。
     function switchTab(num){
+        if(el('tab4')?.classList.contains('active')&&num!==4&&coreSettingsDirty){
+            if(!confirm("核心排班設定尚未套用。要放棄這次修改並離開設定頁嗎？"))return;
+            coreSettingsDirty=false;loadSettingsToForm();
+        }
         triggerVibrate();document.querySelectorAll('.tab-content,.tab-btn').forEach(node=>node.classList.remove('active'));
         el('tab'+num).classList.add('active');document.querySelector(`.tab-bar .tab-btn:nth-child(${num})`).classList.add('active');
+        if(el('settingsStatusBar'))el('settingsStatusBar').style.display=num===4?'block':'none';
+        updateSettingsStatus();
         var controls=el('headerControls'),header=el('mainHeaderSection');
         if(num===4){controls.style.opacity='0';setTimeout(()=>{controls.style.display='none';header.style.paddingBottom='5px';},150);}
         else{controls.style.display='block';setTimeout(()=>{controls.style.opacity='1';header.style.paddingBottom='10px';},10);}
@@ -1768,50 +1968,18 @@
         if(num===3)renderWorkJournal();
     }
 
-    // 還原時保留全部臨時工作、工作日誌、圖片 ID 與調班紀錄，不對日期做過期清除。
-    function processImportData(importedData,sourceName){
-        if(importedData&&importedData.baseDate&&importedData.teams){
-            var now=getTWDate(),oneMonthAgo=new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
-            var mergedHolidays=JSON.parse(JSON.stringify(defaultSettings.holidays));
-            if(importedData.holidays)for(var [dateStr,name] of Object.entries(importedData.holidays))if(new Date(dateStr.replace(/-/g,'/'))>=oneMonthAgo)mergedHolidays[dateStr]=name;
-            importedData.holidays=mergedHolidays;
-            var cleanedManual={};if(importedData.manualShifts)for(var [key,shift] of Object.entries(importedData.manualShifts))if(new Date(key.split('_')[0].replace(/-/g,'/'))>=oneMonthAgo)cleanedManual[key]=shift;
-            importedData.manualShifts=cleanedManual;
-            var mergedTasks=JSON.parse(JSON.stringify(defaultTasks));if(Array.isArray(importedData.tasks))importedData.tasks.forEach(t=>{if(!defaultTasks.find(d=>d.id===t.id))mergedTasks.push(t);});importedData.tasks=mergedTasks;
-            importedData.temporaryTasks=Array.isArray(importedData.temporaryTasks)?importedData.temporaryTasks:[];
-            importedData.workJournals=Array.isArray(importedData.workJournals)?importedData.workJournals:[];
-            importedData.shiftSwapOverrides=importedData.shiftSwapOverrides||{};
-            importedData.shiftSwapRecords=Array.isArray(importedData.shiftSwapRecords)?importedData.shiftSwapRecords:[];
-            importedData.shiftTimeRules=normalizeShiftTimeRules(importedData.shiftTimeRules);
-            localStorage.setItem("shiftSettings",JSON.stringify(importedData));localStorage.setItem("pendingSync","true");
-            alert(`✅ ${sourceName}資料還原成功！臨時工作、工作日誌及雲端圖片連結均已保留。舊有手動改班／假日資料仍依原程式規則處理。`);window.location.reload();
-        }else alert(`❌ ${sourceName}檔案格式不正確，無法還原！`);
-    }
+    // 備份還原與恢復預設的共用函式已於系統設定區統一定義，避免重複覆寫。
 
-    // 恢復預設只重設班表基礎設定，不刪除臨時工作、工作日誌照片索引及調班紀錄。
-    function restoreDefaults(){
-        triggerVibrate();
-        if(!confirm("🚨 確定恢復班表預設設定？\n\n臨時工作、工作日誌、雲端圖片連結及既有調班紀錄會保留。"))return;
-        var keep={
-            temporaryTasks:Array.isArray(appSettings.temporaryTasks)?appSettings.temporaryTasks:[],
-            workJournals:Array.isArray(appSettings.workJournals)?appSettings.workJournals:[],
-            shiftSwapOverrides:appSettings.shiftSwapOverrides||{},
-            shiftSwapRecords:Array.isArray(appSettings.shiftSwapRecords)?appSettings.shiftSwapRecords:[],
-            shiftTimeRules:normalizeShiftTimeRules(appSettings.shiftTimeRules)
-        };
-        appSettings=JSON.parse(JSON.stringify(defaultSettings));
-        appSettings.tasks=JSON.parse(JSON.stringify(defaultTasks));
-        Object.assign(appSettings,keep);
-        setVal("viewTeamSelect",currentViewTeam=appSettings.myTeam);setVal("monthViewSelect",currentMonthViewTeam=appSettings.myTeam);
-        localStorage.setItem("shiftSettings",JSON.stringify(appSettings));localStorage.setItem("pendingSync","true");
-        loadSettingsToForm();renderAppSafe();if(typeof silentCloudBackup==="function")silentCloudBackup();
-        alert("已恢復班表預設設定。臨時工作、工作日誌及調班紀錄均已保留。");switchTab(1);
-    }
+    // 尚未套用核心排班草稿時，離開或重新整理頁面前提醒使用者。
+    window.addEventListener("beforeunload", function (event) {
+        if (coreSettingsDirty) { event.preventDefault(); event.returnValue = ""; }
+    });
 
     // 初始值與首次顯示
     document.addEventListener("DOMContentLoaded",function(){
         setVal("journalDate",formatDateToYYYYMMDD(getTWDate()));
         if(el("journalDate"))renderWorkJournal();
+        updateSettingsStatus();
     });
 
 </script>
