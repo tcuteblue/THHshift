@@ -314,7 +314,7 @@
             <div class="card-title">📖 工作日誌</div>
             <label class="field-label" for="journalDate">選擇日期</label>
             <input type="date" id="journalDate" onchange="renderWorkJournal()">
-            <div class="journal-note" style="margin:8px 0 12px;">拍攝每天各班的紙本工作日誌。照片會上傳至 Google 雲端硬碟；OCR 文字欄位先保留，待實際紙本測試後再接入辨識功能。</div>
+            <div class="journal-note" style="margin:8px 0 12px;">拍攝每天各班的紙本工作日誌。原始照片會完整保存至 Google 雲端硬碟；OCR 僅辨識紙本下方的「一、工作記事」及「二、交待事項」兩個區域。</div>
             <div id="workJournalShiftList"></div>
         </div>
         <div class="card">
@@ -1747,6 +1747,56 @@
         var response=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
         var data=await response.json();if(!response.ok||data.status!=="success")throw new Error(data.message||"圖片服務尚未安裝或回應失敗");return data;
     }
+    // 依目前工作日誌紙本版面裁切 OCR：只辨識「一、工作記事」與「二、交待事項」。
+    // 座標以使用者提供的 1152x2048 直式完整紙本照片校準，使用比例座標以適應不同解析度。
+    // 工作記事：原圖 y=1135~1540；交待事項：原圖 y=1540~1785；避開上方油量表格及底部簽名欄。
+    async function loadImageForCanvas(file){
+        if(window.createImageBitmap){
+            try{
+                var bitmap=await createImageBitmap(file);
+                return {source:bitmap,width:bitmap.width,height:bitmap.height,close:function(){bitmap.close?.();}};
+            }catch(e){}
+        }
+        var objectUrl=URL.createObjectURL(file);
+        try{
+            var img=await new Promise((resolve,reject)=>{
+                var node=new Image();node.onload=()=>resolve(node);node.onerror=()=>reject(new Error("無法讀取照片，請改用 JPG 或 PNG 格式。"));node.src=objectUrl;
+            });
+            return {source:img,width:img.naturalWidth,height:img.naturalHeight,close:function(){URL.revokeObjectURL(objectUrl);}};
+        }catch(err){URL.revokeObjectURL(objectUrl);throw err;}
+    }
+    async function canvasToJpegBase64(canvas){
+        var blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",0.94));
+        if(!blob)throw new Error("建立 OCR 裁切圖片失敗。");
+        return await new Promise((resolve,reject)=>{
+            var reader=new FileReader();reader.onload=()=>{var encoded=String(reader.result).split(",")[1]||"";encoded?resolve(encoded):reject(new Error("OCR 裁切圖片內容為空。"));};
+            reader.onerror=()=>reject(new Error("讀取 OCR 裁切圖片失敗。"));reader.readAsDataURL(blob);
+        });
+    }
+    async function cropJournalOcrSections(file){
+        var loaded=await loadImageForCanvas(file),sections=[];
+        try{
+            if(!loaded.width||!loaded.height||loaded.height<loaded.width)throw new Error("請將工作日誌紙本以直式、完整頁面拍攝後再辨識。");
+            var specs=[
+                {key:"work",title:"一、工作記事",top:1135/2048,bottom:1540/2048},
+                {key:"handover",title:"二、交待事項",top:1540/2048,bottom:1785/2048}
+            ];
+            specs.forEach(spec=>{
+                var sx=0,sy=Math.max(0,Math.floor(loaded.height*spec.top));
+                var sw=loaded.width,sh=Math.min(loaded.height-sy,Math.ceil(loaded.height*(spec.bottom-spec.top)));
+                if(sh<20)throw new Error("照片取景範圍不符合工作日誌紙本版面。");
+                var scale=Math.min(2,2400/sw),canvas=document.createElement("canvas");
+                canvas.width=Math.max(1,Math.round(sw*scale));canvas.height=Math.max(1,Math.round(sh*scale));
+                var ctx=canvas.getContext("2d");if(!ctx)throw new Error("瀏覽器無法建立圖片辨識畫布。");
+                ctx.fillStyle="#FFFFFF";ctx.fillRect(0,0,canvas.width,canvas.height);
+                ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+                ctx.drawImage(loaded.source,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
+                sections.push({key:spec.key,title:spec.title,mimeType:"image/jpeg",base64Promise:canvasToJpegBase64(canvas)});
+            });
+            for(var i=0;i<sections.length;i++)sections[i].base64=await sections[i].base64Promise;
+            return sections;
+        }finally{loaded.close();}
+    }
     async function uploadImageFiles(files,category,onProgress,doOcr){
         var saved=[],errors=[],ocrErrors=[];
         for(var i=0;i<files.length;i++){
@@ -1757,9 +1807,24 @@
                 var photo={fileId:result.fileId,name:result.fileName||payload.fileName,url:result.url||"",thumbnailUrl:result.thumbnailUrl||"",uploadedAt:new Date().toISOString()};
                 if(doOcr){
                     try{
-                        if(onProgress)onProgress(`照片已上傳，正在辨識繁體中文 ${i+1}/${files.length}：${files[i].name}`);
-                        var ocrResult=await callScheduleImageApi({action:"schedule_image_ocr",fileId:result.fileId,language:"zh-TW"});
-                        photo.ocrText=String(ocrResult.text||"").trim();
+                        var regions=await cropJournalOcrSections(files[i]),sectionTexts=[];
+                        for(var ri=0;ri<regions.length;ri++){
+                            var region=regions[ri];
+                            if(onProgress)onProgress(`正在辨識${region.title} ${i+1}/${files.length}：${files[i].name}`);
+                            try{
+                                var ocrResult=await callScheduleImageApi({
+                                    action:"schedule_image_ocr",fileId:result.fileId,language:"zh-TW",
+                                    section:region.key,ocrMimeType:region.mimeType,ocrBase64:region.base64
+                                });
+                                var recognized=String(ocrResult.text||"").trim();
+                                sectionTexts.push(`【${region.title}】${recognized?"\n"+recognized:"\n"}`);
+                            }catch(sectionErr){
+                                sectionTexts.push(`【${region.title}】\n（本區辨識失敗）`);
+                                ocrErrors.push({fileName:files[i].name,section:region.title,error:String(sectionErr.message||sectionErr)});
+                            }
+                        }
+                        photo.ocrText=sectionTexts.join("\n\n");
+                        if(ocrErrors.some(x=>x.fileName===files[i].name))photo.ocrError="部分區域辨識失敗";
                     }catch(ocrErr){photo.ocrError=String(ocrErr.message||ocrErr);ocrErrors.push({fileName:files[i].name,error:photo.ocrError});}
                 }
                 saved.push(photo);
