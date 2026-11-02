@@ -191,9 +191,15 @@
         .journal-shift-card { background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:12px; }
         .journal-shift-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-weight:700; }
         .journal-photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:8px 0; }
-        .journal-photo { position:relative; border:1px solid var(--border-color); border-radius:8px; overflow:hidden; background:#F3F4F6; aspect-ratio:3/4; }
+        .journal-photo-item { min-width:0; border:1px solid var(--border-color); border-radius:9px; overflow:hidden; background:#fff; }
+        .journal-photo { position:relative; border:0; border-radius:0; overflow:hidden; background:#F3F4F6; aspect-ratio:3/4; }
         .journal-photo img { width:100%; height:100%; object-fit:cover; display:block; }
-        .journal-photo button { position:absolute; right:4px; top:4px; border:0; border-radius:50%; width:25px; height:25px; background:rgba(17,24,39,.75); color:#fff; cursor:pointer; }
+        .journal-photo-meta { padding:6px; display:grid; gap:5px; }
+        .journal-photo-state { font-size:.72rem; line-height:1.35; color:#6B7280; min-height:2em; overflow-wrap:anywhere; }
+        .journal-photo-state.failed { color:#B91C1C; font-weight:700; }
+        .journal-photo-state.success { color:#047857; }
+        .journal-photo-retry { width:100%; padding:6px 3px; font-size:.76rem; white-space:nowrap; }
+        .journal-photo-retry:disabled { opacity:.55; cursor:wait; }
         .journal-note { color:#6B7280; font-size:.82rem; line-height:1.45; }
         .settings-status-bar { display:none; position:fixed; left:50%; bottom:calc(65px + env(safe-area-inset-bottom)); transform:translateX(-50%); width:min(500px, calc(100vw - 20px)); box-sizing:border-box; z-index:900; background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:10px 12px; box-shadow:0 5px 18px rgba(15,23,42,.16); }
         .settings-status-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
@@ -1980,11 +1986,19 @@
     }
     function openCalendarDateDetail(dateStr){var team=currentMonthViewTeam||appSettings.myTeam;if(team==="ALL")team=appSettings.myTeam;showDateDetail(dateStr,team);}
 
-    // 工作日誌：晚班、早班、午班。OCR 先預留可修改/搜尋的文字欄位。
+    // 工作日誌：每班可不限張數持續追加照片；照片原檔存 Drive，資料內只保存 fileId/網址及 OCR 狀態。
     function getJournalRecord(date,shift,create){
         var item=appSettings.workJournals.find(x=>x.date===date&&x.shift===shift);
         if(!item&&create){item={id:"wj_"+Date.now()+"_"+shift,date,shift,text:"",photos:[],createdAt:new Date().toISOString()};appSettings.workJournals.push(item);}
         if(item){item.photos=Array.isArray(item.photos)?item.photos:[];item.text=item.text||"";} return item;
+    }
+    function getJournalPhotoOcrLabel(photo){
+        if(photo.ocrStatus==="processing")return "正在重新辨識…";
+        if(photo.ocrError||photo.ocrStatus==="failed")return "OCR 失敗，可重新辨識";
+        if(photo.ocrStatus==="success")return "OCR 已完成";
+        if(photo.ocrStatus==="empty"||(photo.ocrText||"").includes("未辨識到可讀的手寫文字"))return "未辨識到文字，可重試";
+        if(photo.ocrText)return "已有辨識文字";
+        return "尚未辨識，可按重新 OCR";
     }
     function renderWorkJournal(){
         if(!el("journalDate"))return;
@@ -1993,37 +2007,105 @@
         shifts.forEach(sh=>{
             var r=getJournalRecord(date,sh,false),photos=r?.photos||[],text=r?.text||"";
             html+=`<div class="journal-shift-card"><div class="journal-shift-head"><span>${sh}</span><span class="journal-note">${photos.length?`已保存 ${photos.length} 張照片`:"尚未上傳照片"}</span></div>`;
-            if(photos.length)html+=`<div class="journal-photo-grid">${photos.map(ph=>`<div class="journal-photo"><img data-drive-file="${htmlEscape(ph.fileId)}" alt="${sh}工作日誌照片" onclick="openDrivePhoto('${htmlEscape(ph.url||"")}')"></div>`).join("")}</div>`;
+            html+=`<div class="journal-note" style="margin:0 0 8px;">照片沒有程式設定的張數上限，可重複追加；已上傳照片會保留。OCR 失敗時，可在該張照片下方按「重新 OCR」。</div>`;
+            if(photos.length){
+                html+=`<div class="journal-photo-grid">${photos.map((ph,i)=>{
+                    var state=getJournalPhotoOcrLabel(ph),stateClass=(ph.ocrError||ph.ocrStatus==="failed")?"failed":(ph.ocrStatus==="success"?"success":"");
+                    return `<div class="journal-photo-item"><div class="journal-photo"><img data-drive-file="${htmlEscape(ph.fileId)}" alt="${sh}工作日誌照片 ${i+1}" onclick="openDrivePhoto('${htmlEscape(ph.url||"")}')"></div><div class="journal-photo-meta"><div class="journal-photo-state ${stateClass}">照片 ${i+1}・${htmlEscape(state)}</div><button type="button" class="subtle-btn journal-photo-retry" ${ph.ocrStatus==="processing"?"disabled":""} onclick="retryJournalPhotoOcr('${date}','${sh}',${i},this)">↻ ${ph.ocrStatus==="processing"?"辨識中…":"重新 OCR"}</button></div></div>`;
+                }).join("")}</div>`;
+            }
             html+=`<input type="file" id="journalFiles_${sh}" accept="image/*" multiple style="display:none" onchange="uploadJournalPhotos('${date}','${sh}',this)">`;
-            html+=`<button type="button" class="subtle-btn" onclick="el('journalFiles_${sh}').click()">📷 拍照／選擇圖片</button>`;
+            html+=`<button type="button" class="subtle-btn" onclick="el('journalFiles_${sh}').click()">＋ 追加照片／拍照</button>`;
             html+=`<label class="field-label">OCR 辨識文字（自動辨識後可自行修正）</label><textarea id="journalText_${sh}" placeholder="選擇照片後會自動辨識並放在這裡，也可以自行修正或補充。">${htmlEscape(text)}</textarea>`;
-            html+=`<button type="button" class="subtle-btn" style="margin-top:6px;" onclick="saveJournalText('${date}','${sh}')">儲存文字</button></div>`;
+            html+=`<button type="button" class="subtle-btn" style="margin-top:6px;" onclick="saveJournalText('${date}','${sh}')">儲存文字</button><div id="journalStatus_${sh}" class="journal-note" style="margin-top:7px;" aria-live="polite"></div></div>`;
         });
         el("workJournalShiftList").innerHTML=html; loadDriveImagePreviews();
     }
     function saveJournalText(date,shift){var r=getJournalRecord(date,shift,true);r.text=getVal("journalText_"+shift).trim();r.updatedAt=new Date().toISOString();saveExtendedAppData();searchWorkJournals();alert("工作日誌文字已儲存。");}
+    function promptStatusLine(shift){return el("journalStatus_"+shift);}
+    function replaceJournalOcrBlock(record,photo,shift,photoIndex,newText){
+        var title=photo.ocrBlockTitle||`【${shift}照片 ${photoIndex+1} OCR】`;
+        photo.ocrBlockTitle=title;
+        var lines=String(record.text||"").split("\n"),start=-1;
+        for(var i=0;i<lines.length;i++){if(lines[i].trim()===title){start=i;break;}}
+        if(start>=0){
+            var finish=lines.length;
+            for(var j=start+1;j<lines.length;j++){
+                if(/^【(?:晚班|早班|午班)照片 \d+ OCR】$/.test(lines[j].trim())){finish=j;break;}
+            }
+            lines.splice(start,finish-start);
+        }
+        var base=lines.join("\n").replace(/^\s+|\s+$/g,"");
+        record.text=base?(newText?base+"\n\n"+title+"\n"+newText:base):(newText?title+"\n"+newText:"");
+    }
     async function uploadJournalPhotos(date,shift,input){
         var files=Array.from(input.files||[]);if(!files.length)return;
         var record=getJournalRecord(date,shift,true),status=promptStatusLine(shift),failed=0,ocrFailed=0;
+        // 選擇追加照片前，先保留使用者尚未按「儲存文字」的手動修改。
+        var currentTextEditor=el("journalText_"+shift);
+        if(currentTextEditor)record.text=currentTextEditor.value;
         saveExtendedAppData();
         for(var i=0;i<files.length;i++){
-            status.innerText=`${shift}照片上傳與 OCR 辨識中：${i+1}/${files.length}`;
-            var uploaded=await uploadImageFiles([files[i]],"work_journal",msg=>status.innerText=msg,true);
+            if(status)status.innerText=`${shift}照片上傳與 OCR 辨識中：${i+1}/${files.length}`;
+            var uploaded=await uploadImageFiles([files[i]],"work_journal",msg=>{if(status)status.innerText=msg;},true);
             if(uploaded.saved.length){
-                var photo=uploaded.saved[0];record.photos.push(photo);
-                if(photo.ocrText){
-                    var separator=record.text?"\n\n":"";
-                    record.text=(record.text||"")+separator+`【${shift}照片 ${record.photos.length} OCR】\n`+photo.ocrText;
-                }
+                var photo=uploaded.saved[0],photoIndex=record.photos.length;
+                photo.ocrBlockTitle=`【${shift}照片 ${photoIndex+1} OCR】`;
+                record.photos.push(photo);
+                if(photo.ocrStatus==="success"&&photo.ocrText)replaceJournalOcrBlock(record,photo,shift,photoIndex,photo.ocrText);
                 record.updatedAt=new Date().toISOString();saveExtendedAppData();
             }
             failed+=uploaded.errors.length;ocrFailed+=(uploaded.ocrErrors||[]).length;
         }
-        status.innerText=failed?`上傳完成但有 ${failed} 張圖片失敗；OCR 失敗 ${ocrFailed} 張。`:ocrFailed?`照片已全部保存，OCR 有 ${ocrFailed} 張失敗。`:`照片上傳及 OCR 辨識完成。`;
-        input.value="";renderWorkJournal();
-        if(failed||ocrFailed)alert(`照片處理完成。\n圖片上傳失敗：${failed} 張\nOCR 辨識失敗：${ocrFailed} 張\n已成功上傳的原始照片仍保留在雲端。請確認 GAS 已啟用 Drive API v2 後再測試 OCR。`);
+        var finalMessage=failed?`上傳完成：${failed} 張圖片上傳失敗；OCR 失敗 ${ocrFailed} 張。`:(ocrFailed?`照片已全部保存，OCR 有 ${ocrFailed} 張失敗，可在失敗照片下方重新 OCR。`:`照片上傳及 OCR 辨識完成。`);
+        input.value="";renderWorkJournal();searchWorkJournals();status=promptStatusLine(shift);if(status)status.innerText=finalMessage;
+        if(failed||ocrFailed)alert(`照片處理完成。\n圖片上傳失敗：${failed} 張\nOCR 辨識失敗：${ocrFailed} 張\n已成功上傳的原始照片仍保留在雲端。OCR 失敗不必重新上傳，請在該張照片下方按「重新 OCR」。`);
     }
-    function promptStatusLine(shift){var id="journalStatus_"+shift, box=el(id);if(!box){box=document.createElement("div");box.id=id;box.className="journal-note";var card=el("workJournalShiftList").querySelectorAll(".journal-shift-card")[ ["晚班","早班","午班"].indexOf(shift) ];if(card)card.appendChild(box);}return box;}
+    function base64ToJournalFile(base64,mimeType,fileName){
+        var binary=atob(String(base64||"")),bytes=new Uint8Array(binary.length);
+        for(var i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+        return new File([bytes],fileName||"工作日誌照片.jpg",{type:mimeType||"image/jpeg"});
+    }
+    async function retryJournalPhotoOcr(date,shift,photoIndex,button){
+        var record=getJournalRecord(date,shift,false),photo=record&&record.photos[photoIndex];if(!photo||!photo.fileId||photo.ocrStatus==="processing")return;
+        // 重新 OCR 會重繪日誌卡片，先保留目前文字框內尚未手動儲存的內容。
+        var currentTextEditor=el("journalText_"+shift);
+        if(currentTextEditor)record.text=currentTextEditor.value;
+        if(button){button.disabled=true;button.innerText="辨識中…";}
+        photo.ocrStatus="processing";photo.ocrError="";
+        saveExtendedAppData();
+        var status=promptStatusLine(shift);if(status)status.innerText=`正在重新辨識${shift}第 ${photoIndex+1} 張照片…`;
+        renderWorkJournal();
+        try{
+            var imageData=await callScheduleImageApi({action:"schedule_image_get",fileId:photo.fileId});
+            var sourceFile=base64ToJournalFile(imageData.base64,imageData.mimeType,imageData.fileName||photo.name);
+            var regions=await cropJournalOcrSections(sourceFile),sectionTexts=[],recognizedAny=false;
+            for(var ri=0;ri<regions.length;ri++){
+                var region=regions[ri];
+                status=promptStatusLine(shift);if(status)status.innerText=`正在重新辨識${region.title}…`;
+                var result=await callScheduleImageApi({
+                    action:"schedule_image_ocr",fileId:photo.fileId,language:"zh-TW",
+                    section:region.key,ocrMimeType:region.mimeType,ocrBase64:region.base64
+                });
+                var recognized=cleanJournalOcrText(result.text);
+                if(recognized){recognizedAny=true;sectionTexts.push(`【${region.title}】\n${recognized}`);}
+            }
+            photo.ocrText=sectionTexts.join("\n\n");
+            photo.ocrStatus=recognizedAny?"success":"empty";
+            photo.ocrError="";photo.lastOcrAt=new Date().toISOString();photo.ocrAttempts=Number(photo.ocrAttempts||0)+1;
+            replaceJournalOcrBlock(record,photo,shift,photoIndex,photo.ocrText);
+            record.updatedAt=new Date().toISOString();saveExtendedAppData();
+            renderWorkJournal();status=promptStatusLine(shift);
+            if(status)status.innerText=recognizedAny?`第 ${photoIndex+1} 張照片重新 OCR 完成，辨識文字已更新。`:`第 ${photoIndex+1} 張照片已重新 OCR，但沒有辨識到可讀的手寫文字；原圖仍保留，可以再試一次。`;
+            searchWorkJournals();
+        }catch(err){
+            photo.ocrStatus="failed";photo.ocrError=String(err&&err.message?err.message:err);photo.lastOcrAt=new Date().toISOString();photo.ocrAttempts=Number(photo.ocrAttempts||0)+1;
+            record.updatedAt=new Date().toISOString();saveExtendedAppData();
+            renderWorkJournal();status=promptStatusLine(shift);
+            if(status)status.innerText=`第 ${photoIndex+1} 張照片重新 OCR 失敗：${photo.ocrError}`;
+            alert(`重新 OCR 失敗：\n${photo.ocrError}\n\n原始照片仍然保留，請排除問題後再按該張照片下方的「重新 OCR」。`);
+        }
+    }
     function searchWorkJournals(){
         var q=(getVal("journalSearchInput")||"").trim().toLowerCase(),box=el("journalSearchResults");if(!box)return;
         if(!q){box.innerText="輸入關鍵字即可搜尋已儲存的文字。";return;}
@@ -2112,8 +2194,9 @@
                 var result=await callScheduleImageApi({action:"schedule_image_upload",category:category,fileName:payload.fileName,mimeType:payload.mimeType,base64:payload.base64});
                 var photo={fileId:result.fileId,name:result.fileName||payload.fileName,url:result.url||"",thumbnailUrl:result.thumbnailUrl||"",uploadedAt:new Date().toISOString()};
                 if(doOcr){
+                    var sectionTexts=[],photoOcrErrors=[],recognizedAny=false;
                     try{
-                        var regions=await cropJournalOcrSections(files[i]),sectionTexts=[];
+                        var regions=await cropJournalOcrSections(files[i]);
                         for(var ri=0;ri<regions.length;ri++){
                             var region=regions[ri];
                             if(onProgress)onProgress(`正在辨識${region.title} ${i+1}/${files.length}：${files[i].name}`);
@@ -2123,15 +2206,16 @@
                                     section:region.key,ocrMimeType:region.mimeType,ocrBase64:region.base64
                                 });
                                 var recognized=cleanJournalOcrText(ocrResult.text);
-                                sectionTexts.push(recognized?`【${region.title}】\n${recognized}`:`【${region.title}】\n（未辨識到可讀的手寫文字）`);
+                                if(recognized){recognizedAny=true;sectionTexts.push(`【${region.title}】\n${recognized}`);}
                             }catch(sectionErr){
-                                sectionTexts.push(`【${region.title}】\n（辨識失敗）`);
-                                ocrErrors.push({fileName:files[i].name,section:region.title,error:String(sectionErr.message||sectionErr)});
+                                photoOcrErrors.push({fileName:files[i].name,section:region.title,error:String(sectionErr.message||sectionErr)});
                             }
                         }
-                        photo.ocrText=sectionTexts.join("\n\n");
-                        if(ocrErrors.some(x=>x.fileName===files[i].name))photo.ocrError="工作記事及交待事項辨識失敗";
-                    }catch(ocrErr){photo.ocrError=String(ocrErr.message||ocrErr);ocrErrors.push({fileName:files[i].name,error:photo.ocrError});}
+                    }catch(ocrErr){photoOcrErrors.push({fileName:files[i].name,error:String(ocrErr.message||ocrErr)});}
+                    photo.ocrText=sectionTexts.join("\n\n");
+                    photo.ocrStatus=photoOcrErrors.length?"failed":(recognizedAny?"success":"empty");
+                    if(photoOcrErrors.length){photo.ocrError=photoOcrErrors.map(x=>x.error).join("；");ocrErrors=ocrErrors.concat(photoOcrErrors);}
+                    photo.lastOcrAt=new Date().toISOString();photo.ocrAttempts=1;
                 }
                 saved.push(photo);
             }catch(err){errors.push({fileName:files[i].name,error:String(err.message||err)});}
