@@ -410,9 +410,21 @@
             <label style="font-weight:bold; color: #10B981; margin:0; font-size:1.05rem;">💾 系統備份與還原</label>
             <div style="font-size: 0.9rem; color: #6B7280; margin: 5px 0 10px 0;">雲端與本機皆備份完整資料；自動雲端備份只更新同一份雲端檔案。</div>
             
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
-                <button class="btn" onclick="cloudBackup(event)" style="background:#0284C7; font-size:1rem; padding:10px; margin:0;">☁️ 雲端備份</button>
-                <button class="btn" onclick="cloudRestore(event)" style="background:#4F46E5; font-size:1rem; padding:10px; margin:0;">☁️ 雲端還原</button>
+            <div id="advanced-cloud-controls" style="display:none; margin-bottom:12px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <button class="btn" onclick="cloudBackup(event)" style="background:#0284C7; font-size:1rem; padding:10px; margin:0;">☁️ 雲端備份</button>
+                    <button class="btn" onclick="cloudRestore(event)" style="background:#4F46E5; font-size:1rem; padding:10px; margin:0;">☁️ 雲端還原</button>
+                </div>
+            </div>
+            <section id="advanced-mode-panel" style="display:none; border:1px solid #BFDBFE; background:#F8FBFF; border-radius:10px; padding:12px; margin-bottom:12px;">
+                <div style="font-weight:bold; color:#1D4ED8; margin-bottom:5px;">🔐 進階模式管理</div>
+                <div style="font-size:.86rem; color:#6B7280; line-height:1.5; margin-bottom:10px;">目前已通過雲端密碼驗證。此裝置會啟用自動雲端備份及啟動時資料同步。</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <button type="button" class="btn" onclick="openAdvancedPasswordChangeModal()" style="background:#2563EB; font-size:.95rem; padding:9px; margin:0;">修改進階模式密碼</button>
+                    <button type="button" class="btn" onclick="closeAdvancedMode()" style="background:#6B7280; font-size:.95rem; padding:9px; margin:0;">關閉進階模式</button>
+                </div>
+            </section>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" onclick="exportData()" style="background:#10B981; font-size:1rem; padding:10px; margin:0;">📤 本機備份</button>
                 <button class="btn" onclick="el('importDataInput').click()" style="background:#F59E0B; font-size:1rem; padding:10px; margin:0;">📥 本機還原</button>
             </div>
@@ -444,7 +456,7 @@
     <button class="tab-btn active" onclick="switchTab(1)"><div class="tab-icon">👤</div><div class="tab-text">今日班表</div></button>
     <button class="tab-btn" onclick="switchTab(2)"><div class="tab-icon">🗓️</div><div class="tab-text">班表總覽</div></button>
     <button class="tab-btn" onclick="switchTab(3)"><div class="tab-icon">📖</div><div class="tab-text">工作日誌</div></button>
-    <button class="tab-btn" onclick="switchTab(4)"><div class="tab-icon">⚙️</div><div class="tab-text">系統設定</div></button>
+    <button id="settings-nav-secret-trigger" class="tab-btn" onclick="switchTab(4)" aria-label="系統設定"><div class="tab-icon">⚙️</div><div class="tab-text">系統設定</div></button>
 </div>
 
 <!-- 臨時工作編輯視窗 -->
@@ -527,6 +539,31 @@
   </div>
 </div>
 
+<!-- 進階模式密碼驗證視窗 -->
+<div id="advancedPasswordModal" class="modal-overlay" onclick="if(event.target===this) closeAdvancedPasswordModal()">
+  <div class="app-modal">
+    <div class="modal-head"><h3>🔐 開啟進階模式</h3><button class="modal-close" type="button" onclick="closeAdvancedPasswordModal()">×</button></div>
+    <div class="journal-note" style="margin-bottom:10px;">請輸入雲端進階模式密碼。第一次使用時，預設密碼為 41927。密碼由共用 GAS 在 Google Drive 驗證，本機不保存密碼。</div>
+    <label class="field-label" for="advancedModePasswordInput">雲端密碼</label>
+    <input id="advancedModePasswordInput" type="password" maxlength="64" autocomplete="current-password" placeholder="輸入進階模式密碼" onkeydown="if(event.key==='Enter') verifyScheduleAdvancedMode()">
+    <div id="advancedModePasswordStatus" class="journal-note" aria-live="polite"></div>
+    <div class="modal-actions"><button type="button" class="btn" style="background:#6B7280;" onclick="closeAdvancedPasswordModal()">取消</button><button id="advancedModeVerifyBtn" type="button" class="btn" onclick="verifyScheduleAdvancedMode()">驗證並進入</button></div>
+  </div>
+</div>
+
+<!-- 修改進階模式密碼視窗 -->
+<div id="advancedPasswordChangeModal" class="modal-overlay" onclick="if(event.target===this) closeAdvancedPasswordChangeModal()">
+  <div class="app-modal">
+    <div class="modal-head"><h3>修改進階模式密碼</h3><button class="modal-close" type="button" onclick="closeAdvancedPasswordChangeModal()">×</button></div>
+    <label class="field-label" for="advancedCurrentPasswordInput">目前密碼</label>
+    <input id="advancedCurrentPasswordInput" type="password" maxlength="64" autocomplete="current-password" placeholder="輸入目前雲端密碼">
+    <label class="field-label" for="advancedNewPasswordInput">新密碼</label>
+    <input id="advancedNewPasswordInput" type="password" maxlength="64" autocomplete="new-password" placeholder="輸入新密碼，最多 64 個字元">
+    <div id="advancedPasswordChangeStatus" class="journal-note" aria-live="polite"></div>
+    <div class="modal-actions"><button type="button" class="btn" style="background:#6B7280;" onclick="closeAdvancedPasswordChangeModal()">取消</button><button id="advancedPasswordChangeBtn" type="button" class="btn" onclick="changeScheduleAdvancedPassword()">確認修改</button></div>
+  </div>
+</div>
+
 <div id="holidayToast" class="toast"></div>
 
 <!-- iOS 安裝教學彈窗 -->
@@ -569,6 +606,10 @@
     let autoBackupTimer = null;
     let silentBackupPromise = null;
     let silentBackupRequested = false;
+    let activeCloudBackupController = null;
+    let settingsSecretTapCount = 0;
+    let settingsSecretTapTimer = null;
+    let startupCloudSyncPromise = null;
 
     const defaultTasks = [
         { id: "t1", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：登錄MI系統的各型泵浦運轉前暨啟動時檢點表" },
@@ -652,7 +693,10 @@
         }, {passive: true});
 
         checkInstallStatus();
-        setTimeout(() => { if (typeof silentCloudBackup === 'function') silentCloudBackup(); }, 1500);
+        applyModeUI();
+        bindSettingsSecretTrigger();
+        // 一般模式不呼叫任何雲端 API；只有本機旗標表示已通過驗證的裝置才執行啟動比對。
+        setTimeout(() => { if (isAdvancedMode()) syncCloudOnStartup(); }, 1500);
     });
 
     let deferredPrompt;
@@ -1090,14 +1134,24 @@
         updateSettingsStatus();
     }
 
+    const SCHEDULE_LOCAL_MODIFIED_KEY = "ScheduleApp_LocalModifiedAt";
+    const ADVANCED_MODE_KEY = "ScheduleApp_AdvancedMode_CloudVerified";
+    const CLOUD_FILE_NAME = "供油班表_雲端備份.json";
+
+    function isAdvancedMode() {
+        return localStorage.getItem(ADVANCED_MODE_KEY) === "1";
+    }
+
     function persistSettingsToLocal(syncCloud) {
         try {
             localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
-            if (syncCloud) {
+            localStorage.setItem(SCHEDULE_LOCAL_MODIFIED_KEY, new Date().toISOString());
+            if (syncCloud && isAdvancedMode()) {
                 localStorage.setItem("pendingSync", "true");
                 cloudSyncState = "pending";
                 scheduleSilentCloudBackup();
             }
+            // 一般模式只儲存在本機，不設新的雲端待同步工作。
             updateSettingsStatus();
             return true;
         } catch (error) {
@@ -1110,13 +1164,14 @@
 
     function updateSettingsStatus() {
         if (!el("settingsStatusText")) return;
+        const advanced = isAdvancedMode();
         const pending = localStorage.getItem("pendingSync") === "true";
-        let title = "本機資料已儲存", cloud = "雲端：尚未記錄最近一次同步時間", icon = "💾";
+        let title = "本機資料已儲存", cloud = advanced ? "雲端：尚未記錄最近一次同步時間" : "一般模式：僅儲存本機，不執行雲端同步。", icon = "💾";
         if (cloudSyncState === "localError") { title = "本機儲存失敗"; cloud = "請先確認裝置儲存空間。"; icon = "⚠️"; }
-        else if (cloudSyncState === "syncing") { cloud = "雲端：正在同步最新資料…"; icon = "☁️"; }
-        else if (cloudSyncState === "error") { cloud = "雲端：同步失敗，資料仍保留在本機，等待重試。"; icon = "⚠️"; }
-        else if (pending || cloudSyncState === "pending") { cloud = navigator.onLine ? "雲端：等待同步，系統會自動處理。" : "雲端：目前離線，網路恢復後自動重試。"; icon = "⏳"; }
-        else {
+        else if (advanced && cloudSyncState === "syncing") { cloud = "雲端：正在同步最新資料…"; icon = "☁️"; }
+        else if (advanced && cloudSyncState === "error") { cloud = "雲端：同步失敗，資料仍保留在本機，等待重試。"; icon = "⚠️"; }
+        else if (advanced && (pending || cloudSyncState === "pending")) { cloud = navigator.onLine ? "雲端：等待同步，系統會自動處理。" : "雲端：目前離線，網路恢復後自動重試。"; icon = "⏳"; }
+        else if (advanced) {
             const last = localStorage.getItem("lastCloudSyncAt");
             if (last) {
                 const d = new Date(last);
@@ -1256,7 +1311,7 @@
     // ==========================================
     // --- 備份與還原共用邏輯 ---
     // ==========================================
-    function processImportData(importedData, sourceName) {
+    function processImportData(importedData, sourceName, importMeta) {
         if (typeof importedData === "string") importedData = JSON.parse(importedData);
         if (!importedData || typeof importedData !== "object" || !importedData.baseDate || !importedData.teams) {
             alert(`❌ ${sourceName}檔案格式不正確，無法還原！`);
@@ -1287,9 +1342,20 @@
                 restored.teams[t].name = String(restored.teams[t].name || defaultSettings.teams[t].name);
             });
             localStorage.setItem("shiftSettings", JSON.stringify(restored));
-            localStorage.setItem("pendingSync", "true");
-            cloudSyncState = "pending";
-            alert(`✅ ${sourceName}資料還原成功！\n所有備份中的歷史假日、手動改班、工作提醒、臨時工作、工作日誌及照片連結均予以保留。\n重新載入後會自動同步雲端。`);
+            const importAt = new Date().toISOString();
+            localStorage.setItem(SCHEDULE_LOCAL_MODIFIED_KEY, importAt);
+            if (sourceName === "雲端") {
+                // 雲端還原後兩端已對齊，不要在重新載入時把剛還原的資料再當成新修改推回雲端。
+                localStorage.removeItem("pendingSync");
+                localStorage.setItem("lastCloudSyncAt", (importMeta && importMeta.modifiedAt) || importAt);
+                localStorage.setItem(SCHEDULE_LOCAL_MODIFIED_KEY, (importMeta && importMeta.modifiedAt) || importAt);
+                cloudSyncState = "synced";
+            } else {
+                localStorage.setItem("pendingSync", "true");
+                cloudSyncState = "pending";
+            }
+            const syncMessage = isAdvancedMode() ? "重新載入後會依進階模式規則同步雲端。" : "目前為一般模式，資料只儲存在本機；進入進階模式後才會同步雲端。";
+            alert(`✅ ${sourceName}資料還原成功！\n所有備份中的歷史假日、手動改班、工作提醒、臨時工作、工作日誌及照片連結均予以保留。\n${syncMessage}`);
             window.location.reload();
             return true;
         } catch (error) {
@@ -1336,21 +1402,239 @@
     // --- GAS 雲端備份與自動安靜備份 ---
     // ==========================================
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw0wAnCPZkw3nlyx0Eg08Ejk49oG_itD82PqH9IP4X7S4oR5br1NTCmlUJsNfME2kbZ/exec";
-    const CLOUD_FILE_NAME = "供油班表_雲端備份.json";
+
+    function applyModeUI() {
+        const advanced = isAdvancedMode();
+        const cloud = el("advanced-cloud-controls");
+        const panel = el("advanced-mode-panel");
+        if (cloud) cloud.style.display = advanced ? "block" : "none";
+        if (panel) panel.style.display = advanced ? "block" : "none";
+        if (!advanced) {
+            if (autoBackupTimer) clearTimeout(autoBackupTimer);
+            autoBackupTimer = null;
+            silentBackupRequested = false;
+            if (activeCloudBackupController) {
+                try { activeCloudBackupController.abort(); } catch (e) {}
+                activeCloudBackupController = null;
+            }
+        }
+        updateSettingsStatus();
+    }
+
+    function bindSettingsSecretTrigger() {
+        const button = el("settings-nav-secret-trigger");
+        if (!button || button.dataset.secretTapBound === "1") return;
+        button.dataset.secretTapBound = "1";
+        button.addEventListener("click", function () {
+            if (isAdvancedMode()) return;
+            settingsSecretTapCount += 1;
+            if (settingsSecretTapTimer) clearTimeout(settingsSecretTapTimer);
+            if (settingsSecretTapCount >= 5) {
+                settingsSecretTapCount = 0;
+                settingsSecretTapTimer = null;
+                openAdvancedPasswordModal();
+                return;
+            }
+            settingsSecretTapTimer = setTimeout(function () {
+                settingsSecretTapCount = 0;
+                settingsSecretTapTimer = null;
+            }, 2500);
+        });
+    }
+
+    function openAdvancedPasswordModal() {
+        if (isAdvancedMode()) return;
+        setVal("advancedModePasswordInput", "");
+        if (el("advancedModePasswordStatus")) el("advancedModePasswordStatus").innerText = "";
+        el("advancedPasswordModal").classList.add("show");
+        setTimeout(function () { el("advancedModePasswordInput")?.focus(); }, 80);
+    }
+    function closeAdvancedPasswordModal() {
+        el("advancedPasswordModal")?.classList.remove("show");
+        setVal("advancedModePasswordInput", "");
+    }
+    function openAdvancedPasswordChangeModal() {
+        if (!isAdvancedMode()) return;
+        setVal("advancedCurrentPasswordInput", "");
+        setVal("advancedNewPasswordInput", "");
+        if (el("advancedPasswordChangeStatus")) el("advancedPasswordChangeStatus").innerText = "";
+        el("advancedPasswordChangeModal").classList.add("show");
+        setTimeout(function () { el("advancedCurrentPasswordInput")?.focus(); }, 80);
+    }
+    function closeAdvancedPasswordChangeModal() {
+        el("advancedPasswordChangeModal")?.classList.remove("show");
+        setVal("advancedCurrentPasswordInput", "");
+        setVal("advancedNewPasswordInput", "");
+    }
+
+    async function postScheduleModeAction(payload) {
+        const response = await fetch(GAS_WEB_APP_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const result = await response.json();
+        if (!result || result.status !== "success") throw new Error((result && result.message) || "共用 GAS 驗證失敗。");
+        return result;
+    }
+
+    async function verifyScheduleAdvancedMode() {
+        const password = getVal("advancedModePasswordInput");
+        const status = el("advancedModePasswordStatus");
+        const button = el("advancedModeVerifyBtn");
+        if (!password) { status.innerText = "請輸入雲端密碼。"; return; }
+        button.disabled = true; button.innerText = "驗證中…";
+        status.innerText = "正在向共用 GAS 驗證密碼，未收到成功回應前不會開啟進階模式。";
+        try {
+            const result = await postScheduleModeAction({ action: "schedule_advanced_password_verify", password: password });
+            // 僅保存「本裝置已通過雲端驗證」旗標，絕不保存密碼。
+            localStorage.setItem(ADVANCED_MODE_KEY, "1");
+            applyModeUI();
+            closeAdvancedPasswordModal();
+            alert(result.initialized ? "首次雲端密碼已建立，進階模式已開啟。" : "雲端密碼驗證成功，進階模式已開啟。");
+            setTimeout(function () { if (isAdvancedMode()) syncCloudOnStartup(); }, 0);
+        } catch (error) {
+            status.innerText = "驗證失敗：" + (error.message || error) + "。目前仍維持一般模式。";
+            setVal("advancedModePasswordInput", "");
+        } finally {
+            button.disabled = false; button.innerText = "驗證並進入";
+        }
+    }
+
+    async function changeScheduleAdvancedPassword() {
+        if (!isAdvancedMode()) return;
+        const currentPassword = getVal("advancedCurrentPasswordInput");
+        const newPassword = getVal("advancedNewPasswordInput");
+        const status = el("advancedPasswordChangeStatus");
+        const button = el("advancedPasswordChangeBtn");
+        if (!currentPassword) { status.innerText = "請輸入目前密碼。"; return; }
+        if (!newPassword || !newPassword.trim()) { status.innerText = "新密碼不可空白。"; return; }
+        if (newPassword.length > 64) { status.innerText = "新密碼最多 64 個字元。"; return; }
+        button.disabled = true; button.innerText = "修改中…";
+        try {
+            const result = await postScheduleModeAction({
+                action: "schedule_advanced_password_change",
+                currentPassword: currentPassword,
+                newPassword: newPassword
+            });
+            closeAdvancedPasswordChangeModal();
+            alert(result.message || "供油班表雲端進階模式密碼已更新。");
+        } catch (error) {
+            status.innerText = "修改失敗：" + (error.message || error);
+        } finally {
+            button.disabled = false; button.innerText = "確認修改";
+        }
+    }
+
+    function closeAdvancedMode() {
+        if (!isAdvancedMode()) return;
+        if (!confirm("確定關閉進階模式？\n關閉後會停用自動雲端備份、啟動雲端比對，並隱藏雲端備份／還原按鈕。\n本機資料及雲端備份都不會刪除。")) return;
+        localStorage.removeItem(ADVANCED_MODE_KEY);
+        if (settingsSecretTapTimer) clearTimeout(settingsSecretTapTimer);
+        settingsSecretTapTimer = null; settingsSecretTapCount = 0;
+        applyModeUI();
+        alert("已返回一般模式。本機資料及既有雲端備份均保留。");
+    }
+
+    async function syncCloudOnStartup() {
+        if (!isAdvancedMode() || !navigator.onLine) return false;
+        if (startupCloudSyncPromise) return startupCloudSyncPromise;
+        const run = async function () {
+            if (!isAdvancedMode()) return false;
+            const localRaw = localStorage.getItem("shiftSettings");
+            const hasLocal = !!localRaw;
+            const localStamp = Date.parse(localStorage.getItem(SCHEDULE_LOCAL_MODIFIED_KEY) || "");
+            const lastSeenCloudStamp = Date.parse(localStorage.getItem("lastCloudSyncAt") || "");
+            try {
+                const result = await postScheduleModeAction({ action: "schedule_cloud_load" });
+                if (!isAdvancedMode()) return false;
+                if (!result.found || !result.data) {
+                    if (hasLocal) {
+                        localStorage.setItem("pendingSync", "true");
+                        cloudSyncState = "pending";
+                        return await silentCloudBackup();
+                    }
+                    return false;
+                }
+                const cloudData = typeof result.data === "string" ? JSON.parse(result.data) : result.data;
+                const cloudStamp = Date.parse(result.modifiedAt || "");
+                if (!hasLocal) {
+                    processImportData(cloudData, "雲端", { modifiedAt: result.modifiedAt });
+                    return true;
+                }
+                const hasPendingLocal = localStorage.getItem("pendingSync") === "true";
+                if (Number.isFinite(lastSeenCloudStamp)) {
+                    // 以「上次成功同步時間」作共同基準。pendingSync 也代表本機仍有未推送修改。
+                    // 若本機與雲端都在基準後改動，按最後修改時間判斷；不會只因 pendingSync 就盲目覆蓋雲端。
+                    const localChanged = hasPendingLocal || (Number.isFinite(localStamp) && localStamp > lastSeenCloudStamp);
+                    const cloudChanged = Number.isFinite(cloudStamp) && cloudStamp > lastSeenCloudStamp;
+                    if (localChanged && cloudChanged) {
+                        if (!Number.isFinite(localStamp)) {
+                            const useCloud = confirm("本機有待同步修改，雲端也有新的備份，但本機缺少修改時間。\n\n按「確定」：以雲端備份覆蓋本機。\n按「取消」：保留本機資料並上傳到雲端。");
+                            if (useCloud) {
+                                processImportData(cloudData, "雲端", { modifiedAt: result.modifiedAt });
+                                return true;
+                            }
+                            return await silentCloudBackup();
+                        }
+                        if (cloudStamp > localStamp) {
+                            processImportData(cloudData, "雲端", { modifiedAt: result.modifiedAt });
+                            return true;
+                        }
+                        return await silentCloudBackup();
+                    }
+                    if (cloudChanged) {
+                        processImportData(cloudData, "雲端", { modifiedAt: result.modifiedAt });
+                        return true;
+                    }
+                    if (localChanged) return await silentCloudBackup();
+                    // 兩端都沒有比上次成功同步時間更新，無須重複覆蓋或上傳。
+                    return true;
+                }
+                // 舊裝置尚無共同同步基準：不自行覆蓋。由使用者決定保留本機或以雲端為準。
+                const useCloud = confirm("首次啟用進階模式時，本機與雲端都有資料，但缺少足夠的同步時間紀錄。\n\n按「確定」：以雲端備份覆蓋本機。\n按「取消」：保留本機資料並上傳到雲端。");
+                if (useCloud) {
+                    processImportData(cloudData, "雲端", { modifiedAt: result.modifiedAt });
+                    return true;
+                }
+                localStorage.setItem("pendingSync", "true");
+                return await silentCloudBackup();
+            } catch (error) {
+                console.warn("進階模式啟動雲端比對失敗；本機資料保持不變：", error);
+                cloudSyncState = "error"; updateSettingsStatus();
+                return false;
+            }
+        };
+        const promise = run();
+        startupCloudSyncPromise = promise;
+        return promise.finally(function () { if (startupCloudSyncPromise === promise) startupCloudSyncPromise = null; });
+    }
 
     // 自動雲端備份：資料有變更後等待 4 秒，合併連續操作，只上傳最新完整快照。
     var cloudBackupDebounceMs = 4000;
 
     function scheduleSilentCloudBackup() {
+        if (!isAdvancedMode()) {
+            if (autoBackupTimer) clearTimeout(autoBackupTimer);
+            autoBackupTimer = null;
+            updateSettingsStatus();
+            return;
+        }
         if (autoBackupTimer) clearTimeout(autoBackupTimer);
         updateSettingsStatus();
         autoBackupTimer = setTimeout(function () {
             autoBackupTimer = null;
-            silentCloudBackup();
+            if (isAdvancedMode()) silentCloudBackup();
         }, cloudBackupDebounceMs);
     }
 
     function silentCloudBackup() {
+        if (!isAdvancedMode()) {
+            if (autoBackupTimer) clearTimeout(autoBackupTimer);
+            autoBackupTimer = null;
+            return Promise.resolve(false);
+        }
         if (localStorage.getItem("pendingSync") !== "true") return Promise.resolve(true);
         if (!navigator.onLine) { cloudSyncState = "pending"; updateSettingsStatus(); return Promise.resolve(false); }
         if (autoBackupTimer) { clearTimeout(autoBackupTimer); autoBackupTimer = null; }
@@ -1365,17 +1649,27 @@
         const run = async function () {
             let allSucceeded = true;
             do {
+                if (!isAdvancedMode()) { allSucceeded = false; break; }
                 silentBackupRequested = false;
                 const snapshot = localStorage.getItem("shiftSettings") || JSON.stringify(appSettings);
                 cloudSyncState = "syncing";
                 updateSettingsStatus();
                 try {
                     const backupData = JSON.parse(snapshot);
-                    const response = await fetch(GAS_WEB_APP_URL, {
-                        method: "POST",
-                        headers: { "Content-Type": "text/plain;charset=utf-8" },
-                        body: JSON.stringify({ action: "auto_backup", fileName: CLOUD_FILE_NAME, backupData: backupData })
-                    });
+                    const controller = new AbortController();
+                    activeCloudBackupController = controller;
+                    let response;
+                    try {
+                        response = await fetch(GAS_WEB_APP_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
+                            body: JSON.stringify({ action: "auto_backup", fileName: CLOUD_FILE_NAME, backupData: backupData }),
+                            signal: controller.signal
+                        });
+                    } finally {
+                        if (activeCloudBackupController === controller) activeCloudBackupController = null;
+                    }
+                    if (!isAdvancedMode()) { allSucceeded = false; break; }
                     if (!response.ok) throw new Error("HTTP " + response.status);
                     const result = await response.json();
                     if (result.status !== "success") throw new Error(result.message || "雲端備份未成功");
@@ -1404,24 +1698,25 @@
             if (silentBackupPromise === activePromise) silentBackupPromise = null;
             updateSettingsStatus();
             if (silentBackupRequested) {
-                const shouldRetry = localStorage.getItem("pendingSync") === "true";
+                const shouldRetry = isAdvancedMode() && localStorage.getItem("pendingSync") === "true";
                 silentBackupRequested = false;
                 // 若另一個動作在上傳期間要求同步，完成目前請求後再讀取最新快照。
-                if (shouldRetry) setTimeout(function () { silentCloudBackup(); }, 0);
+                if (shouldRetry) setTimeout(function () { if (isAdvancedMode()) silentCloudBackup(); }, 0);
             }
         });
     }
 
     window.addEventListener("online", function () {
-        if (localStorage.getItem("pendingSync") === "true") silentCloudBackup();
+        if (isAdvancedMode()) syncCloudOnStartup();
         updateSettingsStatus();
     });
     window.addEventListener("offline", updateSettingsStatus);
     document.addEventListener("visibilitychange", function () {
-        if (!document.hidden && localStorage.getItem("pendingSync") === "true") silentCloudBackup();
+        if (!document.hidden && isAdvancedMode() && localStorage.getItem("pendingSync") === "true") silentCloudBackup();
     });
 
     async function cloudBackup(event) {
+        if (!isAdvancedMode()) { alert("請先通過雲端密碼驗證並進入進階模式。"); return false; }
         triggerVibrate();
         const btn = event.currentTarget || event.target;
         const originalText = btn.innerText;
@@ -1451,6 +1746,7 @@
     }
 
     function cloudRestore(event) {
+        if (!isAdvancedMode()) { alert("請先通過雲端密碼驗證並進入進階模式。"); return; }
         if (!confirm("⚠️ 警告：雲端還原將覆蓋手機資料，確定繼續嗎？")) return;
         triggerVibrate();
         const btn = event.target; 
@@ -1467,7 +1763,7 @@
         .then(res => {
             if (res.data) {
                 const importedData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
-                processImportData(importedData, "雲端");
+                processImportData(importedData, "雲端", { modifiedAt: res.modifiedAt });
             } else alert("❌ 還原失敗：" + (res.message || "雲端找不到資料")); 
         })
         .catch(e => alert("❌ 連線錯誤，請確認網路連線。"))
@@ -1476,8 +1772,8 @@
 
 
     // =====================================================
-    // 新增功能：臨時工作、工作日誌、獨立日期詳情、試挪班別
-    // OCR 先保留欄位與搜尋介面，實際辨識待紙本照片測試後接入。
+    // 功能：臨時工作、工作日誌、獨立日期詳情、試挪班別及紙本工作日誌 OCR。
+    // OCR 將「工作記事及交待事項」合併成單一裁切區域辨識。
     // =====================================================
     appSettings.temporaryTasks = Array.isArray(appSettings.temporaryTasks) ? appSettings.temporaryTasks : [];
     appSettings.workJournals = Array.isArray(appSettings.workJournals) ? appSettings.workJournals : [];
@@ -2033,6 +2329,7 @@
         triggerVibrate();document.querySelectorAll('.tab-content,.tab-btn').forEach(node=>node.classList.remove('active'));
         el('tab'+num).classList.add('active');document.querySelector(`.tab-bar .tab-btn:nth-child(${num})`).classList.add('active');
         if(el('settingsStatusBar'))el('settingsStatusBar').style.display=num===4?'block':'none';
+        applyModeUI();
         updateSettingsStatus();
         var controls=el('headerControls'),header=el('mainHeaderSection');
         if(num===4){controls.style.opacity='0';setTimeout(()=>{controls.style.display='none';header.style.paddingBottom='5px';},150);}
