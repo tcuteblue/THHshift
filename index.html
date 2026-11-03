@@ -60,11 +60,10 @@
         h1 { text-align: center; font-size: 1.8rem; margin: 0 0 10px 0; color: var(--primary); line-height: 1.3; }
         /* 模式只顯示四字，固定在程式頁面右上角。 */
         .header-section { position: relative; }
-        .app-mode-indicator { position: absolute; top: 8px; right: 14px; z-index: 5; display: block; width: auto; max-width: none; margin: 0; padding: 4px 8px; border: 1px solid #D1D5DB; border-radius: 7px; background: #F3F4F6; color: #374151; font-size: .82rem; font-weight: 800; line-height: 1.3; letter-spacing: 0; white-space: nowrap; box-sizing: border-box; }
-        .app-mode-indicator.is-advanced { background: #F3E8FF; border-color: #C4B5FD; color: #6B21A8; }
-        .app-mode-indicator.is-general { background: #F3F4F6; border-color: #D1D5DB; color: #374151; }
-        /* 預留右上角標籤高度，避免與標題重疊。 */
-        .header-section h1 { padding-top: 24px; }
+        .app-mode-indicator { position: absolute; top: 8px; right: 14px; z-index: 5; display: none; width: auto; max-width: none; margin: 0; padding: 4px 8px; border: 1px solid #C4B5FD; border-radius: 7px; background: #F3E8FF; color: #6B21A8; font-size: .82rem; font-weight: 800; line-height: 1.3; letter-spacing: 0; white-space: nowrap; box-sizing: border-box; }
+        .app-mode-indicator.is-advanced { display: block; }
+        /* 只有進階模式顯示標籤時，才預留右上角空間。 */
+        .header-section.has-advanced-mode h1 { padding-top: 24px; }
         @media screen and (max-width: 480px) {
             .app-mode-indicator { top: 6px; right: 10px; padding: 3px 7px; font-size: .78rem; }
         }
@@ -252,8 +251,8 @@
 <div class="header-section" id="mainHeaderSection">
     <div class="container">
         <h1 style="margin-bottom: 5px;"><img src="icon.jpg" alt="Logo" class="title-icon">班表與工作提醒系統<br><span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">蔡宏和製作20260308</span></h1>
-        <div id="appModeIndicator" class="app-mode-indicator is-general" role="status" aria-live="polite" aria-label="一般模式">
-            <span id="appModeLabel">一般模式</span>
+        <div id="appModeIndicator" class="app-mode-indicator" role="status" aria-live="polite" aria-hidden="true">
+            <span id="appModeLabel">進階模式</span>
         </div>
         <div class="header-controls-container" id="headerControls">
             <div class="date-picker-container" style="margin-bottom: 3px;">
@@ -1488,13 +1487,15 @@
         const advanced = isAdvancedMode();
         const indicator = el("appModeIndicator");
         const label = el("appModeLabel");
-        const modeText = advanced ? "進階模式" : "一般模式";
-        if (label) label.textContent = modeText;
+        const header = el("mainHeaderSection");
+        if (label) label.textContent = advanced ? "進階模式" : "";
         if (indicator) {
             indicator.classList.toggle("is-advanced", advanced);
-            indicator.classList.toggle("is-general", !advanced);
-            indicator.setAttribute("aria-label", modeText);
+            indicator.setAttribute("aria-hidden", advanced ? "false" : "true");
+            if (advanced) indicator.setAttribute("aria-label", "進階模式");
+            else indicator.removeAttribute("aria-label");
         }
+        if (header) header.classList.toggle("has-advanced-mode", advanced);
     }
 
     function applyModeUI() {
