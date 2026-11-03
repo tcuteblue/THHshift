@@ -188,6 +188,8 @@
         .modal-actions { display:flex; gap:8px; margin-top:14px; }
         .modal-actions .btn { flex:1; font-size:1rem; padding:10px; }
         .subtle-btn { border:1px solid var(--border-color); background:#F9FAFB; color:#4B5563; border-radius:8px; padding:8px 10px; cursor:pointer; font-weight:600; }
+        .journal-date-picker-slot { margin: 0 0 10px; padding: 8px 6px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 10px; }
+        .journal-date-picker-slot .date-picker-container { margin: 0; }
         .journal-shift-card { background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:12px; }
         .journal-shift-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-weight:700; }
         .journal-photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:8px 0; }
@@ -200,6 +202,7 @@
         .journal-photo-state.success { color:#047857; }
         .journal-photo-retry { width:100%; padding:6px 3px; font-size:.76rem; white-space:nowrap; }
         .journal-photo-retry:disabled { opacity:.55; cursor:wait; }
+        .journal-photo-error { color:#B91C1C; font-size:.68rem; line-height:1.35; overflow-wrap:anywhere; }
         .journal-note { color:#6B7280; font-size:.82rem; line-height:1.45; }
         .settings-status-bar { display:none; position:fixed; left:50%; bottom:calc(65px + env(safe-area-inset-bottom)); transform:translateX(-50%); width:min(500px, calc(100vw - 20px)); box-sizing:border-box; z-index:900; background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:10px 12px; box-shadow:0 5px 18px rgba(15,23,42,.16); }
         .settings-status-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
@@ -318,9 +321,8 @@
     <div id="tab3" class="tab-content">
         <div class="card">
             <div class="card-title">📖 工作日誌</div>
-            <label class="field-label" for="journalDate">選擇日期</label>
-            <input type="date" id="journalDate" onchange="renderWorkJournal()">
-            <div class="journal-note" style="margin:8px 0 12px;">拍攝每天各班的紙本工作日誌。原始照片會完整保存至 Google 雲端硬碟；OCR 將「工作記事」及「交待事項」合併為單一辨識區，固定印刷標題不會寫入辨識文字。</div>
+            <div id="journalDatePickerSlot" class="journal-date-picker-slot" aria-label="工作日誌日期選擇"></div>
+            <div class="journal-note" style="margin:8px 0 12px;">拍攝每天各班的紙本工作日誌。日期使用本頁專屬記憶，不影響班表總覽及今日班表。原始照片會完整保存至 Google 雲端硬碟；OCR 將「工作記事」及「交待事項」合併為單一辨識區。</div>
             <div id="workJournalShiftList"></div>
         </div>
         <div class="card">
@@ -618,6 +620,10 @@
     let settingsSecretTapCount = 0;
     let settingsSecretTapTimer = null;
     let startupCloudSyncPromise = null;
+    // 班表查詢日期與工作日誌日期分開記憶；工作日誌只暫時借用同一個日期選擇器。
+    let normalQueryDateValue = "";
+    let workJournalSelectedDate = "";
+    let sharedDatePickerNode = null;
 
     const defaultTasks = [
         { id: "t1", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：登錄MI系統的各型泵浦運轉前暨啟動時檢點表" },
@@ -687,8 +693,13 @@
         // 👇 加上這行，讓小日曆圖示顯示今天的日期數字
         if (el('dynamicTodayNum')) el('dynamicTodayNum').innerText = getTWDate().getDate();
 
-        setVal("queryDate", formatDateToYYYYMMDD(getTWDate()));
-        el("queryDate").addEventListener("change", renderAppSafe);
+        var todayString = formatDateToYYYYMMDD(getTWDate());
+        normalQueryDateValue = todayString;
+        var savedJournalDate = localStorage.getItem("ScheduleApp_WorkJournalDate") || "";
+        workJournalSelectedDate = /^\d{4}-\d{2}-\d{2}$/.test(savedJournalDate) ? savedJournalDate : todayString;
+        setVal("queryDate", normalQueryDateValue);
+        sharedDatePickerNode = document.querySelector("#headerControls .date-picker-container");
+        el("queryDate").addEventListener("change", handleSharedDateChange);
         toggleTaskInputs(); loadSettingsToForm(); renderAppSafe();
 
         const calContainer = el("monthCalendar");
@@ -844,6 +855,48 @@
     }
 
     function setToday(inputId) { triggerVibrate(); setVal(inputId, formatDateToYYYYMMDD(getTWDate())); el(inputId).dispatchEvent(new Event('change')); }
+
+    function isWorkJournalTabActive() { return !!el("tab3")?.classList.contains("active"); }
+    function preserveWorkJournalEditors() {
+        if (!workJournalSelectedDate) return;
+        var changed = false;
+        ["晚班", "早班", "午班"].forEach(function (shift) {
+            var editor = el("journalText_" + shift);
+            if (!editor) return;
+            var record = getJournalRecord(workJournalSelectedDate, shift, false);
+            if (!record && !String(editor.value || "").trim()) return;
+            if (!record) record = getJournalRecord(workJournalSelectedDate, shift, true);
+            if (record.text !== editor.value) {
+                record.text = editor.value;
+                record.updatedAt = new Date().toISOString();
+                changed = true;
+            }
+        });
+        if (changed) saveExtendedAppData();
+    }
+    function handleSharedDateChange() {
+        var selected = getVal("queryDate") || formatDateToYYYYMMDD(getTWDate());
+        if (isWorkJournalTabActive()) {
+            if (workJournalSelectedDate && selected !== workJournalSelectedDate) preserveWorkJournalEditors();
+            workJournalSelectedDate = selected;
+            try { localStorage.setItem("ScheduleApp_WorkJournalDate", selected); } catch (e) {}
+            renderWorkJournal();
+        } else {
+            normalQueryDateValue = selected;
+            renderAppSafe();
+        }
+    }
+    function moveSharedDatePickerToJournal(moveToJournal) {
+        if (!sharedDatePickerNode) sharedDatePickerNode = document.querySelector(".date-picker-container");
+        if (!sharedDatePickerNode) return;
+        var headerControlsNode = el("headerControls");
+        var journalSlot = el("journalDatePickerSlot");
+        if (moveToJournal) {
+            if (journalSlot && sharedDatePickerNode.parentNode !== journalSlot) journalSlot.appendChild(sharedDatePickerNode);
+        } else if (headerControlsNode && sharedDatePickerNode.parentNode !== headerControlsNode) {
+            headerControlsNode.insertBefore(sharedDatePickerNode, headerControlsNode.firstChild);
+        }
+    }
     
     function setMode(mode) { triggerVibrate(); isActualMode = mode; el('btnLogical').className = mode ? 'btn-mode' : 'btn-mode active'; el('btnActual').className = mode ? 'btn-mode active' : 'btn-mode'; renderAppSafe(); }
     function changeViewTeam() { triggerVibrate(); currentViewTeam = getVal("viewTeamSelect"); renderAppSafe(); }
@@ -855,7 +908,14 @@
         renderMonthTable();
     }
 
-    function changeDate(days) { triggerVibrate(); let d = new Date(getVal("queryDate").replace(/-/g, '/')); d.setDate(d.getDate() + days); setVal("queryDate", formatDateToYYYYMMDD(d)); renderAppSafe(); }
+    function changeDate(days) {
+        triggerVibrate();
+        var current = getVal("queryDate") || formatDateToYYYYMMDD(getTWDate());
+        let d = new Date(current.replace(/-/g, '/'));
+        d.setDate(d.getDate() + days);
+        setVal("queryDate", formatDateToYYYYMMDD(d));
+        el("queryDate").dispatchEvent(new Event("change"));
+    }
 
     function getLogicalShift(teamId, targetDateStr) {
         if (appSettings.manualShifts?.[`${targetDateStr}_${teamId}`]) return appSettings.manualShifts[`${targetDateStr}_${teamId}`];
@@ -1785,6 +1845,16 @@
     // =====================================================
     appSettings.temporaryTasks = Array.isArray(appSettings.temporaryTasks) ? appSettings.temporaryTasks : [];
     appSettings.workJournals = Array.isArray(appSettings.workJournals) ? appSettings.workJournals : [];
+    var recoveredInterruptedOcr = false;
+    appSettings.workJournals.forEach(function (journal) {
+        (Array.isArray(journal.photos) ? journal.photos : []).forEach(function (photo) {
+            if (photo && photo.ocrStatus === "processing") {
+                photo.ocrStatus = "failed";
+                photo.ocrError = "上次辨識時程式中斷，原始照片仍保留；請按「重新 OCR」。";
+                recoveredInterruptedOcr = true;
+            }
+        });
+    });
     appSettings.shiftSwapOverrides = appSettings.shiftSwapOverrides || {};
     appSettings.shiftSwapRecords = Array.isArray(appSettings.shiftSwapRecords) ? appSettings.shiftSwapRecords : [];
     // 固定班別時間：早班 07:00-15:00、午班 15:00-23:00。
@@ -1805,6 +1875,7 @@
     function saveExtendedAppData() {
         return persistSettingsToLocal(true);
     }
+    if (recoveredInterruptedOcr) saveExtendedAppData();
     function htmlEscape(value) {
         return String(value == null ? "" : value).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;", "'":"&#39;"}[ch]));
     }
@@ -1996,13 +2067,15 @@
         if(photo.ocrStatus==="processing")return "正在重新辨識…";
         if(photo.ocrError||photo.ocrStatus==="failed")return "OCR 失敗，可重新辨識";
         if(photo.ocrStatus==="success")return "OCR 已完成";
-        if(photo.ocrStatus==="empty"||(photo.ocrText||"").includes("未辨識到可讀的手寫文字"))return "未辨識到文字，可重試";
+        if(photo.ocrStatus==="empty")return photo.ocrText?"本次未辨識到文字，舊文字仍保留":"未辨識到文字，可重試";
+        if((photo.ocrText||"").includes("未辨識到可讀的手寫文字"))return "未辨識到文字，可重試";
         if(photo.ocrText)return "已有辨識文字";
         return "尚未辨識，可按重新 OCR";
     }
     function renderWorkJournal(){
-        if(!el("journalDate"))return;
-        var date=getVal("journalDate")||formatDateToYYYYMMDD(getTWDate()); if(!getVal("journalDate"))setVal("journalDate",date);
+        if(!el("queryDate"))return;
+        var date=getVal("queryDate")||workJournalSelectedDate||formatDateToYYYYMMDD(getTWDate());
+        workJournalSelectedDate=date;
         var shifts=["晚班","早班","午班"],html="";
         shifts.forEach(sh=>{
             var r=getJournalRecord(date,sh,false),photos=r?.photos||[],text=r?.text||"";
@@ -2011,7 +2084,8 @@
             if(photos.length){
                 html+=`<div class="journal-photo-grid">${photos.map((ph,i)=>{
                     var state=getJournalPhotoOcrLabel(ph),stateClass=(ph.ocrError||ph.ocrStatus==="failed")?"failed":(ph.ocrStatus==="success"?"success":"");
-                    return `<div class="journal-photo-item"><div class="journal-photo"><img data-drive-file="${htmlEscape(ph.fileId)}" alt="${sh}工作日誌照片 ${i+1}" onclick="openDrivePhoto('${htmlEscape(ph.url||"")}')"></div><div class="journal-photo-meta"><div class="journal-photo-state ${stateClass}">照片 ${i+1}・${htmlEscape(state)}</div><button type="button" class="subtle-btn journal-photo-retry" ${ph.ocrStatus==="processing"?"disabled":""} onclick="retryJournalPhotoOcr('${date}','${sh}',${i},this)">↻ ${ph.ocrStatus==="processing"?"辨識中…":"重新 OCR"}</button></div></div>`;
+                    var errorHint=ph.ocrError?`<div class="journal-photo-error">原因：${htmlEscape(ph.ocrError)}</div>`:"";
+                    return `<div class="journal-photo-item"><div class="journal-photo"><img data-drive-file="${htmlEscape(ph.fileId)}" alt="${sh}工作日誌照片 ${i+1}" onclick="openDrivePhoto('${htmlEscape(ph.url||"")}')"></div><div class="journal-photo-meta"><div class="journal-photo-state ${stateClass}">照片 ${i+1}・${htmlEscape(state)}</div>${errorHint}<button type="button" class="subtle-btn journal-photo-retry" ${ph.ocrStatus==="processing"?"disabled":""} onclick="retryJournalPhotoOcr('${date}','${sh}',${i},this)">↻ ${ph.ocrStatus==="processing"?"辨識中…":"重新 OCR"}</button></div></div>`;
                 }).join("")}</div>`;
             }
             html+=`<input type="file" id="journalFiles_${sh}" accept="image/*" multiple style="display:none" onchange="uploadJournalPhotos('${date}','${sh}',this)">`;
@@ -2090,13 +2164,17 @@
                 var recognized=cleanJournalOcrText(result.text);
                 if(recognized){recognizedAny=true;sectionTexts.push(`【${region.title}】\n${recognized}`);}
             }
-            photo.ocrText=sectionTexts.join("\n\n");
+            var newOcrText=sectionTexts.join("\n\n");
+            if(recognizedAny){
+                photo.ocrText=newOcrText;
+                replaceJournalOcrBlock(record,photo,shift,photoIndex,photo.ocrText);
+            }
+            // 本次沒有辨識到新文字時，保留之前可能已成功辨識的內容，不因重試失敗而刪除。
             photo.ocrStatus=recognizedAny?"success":"empty";
             photo.ocrError="";photo.lastOcrAt=new Date().toISOString();photo.ocrAttempts=Number(photo.ocrAttempts||0)+1;
-            replaceJournalOcrBlock(record,photo,shift,photoIndex,photo.ocrText);
             record.updatedAt=new Date().toISOString();saveExtendedAppData();
             renderWorkJournal();status=promptStatusLine(shift);
-            if(status)status.innerText=recognizedAny?`第 ${photoIndex+1} 張照片重新 OCR 完成，辨識文字已更新。`:`第 ${photoIndex+1} 張照片已重新 OCR，但沒有辨識到可讀的手寫文字；原圖仍保留，可以再試一次。`;
+            if(status)status.innerText=recognizedAny?`第 ${photoIndex+1} 張照片重新 OCR 完成，辨識文字已更新。`:`第 ${photoIndex+1} 張照片已送達 Google Drive OCR，但未擷取到文字。請確認手寫內容位於照片中段記事區、照片清晰且沒有反光；原圖仍保留，可以調整拍攝方式後再試一次。`;
             searchWorkJournals();
         }catch(err){
             photo.ocrStatus="failed";photo.ocrError=String(err&&err.message?err.message:err);photo.lastOcrAt=new Date().toISOString();photo.ocrAttempts=Number(photo.ocrAttempts||0)+1;
@@ -2112,20 +2190,40 @@
         var hits=appSettings.workJournals.filter(r=>(r.text||"").toLowerCase().includes(q));
         box.innerHTML=hits.length?hits.map(r=>{var pos=(r.text||"").toLowerCase().indexOf(q),snippet=(r.text||"").slice(Math.max(0,pos-22),Math.min((r.text||"").length,pos+q.length+45));return `<div class="journal-result" onclick="openJournalSearchHit('${r.date}','${r.shift}')"><strong>${htmlEscape(r.date)}　${htmlEscape(r.shift)}</strong><div style="margin-top:4px;">${htmlEscape(snippet)}</div><div class="journal-note">原始照片 ${(r.photos||[]).length} 張</div></div>`;}).join(""):`<div class="journal-note">找不到包含「${htmlEscape(q)}」的已儲存文字。</div>`;
     }
-    function openJournalSearchHit(date,shift){setVal("journalDate",date);renderWorkJournal();var target=el("journalText_"+shift);if(target)target.scrollIntoView({behavior:"smooth",block:"center"});}
+    function openJournalSearchHit(date,shift){
+        setVal("queryDate",date);
+        handleSharedDateChange();
+        setTimeout(function(){var target=el("journalText_"+shift);if(target)target.scrollIntoView({behavior:"smooth",block:"center"});},30);
+    }
     function openDrivePhoto(url){if(url)window.open(url,"_blank","noopener");}
 
     // 圖片壓縮後再上傳。原始圖片仍保留在雲端，JSON 備份只記檔案 ID/網址。
     async function compressImageToData(file){
-        var blob=file;
+        // 先嘗試用瀏覽器解碼並壓成 JPEG；若 HEIC 等格式無法解碼，仍上傳原圖保存，
+        // 後續 OCR 會回報明確原因，不會因為辨識失敗而丟掉原始照片。
+        var blob=file, loaded=null;
         try{
-            if(window.createImageBitmap){var bmp=await createImageBitmap(file),max=1600,scale=Math.min(1,max/Math.max(bmp.width,bmp.height));var c=document.createElement("canvas");c.width=Math.round(bmp.width*scale);c.height=Math.round(bmp.height*scale);var ctx=c.getContext("2d");ctx.drawImage(bmp,0,0,c.width,c.height);blob=await new Promise(resolve=>c.toBlob(resolve,"image/jpeg",.82));if(!blob)blob=file;bmp.close?.();}
+            loaded=await loadImageForCanvas(file);
+            var max=1600,scale=Math.min(1,max/Math.max(loaded.width,loaded.height));
+            var c=document.createElement("canvas");c.width=Math.max(1,Math.round(loaded.width*scale));c.height=Math.max(1,Math.round(loaded.height*scale));
+            var ctx=c.getContext("2d");if(!ctx)throw new Error("無法建立圖片壓縮畫布");
+            ctx.drawImage(loaded.source,0,0,c.width,c.height);
+            var converted=await new Promise(resolve=>c.toBlob(resolve,"image/jpeg",.84));
+            if(converted)blob=converted;
         }catch(e){blob=file;}
-        return await new Promise((resolve,reject)=>{var reader=new FileReader();reader.onload=()=>{var data=String(reader.result).split(",")[1];resolve({base64:data,mimeType:blob.type||file.type||"image/jpeg",fileName:(file.name||"photo").replace(/\.[^.]+$/,"")+".jpg"});};reader.onerror=()=>reject(new Error("讀取圖片失敗"));reader.readAsDataURL(blob);});
+        finally{if(loaded)loaded.close();}
+        return await new Promise((resolve,reject)=>{
+            var reader=new FileReader();
+            reader.onload=()=>{var data=String(reader.result).split(",")[1]||"";if(!data){reject(new Error("讀取圖片內容失敗"));return;}resolve({base64:data,mimeType:blob.type||file.type||"image/jpeg",fileName:(file.name||"photo").replace(/\.[^.]+$/," ").trim()+".jpg"});};
+            reader.onerror=()=>reject(new Error("讀取圖片失敗"));reader.readAsDataURL(blob);
+        });
     }
     async function callScheduleImageApi(payload){
         var response=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
-        var data=await response.json();if(!response.ok||data.status!=="success")throw new Error(data.message||"圖片服務尚未安裝或回應失敗");return data;
+        var raw=await response.text(),data;
+        try{data=JSON.parse(raw);}catch(parseError){throw new Error("共用 GAS 沒有回傳 JSON（HTTP "+response.status+"）。請確認已部署最新版本及 GAS 網址；回應開頭："+String(raw||"").slice(0,160));}
+        if(!response.ok||!data||data.status!=="success")throw new Error((data&&data.message)||("圖片服務回應失敗（HTTP "+response.status+"）"));
+        return data;
     }
     // 依目前工作日誌紙本版面，將「一、工作記事」與「二、交待事項」合併成單一 OCR 區域。
     // 合併範圍：原圖 y=1135~1785；避開上方油量表格及底部簽名欄。
@@ -2171,7 +2269,8 @@
     async function cropJournalOcrSections(file){
         var loaded=await loadImageForCanvas(file);
         try{
-            if(!loaded.width||!loaded.height||loaded.height<loaded.width)throw new Error("請將工作日誌紙本以直式、完整頁面拍攝後再辨識。");
+            if(!loaded.width||!loaded.height)throw new Error("無法讀取照片尺寸；請改用 JPG 或 PNG 照片。");
+            if(loaded.height<loaded.width)throw new Error("照片目前是橫式。請將工作日誌紙本以直式、完整頁面拍攝後再辨識。");
             var sx=0,sy=Math.max(0,Math.floor(loaded.height*(1135/2048)));
             var sw=loaded.width,sh=Math.min(loaded.height-sy,Math.ceil(loaded.height*((1785-1135)/2048)));
             if(sh<20)throw new Error("照片取景範圍不符合工作日誌紙本版面。");
@@ -2406,11 +2505,22 @@
         box.innerHTML=rows.length?rows.map(r=>`<div class="trial-pair"><strong>${htmlEscape(r.team)}班</strong><div>${htmlEscape(r.dateA)}：${htmlEscape(formatShiftLabel(r.beforeA))} → <strong>${htmlEscape(formatShiftLabel(r.afterA))}</strong></div><div>${htmlEscape(r.dateB)}：${htmlEscape(formatShiftLabel(r.beforeB))} → <strong>${htmlEscape(formatShiftLabel(r.afterB))}</strong></div><div>原因：${htmlEscape(r.reason)}</div><div class="journal-note">調整時間：${htmlEscape(new Date(r.adjustedAt).toLocaleString("zh-TW"))}</div></div>`).join(""):'尚無調班紀錄。';
     }
 
-    // 導覽列第四頁為系統設定；工作日誌固定在第三頁。
+    // 導覽列第四頁為系統設定；工作日誌使用同一個日期選擇器，但日期記憶獨立。
     function switchTab(num){
         if(el('tab4')?.classList.contains('active')&&num!==4&&coreSettingsDirty){
             if(!confirm("核心排班設定尚未套用。要放棄這次修改並離開設定頁嗎？"))return;
             coreSettingsDirty=false;loadSettingsToForm();
+        }
+        var wasJournal = isWorkJournalTabActive();
+        if (wasJournal && num === 3) preserveWorkJournalEditors();
+        if (wasJournal && num !== 3) {
+            preserveWorkJournalEditors();
+            workJournalSelectedDate = getVal("queryDate") || workJournalSelectedDate;
+            try { localStorage.setItem("ScheduleApp_WorkJournalDate", workJournalSelectedDate); } catch (e) {}
+            moveSharedDatePickerToJournal(false);
+            setVal("queryDate", normalQueryDateValue || formatDateToYYYYMMDD(getTWDate()));
+        } else if (!wasJournal && num === 3) {
+            normalQueryDateValue = getVal("queryDate") || normalQueryDateValue || formatDateToYYYYMMDD(getTWDate());
         }
         triggerVibrate();document.querySelectorAll('.tab-content,.tab-btn').forEach(node=>node.classList.remove('active'));
         el('tab'+num).classList.add('active');document.querySelector(`.tab-bar .tab-btn:nth-child(${num})`).classList.add('active');
@@ -2418,10 +2528,22 @@
         applyModeUI();
         updateSettingsStatus();
         var controls=el('headerControls'),header=el('mainHeaderSection');
-        if(num===4){controls.style.opacity='0';setTimeout(()=>{controls.style.display='none';header.style.paddingBottom='5px';},150);}
-        else{controls.style.display='block';setTimeout(()=>{controls.style.opacity='1';header.style.paddingBottom='10px';},10);}
+        if(num===3){
+            moveSharedDatePickerToJournal(true);
+            setVal("queryDate", workJournalSelectedDate || formatDateToYYYYMMDD(getTWDate()));
+            controls.style.display='none';
+            controls.style.opacity='0';
+            header.style.paddingBottom='5px';
+        } else if(num===4){
+            controls.style.opacity='0';
+            setTimeout(()=>{controls.style.display='none';header.style.paddingBottom='5px';},150);
+        } else {
+            controls.style.display='block';
+            setTimeout(()=>{controls.style.opacity='1';header.style.paddingBottom='10px';},10);
+        }
         el('tab'+num).scrollTop=0;
         if(num===3)renderWorkJournal();
+        else if(wasJournal){renderAppSafe();renderMonthTable();}
     }
 
     // 備份還原與恢復預設的共用函式已於系統設定區統一定義，避免重複覆寫。
@@ -2433,8 +2555,6 @@
 
     // 初始值與首次顯示
     document.addEventListener("DOMContentLoaded",function(){
-        setVal("journalDate",formatDateToYYYYMMDD(getTWDate()));
-        if(el("journalDate"))renderWorkJournal();
         updateSettingsStatus();
     });
 
