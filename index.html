@@ -234,6 +234,10 @@
         .journal-photo-retry:disabled { opacity:.55; cursor:wait; }
         .journal-photo-delete { width:100%; padding:6px 3px; font-size:.76rem; color:#B91C1C; border-color:#FECACA; white-space:nowrap; }
         .journal-photo-delete:disabled { opacity:.55; cursor:wait; }
+        .journal-photo-viewer { position:fixed; inset:0; z-index:10050; display:flex; align-items:center; justify-content:center; padding:18px; background:rgba(0,0,0,.88); }
+        .journal-photo-viewer img { display:block; max-width: min(96vw, 1200px); max-height:88vh; width:auto; height:auto; object-fit:contain; border-radius:8px; box-shadow:0 8px 32px rgba(0,0,0,.35); }
+        .journal-photo-viewer-close { position:absolute; top:14px; right:16px; width:42px; height:42px; border:0; border-radius:50%; color:#fff; background:rgba(255,255,255,.18); font-size:28px; cursor:pointer; }
+        .journal-photo-viewer-status { color:#fff; font-size:14px; text-align:center; }
         .journal-photo-error { color:#B91C1C; font-size:.68rem; line-height:1.35; overflow-wrap:anywhere; }
         .journal-note { color:#6B7280; font-size:.82rem; line-height:1.45; }
         .settings-status-bar { display:none; position:fixed; left:50%; bottom:calc(65px + env(safe-area-inset-bottom)); transform:translateX(-50%); width:min(500px, calc(100vw - 20px)); box-sizing:border-box; z-index:900; background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:10px 12px; box-shadow:0 5px 18px rgba(15,23,42,.16); }
@@ -1990,7 +1994,7 @@
         return `<li style="background:transparent;border:0;padding:0 0 5px;margin:0 0 8px;font-weight:bold;color:#0F766E;border-bottom:2px solid var(--border-color);border-radius:0;font-size:1.15rem;">📌 臨時工作項目</li>` + tasks.map(t => {
             var dateText = t.startDate === (t.endDate || t.startDate) ? t.startDate : `${t.startDate}～${t.endDate}`;
             var photoCount = (t.photos || []).length;
-            var photos = photoCount ? `<button class="subtle-btn" style="margin-top:5px;font-size:.8rem;padding:4px 8px;" onclick="toggleTemporaryPhotos('${t.id}')">📷 查看圖片（${photoCount}）</button><div id="temporaryPhotos_${t.id}" class="journal-photo-grid" style="display:none;">${(t.photos||[]).map(ph=>`<div class="journal-photo"><img data-drive-file="${htmlEscape(ph.fileId)}" alt="臨時工作照片" onclick="openDrivePhoto('${htmlEscape(ph.url||"")}')"></div>`).join("")}</div>` : "";
+            var photos = photoCount ? `<button class="subtle-btn" style="margin-top:5px;font-size:.8rem;padding:4px 8px;" onclick="toggleTemporaryPhotos('${t.id}')">📷 查看圖片（${photoCount}）</button><div id="temporaryPhotos_${t.id}" class="journal-photo-grid" style="display:none;">${(t.photos||[]).map(ph=>`<div class="journal-photo"><img data-drive-file="${htmlEscape(ph.fileId)}" alt="臨時工作照片" onclick="openDrivePhoto('${htmlEscape(ph.fileId||"")}')"></div>`).join("")}</div>` : "";
             var actions = `<div style="display:flex;gap:12px;justify-content:flex-end;margin-top:6px;"><button class="subtle-btn" onclick="editTemporaryTask('${t.id}')">編輯</button><button class="subtle-btn" style="color:#B91C1C;" onclick="deleteTemporaryTask('${t.id}')">刪除</button></div>`;
             return `<li style="background:#F0FDFA;color:#115E59;border-left:4px solid #14B8A6;">${htmlEscape(t.text)}${t.time?`<div style="font-size:.88rem;margin-top:3px;">時間：${htmlEscape(t.time)}</div>`:""}${t.note?`<div style="font-size:.88rem;margin-top:3px;">備註：${htmlEscape(t.note)}</div>`:""}<div style="font-size:.8rem;color:#0F766E;margin-top:4px;">${htmlEscape(dateText)}</div>${photos}${actions}</li>`;
         }).join("");
@@ -2138,7 +2142,7 @@
                 html+=`<div class="journal-photo-grid">${photos.map((ph,i)=>{
                     var state=getJournalPhotoOcrLabel(ph),stateClass=(ph.ocrError||ph.ocrStatus==="failed")?"failed":(ph.ocrStatus==="success"?"success":"");
                     var errorHint=ph.ocrError?`<div class="journal-photo-error">原因：${htmlEscape(ph.ocrError)}</div>`:"";
-                    return `<div class="journal-photo-item"><div class="journal-photo"><img data-drive-file="${htmlEscape(ph.fileId)}" alt="${sh}工作日誌照片 ${i+1}" onclick="openDrivePhoto('${htmlEscape(ph.url||"")}')"></div><div class="journal-photo-meta"><div class="journal-photo-state ${stateClass}">照片 ${i+1}・${htmlEscape(state)}</div>${errorHint}<button type="button" class="subtle-btn journal-photo-retry" ${ph.ocrStatus==="processing"?"disabled":""} onclick="retryJournalPhotoOcr('${date}','${sh}',${i},this)">↻ ${ph.ocrStatus==="processing"?"辨識中…":"重新 OCR"}</button><button type="button" class="subtle-btn journal-photo-delete" ${ph.ocrStatus==="processing"?"disabled":""} onclick="deleteJournalPhoto('${date}','${sh}',${i},this)">🗑️ 刪除照片</button></div></div>`;
+                    return `<div class="journal-photo-item"><div class="journal-photo"><img data-drive-file="${htmlEscape(ph.fileId)}" alt="${sh}工作日誌照片 ${i+1}" onclick="openDrivePhoto('${htmlEscape(ph.fileId||"")}')"></div><div class="journal-photo-meta"><div class="journal-photo-state ${stateClass}">照片 ${i+1}・${htmlEscape(state)}</div>${errorHint}<button type="button" class="subtle-btn journal-photo-retry" ${ph.ocrStatus==="processing"?"disabled":""} onclick="retryJournalPhotoOcr('${date}','${sh}',${i},this)">↻ ${ph.ocrStatus==="processing"?"辨識中…":"重新 OCR"}</button><button type="button" class="subtle-btn journal-photo-delete" ${ph.ocrStatus==="processing"?"disabled":""} onclick="deleteJournalPhoto('${date}','${sh}',${i},this)">🗑️ 刪除照片</button></div></div>`;
                 }).join("")}</div>`;
             }
             // 相機入口：capture=environment 優先要求使用手機後置相機；每次拍攝一張，可重複新增。
@@ -2287,7 +2291,23 @@
         handleSharedDateChange();
         setTimeout(function(){var target=el("journalText_"+shift);if(target)target.scrollIntoView({behavior:"smooth",block:"center"});},30);
     }
-    function openDrivePhoto(url){if(url)window.open(url,"_blank","noopener");}
+    async function openDrivePhoto(fileId){
+        // 使用已透過共用 GAS 取得的圖片資料，在程式內放大檢視；不再開啟 Drive 網址，因此不必另外選 Google 帳號。
+        if(!fileId)return;
+        var viewer=document.createElement("div");viewer.className="journal-photo-viewer";viewer.setAttribute("role","dialog");viewer.setAttribute("aria-modal","true");
+        var close=()=>{viewer.remove();document.removeEventListener("keydown",onKey);};
+        var onKey=e=>{if(e.key==="Escape")close();};
+        viewer.addEventListener("click",e=>{if(e.target===viewer)close();});
+        var closeBtn=document.createElement("button");closeBtn.type="button";closeBtn.className="journal-photo-viewer-close";closeBtn.textContent="×";closeBtn.setAttribute("aria-label","關閉照片");closeBtn.onclick=close;
+        var status=document.createElement("div");status.className="journal-photo-viewer-status";status.textContent="照片載入中…";
+        viewer.appendChild(closeBtn);viewer.appendChild(status);document.body.appendChild(viewer);document.addEventListener("keydown",onKey);
+        try{
+            var src=driveImageCache[fileId];
+            if(!src){var data=await callScheduleImageApi({action:"schedule_image_get",fileId:fileId});src=`data:${data.mimeType||"image/jpeg"};base64,${data.base64}`;driveImageCache[fileId]=src;}
+            if(!viewer.isConnected)return;
+            var img=document.createElement("img");img.alt="工作日誌照片";img.src=src;status.replaceWith(img);
+        }catch(err){if(viewer.isConnected)status.textContent="照片載入失敗："+String(err&&err.message?err.message:err);}
+    }
 
     // 圖片壓縮後再上傳。原始圖片仍保留在雲端，JSON 備份只記檔案 ID/網址。
     async function compressImageToData(file){
