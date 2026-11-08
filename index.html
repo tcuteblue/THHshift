@@ -2252,7 +2252,7 @@
             var regions=await cropJournalOcrSections(sourceFile),sectionTexts=[],recognizedAny=false;
             for(var ri=0;ri<regions.length;ri++){
                 var region=regions[ri];
-                status=promptStatusLine(shift);if(status)status.innerText=`正在重新辨識${region.title}…`;
+                status=promptStatusLine(shift);if(status)status.innerText=`正在以 Gemini 辨識${region.title}…`;
                 var result=await callScheduleImageApi({
                     action:"schedule_image_ocr",fileId:photo.fileId,language:"zh",
                     section:region.key,ocrMimeType:region.mimeType,ocrBase64:region.base64
@@ -2270,7 +2270,7 @@
             photo.ocrError="";photo.lastOcrAt=new Date().toISOString();photo.ocrAttempts=Number(photo.ocrAttempts||0)+1;
             record.updatedAt=new Date().toISOString();saveExtendedAppData();
             renderWorkJournal();status=promptStatusLine(shift);
-            if(status)status.innerText=recognizedAny?`第 ${photoIndex+1} 張照片重新 OCR 完成，辨識文字已更新。`:`第 ${photoIndex+1} 張照片已送達 Google Drive OCR，但未擷取到文字。請確認手寫內容位於照片中段記事區、照片清晰且沒有反光；原圖仍保留，可以調整拍攝方式後再試一次。`;
+            if(status)status.innerText=recognizedAny?`第 ${photoIndex+1} 張照片重新 OCR 完成，辨識文字已更新。`:`第 ${photoIndex+1} 張照片已完成 Gemini 辨識，但沒有擷取到第 4 點以後的手寫記事。請確認手寫文字完整入鏡且清晰；原圖仍保留，可以重新拍攝或再試一次。`;
             searchWorkJournals();
         }catch(err){
             photo.ocrStatus="failed";photo.ocrError=String(err&&err.message?err.message:err);photo.lastOcrAt=new Date().toISOString();photo.ocrAttempts=Number(photo.ocrAttempts||0)+1;
@@ -2363,37 +2363,64 @@
             reader.onerror=()=>reject(new Error("讀取 OCR 裁切圖片失敗。"));reader.readAsDataURL(blob);
         });
     }
-    // 移除 OCR 可能辨識出的固定印刷標題；若標題與手寫文字被辨識在同一行，只移除標題前綴並保留後續手寫內容。
+    // 只保留工作記事的手寫第 4 點及其後條目；模型若混入其他印刷內容，前端再做一次防護。
     function cleanJournalOcrText(rawText){
         var lines=String(rawText||"").replace(/\r\n?/g,"\n").split("\n");
-        var cleaned=lines.map(line=>String(line)
-            .replace(/^\s*(?:[一1][、.．)]?\s*)?工作記事\s*[:：]?\s*/i,"")
-            .replace(/^\s*(?:[二2][、.．)]?\s*)?(?:交待事項|交代事項)\s*[:：]?\s*/i,""));
-        cleaned=cleaned.filter(line=>{
-            var normalized=line.replace(/[\s　、，。．:：;；]/g,"");
-            if(!normalized)return false;
-            // 去掉 OCR 將印刷標題拆成獨立行時留下的編號。
-            if(/^[一二12]$/.test(normalized))return false;
-            return true;
+        var result=[],started=false,currentIndex=-1,lastItemNumber=0;
+        lines.forEach(function(rawLine){
+            var line=String(rawLine||"").trim();
+            if(!line)return;
+            line=line.replace(/^```[a-zA-Z]*\s*/,"" ).replace(/```$/g,"").trim();
+            line=line.replace(/^[-*•]\s*/,"");
+            // 項目編號必須有句點、頓號、括號、連字號或空白分隔；避免把 08:23 誤判成第 8 點。
+            var match=line.match(/^(\d{1,2})(?:\s*[.．、)）-]\s*|\s+)(.*)$/);
+            if(match){
+                var number=Number(match[1]),content=String(match[2]||"").trim();
+                if(!started){
+                    // 忽略紙本印刷的第 1～3 點，從第一個手寫第 4 點或之後的條目開始。
+                    if(number>=4){
+                        started=true;lastItemNumber=number;
+                        result.push(number+". "+content);currentIndex=result.length-1;
+                    }
+                    return;
+                }
+                if(number>lastItemNumber&&number>=4){
+                    // 僅遞增的 5、6、7…視為新工作記事；小於等於目前項目編號的數字
+                    // 可能是第 6 點內部的油罐車 1、2、3、4 號，必須保留為續行。
+                    lastItemNumber=number;
+                    result.push(number+". "+content);currentIndex=result.length-1;
+                }else if(currentIndex>=0){
+                    result[currentIndex]+=(result[currentIndex].trim()?"\n":"")+line;
+                }
+                return;
+            }
+            // 模型可能將同一點的長句換行；只把第 4 點開始後的續行併入前一點。
+            if(started&&currentIndex>=0){
+                result[currentIndex]+=(result[currentIndex].trim()?"\n":"")+line;
+            }
         });
-        return cleaned.join("\n").replace(/\n{3,}/g,"\n\n").trim();
+        return result.join("\n").replace(/\n{3,}/g,"\n\n").trim();
     }
     async function cropJournalOcrSections(file){
         var loaded=await loadImageForCanvas(file);
         try{
             if(!loaded.width||!loaded.height)throw new Error("無法讀取照片尺寸；請改用 JPG 或 PNG 照片。");
             if(loaded.height<loaded.width)throw new Error("照片目前是橫式。請將工作日誌紙本以直式、完整頁面拍攝後再辨識。");
-            var sx=0,sy=Math.max(0,Math.floor(loaded.height*(1135/2048)));
-            var sw=loaded.width,sh=Math.min(loaded.height-sy,Math.ceil(loaded.height*((1785-1135)/2048)));
-            if(sh<20)throw new Error("照片取景範圍不符合工作日誌紙本版面。");
-            var scale=Math.min(2,2400/sw),canvas=document.createElement("canvas");
+            // 供油班表固定紙本版型：只截取「一、工作記事」第 4 點起的手寫行，避開上方日期、班別、油量表與印刷第 1～3 點。
+            // 以整張照片比例定位，保留左右及上下少量緩衝，確保第 4～6 點與油罐車數值完整入鏡。
+            var sx=Math.max(0,Math.floor(loaded.width*0.035));
+            var sy=Math.max(0,Math.floor(loaded.height*0.717));
+            var sw=Math.min(loaded.width-sx,Math.ceil(loaded.width*0.75));
+            var sh=Math.min(loaded.height-sy,Math.ceil(loaded.height*0.092));
+            if(sw<100||sh<50)throw new Error("照片取景範圍不符合工作日誌紙本版面，無法定位第 4 點以後的手寫記事。");
+            var scale=Math.min(2.2,2600/sw),canvas=document.createElement("canvas");
             canvas.width=Math.max(1,Math.round(sw*scale));canvas.height=Math.max(1,Math.round(sh*scale));
             var ctx=canvas.getContext("2d");if(!ctx)throw new Error("瀏覽器無法建立圖片辨識畫布。");
             ctx.fillStyle="#FFFFFF";ctx.fillRect(0,0,canvas.width,canvas.height);
             ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
             ctx.drawImage(loaded.source,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
             var base64=await canvasToJpegBase64(canvas);
-            return [{key:"combined",title:"工作記事及交待事項",mimeType:"image/jpeg",base64:base64}];
+            return [{key:"work_notes_4_plus",title:"工作記事第4點以後",mimeType:"image/jpeg",base64:base64}];
         }finally{loaded.close();}
     }
     async function uploadImageFiles(files,category,onProgress,doOcr){
@@ -2410,7 +2437,7 @@
                         var regions=await cropJournalOcrSections(files[i]);
                         for(var ri=0;ri<regions.length;ri++){
                             var region=regions[ri];
-                            if(onProgress)onProgress(`正在辨識${region.title} ${i+1}/${files.length}：${files[i].name}`);
+                            if(onProgress)onProgress(`正在以 Gemini 辨識${region.title} ${i+1}/${files.length}：${files[i].name}`);
                             try{
                                 var ocrResult=await callScheduleImageApi({
                                     action:"schedule_image_ocr",fileId:result.fileId,language:"zh",
