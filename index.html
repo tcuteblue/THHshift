@@ -232,6 +232,8 @@
         .journal-photo-state.success { color:#047857; }
         .journal-photo-retry { width:100%; padding:6px 3px; font-size:.76rem; white-space:nowrap; }
         .journal-photo-retry:disabled { opacity:.55; cursor:wait; }
+        .journal-photo-delete { width:100%; padding:6px 3px; font-size:.76rem; color:#B91C1C; border-color:#FECACA; white-space:nowrap; }
+        .journal-photo-delete:disabled { opacity:.55; cursor:wait; }
         .journal-photo-error { color:#B91C1C; font-size:.68rem; line-height:1.35; overflow-wrap:anywhere; }
         .journal-note { color:#6B7280; font-size:.82rem; line-height:1.45; }
         .settings-status-bar { display:none; position:fixed; left:50%; bottom:calc(65px + env(safe-area-inset-bottom)); transform:translateX(-50%); width:min(500px, calc(100vw - 20px)); box-sizing:border-box; z-index:900; background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:10px 12px; box-shadow:0 5px 18px rgba(15,23,42,.16); }
@@ -2136,7 +2138,7 @@
                 html+=`<div class="journal-photo-grid">${photos.map((ph,i)=>{
                     var state=getJournalPhotoOcrLabel(ph),stateClass=(ph.ocrError||ph.ocrStatus==="failed")?"failed":(ph.ocrStatus==="success"?"success":"");
                     var errorHint=ph.ocrError?`<div class="journal-photo-error">原因：${htmlEscape(ph.ocrError)}</div>`:"";
-                    return `<div class="journal-photo-item"><div class="journal-photo"><img data-drive-file="${htmlEscape(ph.fileId)}" alt="${sh}工作日誌照片 ${i+1}" onclick="openDrivePhoto('${htmlEscape(ph.url||"")}')"></div><div class="journal-photo-meta"><div class="journal-photo-state ${stateClass}">照片 ${i+1}・${htmlEscape(state)}</div>${errorHint}<button type="button" class="subtle-btn journal-photo-retry" ${ph.ocrStatus==="processing"?"disabled":""} onclick="retryJournalPhotoOcr('${date}','${sh}',${i},this)">↻ ${ph.ocrStatus==="processing"?"辨識中…":"重新 OCR"}</button></div></div>`;
+                    return `<div class="journal-photo-item"><div class="journal-photo"><img data-drive-file="${htmlEscape(ph.fileId)}" alt="${sh}工作日誌照片 ${i+1}" onclick="openDrivePhoto('${htmlEscape(ph.url||"")}')"></div><div class="journal-photo-meta"><div class="journal-photo-state ${stateClass}">照片 ${i+1}・${htmlEscape(state)}</div>${errorHint}<button type="button" class="subtle-btn journal-photo-retry" ${ph.ocrStatus==="processing"?"disabled":""} onclick="retryJournalPhotoOcr('${date}','${sh}',${i},this)">↻ ${ph.ocrStatus==="processing"?"辨識中…":"重新 OCR"}</button><button type="button" class="subtle-btn journal-photo-delete" ${ph.ocrStatus==="processing"?"disabled":""} onclick="deleteJournalPhoto('${date}','${sh}',${i},this)">🗑️ 刪除照片</button></div></div>`;
                 }).join("")}</div>`;
             }
             // 相機入口：capture=environment 優先要求使用手機後置相機；每次拍攝一張，可重複新增。
@@ -2151,6 +2153,39 @@
             html+=`<button type="button" class="subtle-btn" style="margin-top:6px;" onclick="saveJournalText('${date}','${sh}')">儲存文字</button><div id="journalStatus_${sh}" class="journal-note" style="margin-top:7px;" aria-live="polite"></div></div>`;
         });
         el("workJournalShiftList").innerHTML=html; loadDriveImagePreviews();
+    }
+    function removeJournalOcrBlock(record,photo){
+        var title=photo.ocrBlockTitle;
+        if(!title)return;
+        var lines=String(record.text||"").split("\n"),start=lines.findIndex(line=>line.trim()===title);
+        if(start<0)return;
+        var finish=lines.length;
+        for(var i=start+1;i<lines.length;i++){
+            if(/^【(?:晚班|早班|午班)照片 \d+ OCR】$/.test(lines[i].trim())){finish=i;break;}
+        }
+        lines.splice(start,finish-start);
+        record.text=lines.join("\n").replace(/^\s+|\s+$/g,"");
+    }
+    async function deleteJournalPhoto(date,shift,photoIndex,button){
+        var record=getJournalRecord(date,shift,false),photo=record&&record.photos[photoIndex];
+        if(!record||!photo||!photo.fileId)return;
+        if(photo.ocrStatus==="processing"){alert("這張照片正在 OCR 辨識，請完成後再刪除。");return;}
+        if(!confirm(`確定刪除${shift}第 ${photoIndex+1} 張工作日誌照片？\n\n照片將從工作日誌清單移除，雲端原始檔會移至 Google 雲端硬碟垃圾桶（可在垃圾桶復原）。\n這張照片對應的 OCR 文字也會一併移除；其他照片及文字不受影響。`))return;
+        var editor=el("journalText_"+shift);if(editor)record.text=editor.value;
+        if(button){button.disabled=true;button.innerText="刪除中…";}
+        var status=promptStatusLine(shift);if(status)status.innerText=`正在刪除${shift}第 ${photoIndex+1} 張照片…`;
+        try{
+            await callScheduleImageApi({action:"schedule_image_delete",category:"work_journal",fileId:photo.fileId});
+            removeJournalOcrBlock(record,photo);
+            record.photos.splice(photoIndex,1);
+            record.updatedAt=new Date().toISOString();
+            saveExtendedAppData();renderWorkJournal();searchWorkJournals();
+            status=promptStatusLine(shift);if(status)status.innerText=`${shift}第 ${photoIndex+1} 張照片已刪除，雲端原始檔已移至垃圾桶。`;
+        }catch(err){
+            renderWorkJournal();status=promptStatusLine(shift);
+            if(status)status.innerText=`照片刪除失敗：${String(err&&err.message?err.message:err)}`;
+            alert(`照片刪除失敗：\n${String(err&&err.message?err.message:err)}\n\n照片資料仍保留，請確認網路及共用 GAS 部署版本後重試。`);
+        }
     }
     function saveJournalText(date,shift){var r=getJournalRecord(date,shift,true);r.text=getVal("journalText_"+shift).trim();r.updatedAt=new Date().toISOString();saveExtendedAppData();searchWorkJournals();alert("工作日誌文字已儲存。");}
     function promptStatusLine(shift){return el("journalStatus_"+shift);}
