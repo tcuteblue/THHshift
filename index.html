@@ -2569,13 +2569,14 @@
         try{
             if(!loaded.width||!loaded.height)throw new Error("無法讀取照片尺寸；請改用 JPG 或 PNG 照片。");
             if(loaded.height<loaded.width)throw new Error("照片目前是橫式。請將工作日誌紙本以直式、完整頁面拍攝後再辨識。");
-            // 供油班表固定紙本版型：從手寫第 4 點開始，向下擴大到工作記事區末端，避免第 7 點或較低的續項被切掉。
-            // 保留原本第 4 點起始位置（y=71.7%），將下緣延伸到約 82.2%，讓後續一至數點有空間，同時避開下方交接事項標題。
-            // 圖中若帶到「二、交待事項」印刷標題，Gemini 指令會明確要求排除，不會寫入工作日誌文字。
-            var sx=Math.max(0,Math.floor(loaded.width*0.035));
-            var sy=Math.max(0,Math.floor(loaded.height*0.717));
-            var sw=Math.min(loaded.width-sx,Math.ceil(loaded.width*0.88));
-            var sh=Math.min(loaded.height-sy,Math.ceil(loaded.height*0.105));
+            // 改為擷取完整「一、工作記事」欄位，而不是從固定的第 4 點高度開始窄裁切。
+            // 範圍 y=65%～87%、x=2%～98%，包含欄位標題、印刷第 1～3 點、所有手寫第 4 點以後條目，
+            // 並延伸到「二、交待事項」標題附近，降低紙張偏移、拍攝角度不同時漏掉前幾點或末尾條目的風險。
+            // Gemini 會依提示排除印刷第 1～3 點及「二、交待事項」標題，只逐項輸出手寫第 4 點以後內容。
+            var sx=Math.max(0,Math.floor(loaded.width*0.02));
+            var sy=Math.max(0,Math.floor(loaded.height*0.65));
+            var sw=Math.min(loaded.width-sx,Math.ceil(loaded.width*0.96));
+            var sh=Math.min(loaded.height-sy,Math.ceil(loaded.height*0.22));
             if(sw<100||sh<50)throw new Error("照片取景範圍不符合工作日誌紙本版面，無法定位第 4 點以後的手寫記事。");
             var scale=Math.min(2.2,2600/sw),canvas=document.createElement("canvas");
             canvas.width=Math.max(1,Math.round(sw*scale));canvas.height=Math.max(1,Math.round(sh*scale));
