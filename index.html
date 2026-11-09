@@ -225,7 +225,7 @@
         .journal-photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:8px 0; }
         .journal-photo-item { min-width:0; border:1px solid var(--border-color); border-radius:9px; overflow:hidden; background:#fff; }
         .journal-photo { position:relative; border:0; border-radius:0; overflow:hidden; background:#F3F4F6; aspect-ratio:3/4; }
-        .journal-photo img { width:100%; height:100%; object-fit:cover; display:block; }
+        .journal-photo img { width:100%; height:100%; object-fit:cover; display:block; cursor:zoom-in; }
         .journal-photo-meta { padding:6px; display:grid; gap:5px; }
         .journal-photo-state { font-size:.72rem; line-height:1.35; color:#6B7280; min-height:2em; overflow-wrap:anywhere; }
         .journal-photo-state.failed { color:#B91C1C; font-weight:700; }
@@ -2476,6 +2476,28 @@
         await queueJournalPhotoOcr(date,shift,photo,photoIndex,true,null);
     }
 
+    // 圖片壓縮後再上傳。原始圖片仍保留在雲端，JSON 備份只記檔案 ID/網址。
+    async function compressImageToData(file){
+        // 先嘗試用瀏覽器解碼並壓成 JPEG；若 HEIC 等格式無法解碼，仍上傳原圖保存，
+        // 後續 OCR 會回報明確原因，不會因為辨識失敗而丟掉原始照片。
+        var blob=file, loaded=null;
+        try{
+            loaded=await loadImageForCanvas(file);
+            var max=1600,scale=Math.min(1,max/Math.max(loaded.width,loaded.height));
+            var c=document.createElement("canvas");c.width=Math.max(1,Math.round(loaded.width*scale));c.height=Math.max(1,Math.round(loaded.height*scale));
+            var ctx=c.getContext("2d");if(!ctx)throw new Error("無法建立圖片壓縮畫布");
+            ctx.drawImage(loaded.source,0,0,c.width,c.height);
+            var converted=await new Promise(resolve=>c.toBlob(resolve,"image/jpeg",.84));
+            if(converted)blob=converted;
+        }catch(e){blob=file;}
+        finally{if(loaded)loaded.close();}
+        return await new Promise((resolve,reject)=>{
+            var reader=new FileReader();
+            reader.onload=()=>{var data=String(reader.result).split(",")[1]||"";if(!data){reject(new Error("讀取圖片內容失敗"));return;}resolve({base64:data,mimeType:blob.type||file.type||"image/jpeg",fileName:(file.name||"photo").replace(/\.[^.]+$/," ").trim()+".jpg"});};
+            reader.onerror=()=>reject(new Error("讀取圖片失敗"));reader.readAsDataURL(blob);
+        });
+    }
+
     async function callScheduleImageApi(payload){
         var response=null,lastError=null;
         // 手機切換 App、網路短暫切換或 GAS 冷啟動時，瀏覽器可能回報 Failed to fetch。
@@ -2625,6 +2647,44 @@
         }
         return {saved,errors,ocrErrors};
     }
+    function searchWorkJournals(){
+        var q=(getVal("journalSearchInput")||"").trim().toLowerCase(),box=el("journalSearchResults");if(!box)return;
+        if(!q){box.innerText="輸入關鍵字即可搜尋已儲存的文字。";return;}
+        var hits=appSettings.workJournals.filter(r=>(r.text||"").toLowerCase().includes(q));
+        box.innerHTML=hits.length?hits.map(r=>{var pos=(r.text||"").toLowerCase().indexOf(q),snippet=(r.text||"").slice(Math.max(0,pos-22),Math.min((r.text||"").length,pos+q.length+45));return `<div class="journal-result" onclick="openJournalSearchHit('${r.date}','${r.shift}')"><strong>${htmlEscape(r.date)}　${htmlEscape(r.shift)}</strong><div style="margin-top:4px;">${htmlEscape(snippet)}</div><div class="journal-note">原始照片 ${(r.photos||[]).length} 張</div></div>`;}).join(""):`<div class="journal-note">找不到包含「${htmlEscape(q)}」的已儲存文字。</div>`;
+    }
+    function openJournalSearchHit(date,shift){
+        setVal("queryDate",date);
+        handleSharedDateChange();
+        setTimeout(function(){var target=el("journalText_"+shift);if(target)target.scrollIntoView({behavior:"smooth",block:"center"});},30);
+    }
+    async function openDrivePhoto(fileId){
+        // 照片檢視加入一筆瀏覽歷史；手機返回鍵會先關閉照片，不會直接離開程式。
+        if(!fileId)return;
+        if(schedulePhotoViewerClose){schedulePhotoViewerClose(true);}
+        var viewer=document.createElement("div");viewer.className="journal-photo-viewer";viewer.setAttribute("role","dialog");viewer.setAttribute("aria-modal","true");
+        var closed=false;
+        var close=(fromPop)=>{
+            if(closed)return;closed=true;
+            viewer.remove();document.removeEventListener("keydown",onKey);
+            if(schedulePhotoViewer===viewer){schedulePhotoViewer=null;schedulePhotoViewerClose=null;}
+            if(!fromPop && history.state && history.state.schedulePhotoViewer){scheduleIgnoreNextPopState=true;history.back();}
+        };
+        var onKey=e=>{if(e.key==="Escape")close(false);};
+        schedulePhotoViewer=viewer;schedulePhotoViewerClose=close;
+        try{history.pushState({scheduleApp:true,schedulePhotoViewer:true},"",location.href);}catch(e){}
+        viewer.addEventListener("click",e=>{if(e.target===viewer)close(false);});
+        var closeBtn=document.createElement("button");closeBtn.type="button";closeBtn.className="journal-photo-viewer-close";closeBtn.textContent="×";closeBtn.setAttribute("aria-label","關閉照片");closeBtn.onclick=()=>close(false);
+        var status=document.createElement("div");status.className="journal-photo-viewer-status";status.textContent="照片載入中…";
+        viewer.appendChild(closeBtn);viewer.appendChild(status);document.body.appendChild(viewer);document.addEventListener("keydown",onKey);
+        try{
+            var src=driveImageCache[fileId];
+            if(!src){var data=await callScheduleImageApi({action:"schedule_image_get",fileId:fileId});src=`data:${data.mimeType||"image/jpeg"};base64,${data.base64}`;driveImageCache[fileId]=src;}
+            if(!viewer.isConnected)return;
+            var img=document.createElement("img");img.alt="工作日誌照片";img.src=src;status.replaceWith(img);
+        }catch(err){if(viewer.isConnected)status.textContent="照片載入失敗："+String(err&&err.message?err.message:err);}
+    }
+
     function loadDriveImagePreviews(){
         document.querySelectorAll("img[data-drive-file]").forEach(img=>{
             var id=img.getAttribute("data-drive-file");if(!id||img.dataset.loading==="1")return;
