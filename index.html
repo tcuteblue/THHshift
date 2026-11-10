@@ -1,0 +1,2900 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-B6CYHLTWCH"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      // 強制使用台灣時間
+      const getTWDate = () => new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
+      gtag('js', getTWDate());
+      gtag('config', 'G-B6CYHLTWCH');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="供油班表">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#F3F4F6"> 
+    
+    <!-- 單檔 PWA 內嵌 Manifest -->
+    <link rel="manifest" id="manifestLink">
+    <script>
+        const manifest = {
+            "name": "供油班表",
+            "short_name": "供油班表",
+            "start_url": window.location.href,
+            "display": "standalone",
+            "background_color": "#F3F4F6",
+            "theme_color": "#F3F4F6",
+            "icons": [{"src": "icon.jpg", "sizes": "192x192", "type": "image/jpeg"}]
+        };
+        document.getElementById('manifestLink').setAttribute('href', 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest)));
+    </script>
+
+    <title>班表查詢與工作提醒系統 蔡宏和製作20260308（臨時工作／工作日誌／試挪班別版）</title>
+    <link rel="icon" type="image/jpeg" href="icon.jpg">
+    <link rel="apple-touch-icon" href="icon.jpg">
+    
+    <style>
+        * { -webkit-tap-highlight-color: transparent; outline: none; }
+        :root {
+            --primary: #4F46E5; --bg-color: #F3F4F6; --card-bg: #FFFFFF;
+            --text-main: #1F2937; --text-muted: #6B7280; --border-color: #E5E7EB;
+            --morn-color: #FEF3C7; --morn-text: #D97706;
+            --mid-color: #DBEAFE; --mid-text: #2563EB;
+            --night-color: #F3E8FF; --night-text: #9333EA;
+            --rest-color: #F3F4F6; --rest-text: #4B5563;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; display: flex; flex-direction: column; min-height: 100vh; padding-top: env(safe-area-inset-top); }
+        .title-icon { width: 1.8rem; height: 1.8rem; vertical-align: text-bottom; margin-right: 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .install-button-container { display: none; text-align: center; margin: 20px 0; animation: slideInUp 0.5s ease-out forwards; }
+        .btn-install { background: var(--primary); color: white; border: none; padding: 15px 25px; border-radius: 8px; font-size: 1.2rem; cursor: pointer; width: 100%; max-width: 400px; font-weight: bold; margin: 0 auto; display: flex; justify-content: center; gap: 10px; box-shadow: 0 4px 6px -1px rgba(79,70,229,0.2); }
+        .btn-install:active { transform: scale(0.97); }
+        .install-explanation { font-size: 0.9rem; color: var(--text-muted); margin-top: 8px; font-weight: bold; }
+
+        .header-section { padding: 15px 15px 0 15px; background: var(--bg-color); border-bottom: 1px solid var(--border-color); transition: padding 0.15s; }
+        .container { width: 100%; max-width: 500px; margin: 0 auto; }
+        h1 { text-align: center; font-size: 1.8rem; margin: 0 0 10px 0; color: var(--primary); line-height: 1.3; }
+        /* 模式只顯示四字，固定在程式頁面右上角。 */
+        .header-section { position: relative; }
+        .app-mode-indicator { position: absolute; top: 8px; right: 14px; z-index: 5; display: none; width: auto; max-width: none; margin: 0; padding: 4px 8px; border: 1px solid #C4B5FD; border-radius: 7px; background: #F3E8FF; color: #6B21A8; font-size: .82rem; font-weight: 800; line-height: 1.3; letter-spacing: 0; white-space: nowrap; box-sizing: border-box; }
+        .app-mode-indicator.is-advanced { display: block; }
+        /* 只有進階模式顯示標籤時，才預留右上角空間。 */
+        .header-section.has-advanced-mode h1 { padding-top: 24px; }
+        @media screen and (max-width: 480px) {
+            .app-mode-indicator { top: 6px; right: 10px; padding: 3px 7px; font-size: .78rem; }
+        }
+        .header-controls-container { transition: opacity 0.15s, height 0.15s; overflow: hidden; }
+        
+        .date-picker-container { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 5px; flex-wrap: nowrap; overflow-x: auto; }
+        input[type="date"], select, input[type="text"], input[type="number"] { padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.1rem; width: 100%; box-sizing: border-box; margin-bottom: 8px; background: #fff; }
+        input[type="date"] { margin-bottom: 0; flex: 1 1 auto; text-align: center; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05); min-width: 110px; padding: 10px 4px; }
+        
+        #dayOfWeekDisplay { text-align: center; font-weight: bold; font-size: 1.25rem; color: var(--primary); margin-bottom: 12px; letter-spacing: 1px; }
+
+        .toggle-group { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; max-width: 400px; margin: 0 auto; }
+        .btn-mode { flex: 1; padding: 10px 0; border: 1px solid var(--primary); border-radius: 8px; background: transparent; color: var(--primary); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: all 0.15s; }
+        .btn-mode.active { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(79,70,229,0.2); }
+
+        .card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08); animation: slideInUp 0.3s ease-out forwards; }
+        .card-title { font-size: 1.25rem; font-weight: bold; margin: 0 0 12px 0; border-bottom: 2px solid var(--border-color); padding-bottom: 6px; display: flex; justify-content: center; align-items: center; color: var(--text-main); position: relative; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 15px; border-radius: 8px; font-size: 1.15rem; cursor: pointer; width: 100%; font-weight: bold; text-align: center; }
+        .btn-icon { width: auto; flex-grow: 0; padding: 10px 15px; font-size: 1.2rem; background: var(--card-bg); color: var(--primary); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-danger { background: transparent; color: #DC2626; border: 1px solid #DC2626; margin-top: 10px; }
+        .btn:active, .btn-icon:active, .btn-mode:active, .tab-btn:active, .list-action-btn:active { transform: scale(0.97); }
+
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes flashWarning { 0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); } 70% { box-shadow: 0 0 0 6px rgba(220,38,38,0); } }
+        .conflict-warning { animation: flashWarning 2s infinite; }
+
+        .shift-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 1.05rem; }
+        .shift-morn { background: var(--morn-color); color: var(--morn-text); }
+        .shift-mid { background: var(--mid-color); color: var(--mid-text); }
+        .shift-night { background: var(--night-color); color: var(--night-text); }
+        .shift-rest { background: var(--rest-color); color: var(--rest-text); }
+        .shift-override { background: #FEF2F2; color: #991B1B; border: 1px dashed #FCA5A5; }
+
+        .team-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+        .team-row:last-child { border-bottom: none; }
+        .team-name { font-size: 1.15rem; }
+
+        .task-list { list-style-type: none; padding: 0; margin: 0; }
+        .task-list li { background: #FEF2F2; color: #DC2626; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 1.05rem; border-left: 4px solid #EF4444; animation: slideInUp 0.3s forwards; line-height: 1.4; }
+        .task-list li.no-task { background: #ECFCCB; color: #4D7C0F; border-left-color: #84CC16; }
+
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: var(--border-color); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; touch-action: pan-y; }
+        .cal-header { background: #F3F4F6; text-align: center; font-weight: bold; font-size: 0.95rem; padding: 6px 0; color: var(--text-muted); }
+        .cal-cell { background: #FFFFFF; min-height: 80px; padding: 4px; display: flex; flex-direction: column; position: relative; }
+        .cal-cell.today { background: #FEF9C3; }
+        .cal-day-num { font-size: 1.05rem; font-weight: bold; margin-bottom: 4px; display: flex; justify-content: space-between; color: var(--text-main); }
+        .cal-shift-single { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; border-radius: 6px; margin-top: 2px; }
+        .cal-shift-all { display: flex; flex-direction: column; gap: 2px; margin-top: 1px; }
+        
+        .cal-shift-all > span { display: flex; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; padding: 1px 0; border-radius: 4px; line-height: 1.15; white-space: nowrap; letter-spacing: -0.5px; overflow: hidden; }
+        .shift-prefix { flex: 0 0 14px; text-align: right; }
+        .shift-name { flex: 0 0 24px; text-align: left; padding-left: 2px; }
+        
+        .toast { visibility: hidden; min-width: 220px; margin-left: -110px; background-color: rgba(31,41,55,0.95); color: #fff; text-align: center; border-radius: 12px; padding: 12px 15px; position: fixed; z-index: 2000; left: 50%; bottom: 85px; font-size: 1.1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(20px); pointer-events: none; line-height: 1.4;}
+        .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
+
+        .setting-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .setting-grid label { font-size: 1rem; color: var(--text-muted); margin-bottom: 4px; display: block; }
+        .list-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; align-items: center; font-size: 1rem; background: #fff; border-radius: 6px; margin-bottom: 6px; }
+        .task-badge { background: #E5E7EB; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; color: #374151; margin-right: 5px; font-weight: bold; }
+        .list-action-btn { font-size: 0.9rem; cursor: pointer; padding: 4px 8px; margin-left: 5px; border-radius: 4px; font-weight: bold; display: inline-block; }
+        .btn-edit { background: #DBEAFE; color: #1E40AF; }
+        .btn-delete { background: #FEE2E2; color: #B91C1C; }
+        .editing-item { border: 2px solid #60A5FA !important; background: #EFF6FF !important; }
+
+        .tab-content { display: none; flex: 1; padding: 15px; padding-bottom: 92px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .tab-content.active { display: block; }
+        .tab-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: #FFFFFF; border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+        .tab-btn { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; border: none; background: transparent; cursor: pointer; color: var(--text-muted); }
+        .tab-icon { font-size: 1.5rem; margin-bottom: 4px; }
+        .tab-text { font-size: 0.9rem; font-weight: bold; }
+        .tab-btn.active { color: var(--primary); }
+
+        /* 製作資訊移至畫面底部導覽列上方，不再佔用班表總覽上方空間。 */
+        .app-credit-footer {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: calc(65px + env(safe-area-inset-bottom));
+            z-index: 900;
+            height: 16px;
+            line-height: 16px;
+            padding: 0;
+            text-align: center;
+            color: #9CA3AF;
+            background: var(--bg-color);
+            font-size: .68rem;
+            font-weight: 400;
+            pointer-events: none;
+        }
+        /* 班表總覽少留一點上方空白，讓月曆區塊更容易完整呈現。 */
+        #tab2 { padding-top: 9px; }
+
+        @media screen and (max-width: 480px) {
+            html { font-size: 17px; } 
+            .header-section { padding: 10px 10px 0; }
+            h1 { font-size: 1.5rem; margin-bottom: 8px; }
+            #dayOfWeekDisplay { font-size: 1.15rem; margin-bottom: 8px; }
+            .toggle-group { margin-bottom: 10px; gap: 5px; }
+            .btn-mode { padding: 6px 0; font-size: 1.05rem; }
+            .tab-content { padding: 10px 10px 92px; }
+            #tab2 { padding-top: 5px; }
+            .card { padding: 12px; margin-bottom: 8px; border-radius: 10px; }
+            .task-list li { font-size: 1rem; }
+            .cal-shift-all > span { font-size: 0.65rem; letter-spacing: -0.8px; border-left-width: 2px !important; }
+            .shift-prefix { flex: 0 0 11px; }
+            .shift-name { flex: 0 0 21px; }
+            
+            .date-picker-container { gap: 4px; }
+            input[type="date"] { padding: 8px 2px; font-size: 1rem; min-width: 105px; }
+            .btn-icon { padding: 8px 12px; font-size: 1.1rem; }
+        }
+
+        /* iOS 安裝教學彈窗樣式 */
+        #iosInstallOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:flex-end; padding-bottom:40px; }
+        .ios-modal { background:#fff; width:90%; max-width:400px; padding:25px 20px; border-radius:15px; text-align:center; position:relative; animation: slideInUp 0.3s forwards; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .ios-modal h3 { margin-top:0; color:var(--primary); font-size:1.3rem; margin-bottom: 15px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+        .ios-modal-close { position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.8rem; color:#9CA3AF; cursor:pointer; line-height: 1; }
+        .ios-step { display: flex; align-items: center; text-align:left; font-size:1.1rem; color:var(--text-main); margin-bottom: 15px; font-weight: bold; background: #F9FAFB; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .ios-icon { font-size: 1.5rem; margin: 0 10px; }
+
+        /* 新增：臨時工作、工作日誌、日期詳情與試挪班別 */
+        /* 工作提醒標題獨立置中；新增臨時工作按鈕另起一行靠右，使用臨時工作區塊相同配色。 */
+        .task-card-title { display:block; width:100%; padding-right:0; text-align:center; margin-bottom:12px; }
+        .task-card-heading { display:flex; justify-content:center; align-items:center; gap:8px; width:100%; text-align:center; }
+        .task-card-action-row { display:flex; justify-content:flex-end; align-items:center; margin-top:9px; width:100%; }
+        .temp-task-entry { position:static; transform:none; border:1px solid #14B8A6; background:#F0FDFA; color:#0F766E; border-radius:8px; font-size:.82rem; font-weight:700; padding:6px 10px; cursor:pointer; white-space:nowrap; line-height:1.35; }
+        .temp-task-entry:hover { background:#CCFBF1; border-color:#0D9488; }
+        .temp-task-entry:active { background:#99F6E4; color:#115E59; }
+        /* 班表總覽工具列：試挪按鈕與班別選單並排，節省垂直空間。 */
+        .calendar-toolbar-row { display:flex; justify-content:space-between; align-items:center; gap:8px; min-width:0; margin:0 0 9px; padding:0 0 8px; border-bottom:2px solid var(--border-color); }
+        .trial-swap-entry { flex:0 0 auto; border:1px solid #14B8A6; background:#F0FDFA; color:#0F766E; border-radius:8px; font-size:.82rem; font-weight:700; padding:6px 10px; cursor:pointer; white-space:nowrap; line-height:1.35; }
+        .trial-swap-entry:hover { background:#CCFBF1; border-color:#0D9488; }
+        .trial-swap-entry:active { background:#99F6E4; color:#115E59; }
+        .calendar-toolbar-row select { flex:0 1 auto; width:auto; max-width:58%; min-width:0; padding:4px 9px; font-size:1rem; margin:0; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; color:#1E3A8A; font-weight:bold; }
+        .trial-date-assignment { margin-top:12px; padding:12px; border:1px solid var(--border-color); border-radius:10px; background:#F8FAFC; }
+        .trial-date-assignment > strong { display:block; margin-bottom:7px; color:var(--text-main); }
+        .trial-date-assignment input, .trial-date-assignment select { margin-bottom:8px; }
+        .date-detail-task-title { text-align:center; font-weight:700; margin-bottom:8px; }
+        .date-detail-task-action { display:flex; justify-content:flex-end; align-items:center; margin:0 0 8px; }
+        .cal-cell { cursor:pointer; }
+        .cal-cell:active { filter:brightness(.97); }
+        .modal-overlay { display:none; position:fixed; inset:0; z-index:5000; background:rgba(15,23,42,.55); align-items:center; justify-content:center; padding:16px; box-sizing:border-box; }
+        .modal-overlay.show { display:flex; }
+        #temporaryTaskModal.show { z-index:5100; }
+        .app-modal { width:100%; max-width:520px; max-height:88vh; overflow:auto; background:#fff; border-radius:16px; padding:18px; box-shadow:0 18px 50px rgba(0,0,0,.25); }
+        .modal-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; }
+        .modal-head h3 { margin:0; font-size:1.25rem; }
+        .modal-close { border:0; background:#F3F4F6; border-radius:50%; width:36px; height:36px; font-size:1.35rem; color:#4B5563; cursor:pointer; }
+        .field-label { display:block; font-weight:700; margin:10px 0 5px; font-size:.95rem; }
+        .app-modal textarea { width:100%; min-height:78px; padding:10px; box-sizing:border-box; border:1px solid var(--border-color); border-radius:8px; font:inherit; resize:vertical; }
+        .modal-actions { display:flex; gap:8px; margin-top:14px; }
+        .modal-actions .btn { flex:1; font-size:1rem; padding:10px; }
+        .subtle-btn { border:1px solid var(--border-color); background:#F9FAFB; color:#4B5563; border-radius:8px; padding:8px 10px; cursor:pointer; font-weight:600; }
+        .journal-date-picker-slot { margin: 0 0 10px; padding: 8px 6px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 10px; }
+        .journal-date-picker-slot .date-picker-container { margin: 0; }
+        .journal-shift-card { background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:12px; }
+        .journal-shift-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-weight:700; }
+        .journal-photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:8px 0; }
+        .journal-photo-item { min-width:0; border:1px solid var(--border-color); border-radius:9px; overflow:hidden; background:#fff; }
+        .journal-photo { position:relative; border:0; border-radius:0; overflow:hidden; background:#F3F4F6; aspect-ratio:3/4; }
+        .journal-photo img { width:100%; height:100%; object-fit:cover; display:block; cursor:zoom-in; }
+        .journal-photo-meta { padding:6px; display:grid; gap:5px; }
+        .journal-photo-state { font-size:.72rem; line-height:1.35; color:#6B7280; min-height:2em; overflow-wrap:anywhere; }
+        .journal-photo-state.failed { color:#B91C1C; font-weight:700; }
+        .journal-photo-state.success { color:#047857; }
+        .journal-photo-retry { width:100%; padding:6px 3px; font-size:.76rem; white-space:nowrap; }
+        .journal-photo-retry:disabled { opacity:.55; cursor:wait; }
+        .journal-photo-delete { width:100%; padding:6px 3px; font-size:.76rem; color:#B91C1C; border-color:#FECACA; white-space:nowrap; }
+        .journal-photo-delete:disabled { opacity:.55; cursor:wait; }
+        .journal-photo-viewer { position:fixed; inset:0; z-index:10050; display:flex; align-items:center; justify-content:center; padding:18px; background:rgba(0,0,0,.88); }
+        .journal-photo-viewer img { display:block; max-width: min(96vw, 1200px); max-height:88vh; width:auto; height:auto; object-fit:contain; border-radius:8px; box-shadow:0 8px 32px rgba(0,0,0,.35); }
+        .journal-photo-viewer-close { position:absolute; top:14px; right:16px; width:42px; height:42px; border:0; border-radius:50%; color:#fff; background:rgba(255,255,255,.18); font-size:28px; cursor:pointer; }
+        .journal-photo-viewer-status { color:#fff; font-size:14px; text-align:center; }
+        .journal-photo-error { color:#B91C1C; font-size:.68rem; line-height:1.35; overflow-wrap:anywhere; }
+        .journal-note { color:#6B7280; font-size:.82rem; line-height:1.45; }
+        .settings-status-bar { display:none; position:fixed; left:50%; bottom:calc(65px + env(safe-area-inset-bottom)); transform:translateX(-50%); width:min(500px, calc(100vw - 20px)); box-sizing:border-box; z-index:900; background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:10px 12px; box-shadow:0 5px 18px rgba(15,23,42,.16); }
+        .settings-status-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+        .settings-status-title { font-weight:700; font-size:.92rem; }
+        .settings-status-detail { color:var(--text-muted); font-size:.78rem; margin-top:3px; line-height:1.35; }
+        .settings-core-pending { display:none; color:#92400E; background:#FFFBEB; border:1px solid #FDE68A; border-radius:7px; padding:7px 9px; margin-top:8px; font-size:.82rem; }
+        .settings-apply-btn { display:none; width:100%; margin-top:8px; padding:9px 12px; font-size:.95rem; background:#2563EB; }
+        #tab4 { padding-bottom:170px; }
+        @media(max-width:480px) { .settings-status-bar { padding:9px 10px; } }
+        .cal-date-detail { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid var(--border-color); }
+        .cal-date-detail:last-child { border-bottom:0; }
+        .trial-pair { background:#F9FAFB; border:1px solid var(--border-color); padding:10px; border-radius:9px; margin:8px 0; }
+        .check-line { padding:8px 10px; border-radius:8px; margin:6px 0; font-size:.9rem; line-height:1.45; }
+        .check-pass { background:#ECFDF5; color:#065F46; }
+        .check-fail { background:#FEF2F2; color:#991B1B; }
+        .check-wait { background:#FFFBEB; color:#92400E; }
+        .time-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+        .time-grid input { min-width:0; padding:7px 4px; font-size:.9rem; }
+        .time-grid label { display:block; font-size:.8rem; color:#6B7280; margin-bottom:3px; }
+        .journal-result { border:1px solid var(--border-color); border-radius:8px; padding:9px; margin:7px 0; background:#fff; cursor:pointer; }
+        .journal-result:active { background:#EFF6FF; }
+        @media(max-width:480px) {
+            .app-modal { padding:14px; max-height:92vh; }
+            .journal-photo-grid { grid-template-columns:repeat(3,1fr); }
+            .temp-task-entry { font-size:.76rem; padding:6px 9px; }
+            .trial-swap-entry { font-size:.76rem; padding:6px 8px; }
+            .calendar-toolbar-row { gap:6px; }
+            .calendar-toolbar-row select { max-width:56%; font-size:.9rem; padding:5px 6px; }
+            .task-card-title { padding-right:0; }
+            .time-grid { grid-template-columns:1fr; }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="header-section" id="mainHeaderSection">
+    <div class="container">
+        <h1 style="margin-bottom: 4px;"><img src="icon.jpg" alt="Logo" class="title-icon">班表與工作提醒系統</h1>
+        <div id="appModeIndicator" class="app-mode-indicator" role="status" aria-live="polite" aria-hidden="true">
+            <span id="appModeLabel">進階模式</span>
+        </div>
+        <div class="header-controls-container" id="headerControls">
+            <div class="date-picker-container" style="margin-bottom: 3px;">
+                <button type="button" class="btn btn-icon" onclick="changeDate(-1)">◀</button>
+                <input type="date" id="queryDate">
+                <button type="button" class="btn btn-icon" onclick="changeDate(1)">▶</button>
+                
+                <!-- 全新動態日曆圖示按鈕 -->
+                <button type="button" onclick="setToday('queryDate')" style="width: 42px; height: 42px; padding: 0; border: 1px solid var(--border-color); border-radius: 8px; background: #fff; cursor: pointer; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex-shrink: 0;">
+                    <div style="background: #EF4444; color: white; font-size: 0.65rem; font-weight: bold; height: 14px; line-height: 14px; text-align: center; width: 100%;">今日</div>
+                    <div id="dynamicTodayNum" style="color: #1F2937; font-size: 1.1rem; font-weight: bold; flex: 1; display: flex; align-items: center; justify-content: center; background: #FAFAFA;">21</div>
+                </button>
+            </div>
+            <!-- 調整星期幾的上下間距 -->
+            <div id="dayOfWeekDisplay" style="margin-bottom: 6px;">載入中...</div>
+            <!-- 調整模式切換按鈕的下間距 -->
+            <div class="toggle-group" style="margin-bottom: 10px;">
+                <button type="button" id="btnLogical" class="btn-mode active" onclick="setMode(false)">📅 標準班表</button>
+                <button type="button" id="btnActual" class="btn-mode" onclick="setMode(true)">🏃 實際出勤</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="flex: 1; display: flex; flex-direction: column;">
+    <div id="tab1" class="tab-content active">
+        <div class="card">
+            <div class="card-title">
+                <span>👨‍💻 今日班表</span>
+                <select id="viewTeamSelect" onchange="changeViewTeam()" style="position: absolute; right: 0; width: auto; max-width: 150px; padding: 2px 8px; font-size: 1rem; margin: 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; color: #1E3A8A; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <!-- 動態載入選單選項 -->
+                </select>
+            </div>
+            
+            <!-- 單一班別顯示區塊 -->
+            <div id="singleTeamView" class="team-row" style="border: none; padding-bottom: 0; justify-content: space-around;">
+                <span class="team-name" id="myTeamName" style="font-weight: bold; font-size: 1.3rem;">載入中...</span>
+                <span id="myShiftBadge" class="shift-badge" style="font-size: 1.1rem;">載入中...</span>
+            </div>
+            <!-- 全部班別顯示區塊 -->
+            <div id="allTeamsTodayView" style="display: none; margin-top: 5px;"></div>
+
+            <div id="holidayConflictContainer" class="conflict-warning" style="display: none; margin-top: 15px; padding: 12px; background: #FEF2F2; border-radius: 8px; border: 2px solid #EF4444; color: #991B1B; font-size: 1.05rem;"></div>
+            <div id="restDayReminderContainer" style="display: none; margin-top: 15px; padding: 10px; background: #FEF2F2; border-radius: 8px; border: 1px dashed #FCA5A5; color: #B91C1C; font-size: 1.05rem;"></div>
+        </div>
+        <div class="card">
+            <div class="card-title task-card-title">
+                <div class="task-card-heading"><span>🛠️ 工作提醒</span><span id="taskTeamLabel" style="font-size:0.9rem; color:#4F46E5; font-weight:normal;"></span></div>
+                <div class="task-card-action-row"><button type="button" class="temp-task-entry" onclick="openTemporaryTaskModal()">＋新增臨時工作</button></div>
+            </div>
+            <ul class="task-list" id="taskList"></ul>
+        </div>
+        <div id="installButtonContainer" class="install-button-container"><button id="btnInstall" class="btn-install">📥 安裝為手機 APP</button><div class="install-explanation">以便離線使用和更快載入</div></div>
+    </div>
+
+    <div id="tab2" class="tab-content">
+        <div class="card">
+            <!-- 第一行：切換月份與標題 -->
+            <div class="card-title" style="justify-content: center; gap: 15px; border-bottom: none; padding-bottom: 0;">
+                <button type="button" class="btn-icon" style="padding: 4px 15px; font-size: 1.1rem; box-shadow: none; border: 1px solid var(--border-color); cursor: pointer; background: #F9FAFB;" onclick="changeCalendarMonth(-1)">◀</button>
+                <span id="calendarTitle" style="font-size: 1.25rem; white-space: nowrap;">🗓️ 載入中...</span>
+                <button type="button" class="btn-icon" style="padding: 4px 15px; font-size: 1.1rem; box-shadow: none; border: 1px solid var(--border-color); cursor: pointer; background: #F9FAFB;" onclick="changeCalendarMonth(1)">▶</button>
+            </div>
+            <!-- 第二行：顯示視角選單 (靠右對齊) -->
+            <!-- 班別視角與試挪班別共用同一列，避免多占一整行把月曆往下推。 -->
+            <div class="calendar-toolbar-row">
+                <button type="button" class="trial-swap-entry" onclick="openShiftSwapModal()">⇄ 試挪班別</button>
+                <select id="monthViewSelect" onchange="changeMonthViewTeam()" aria-label="選擇班表總覽班別">
+                    <!-- 動態載入選單選項 -->
+                </select>
+            </div>
+            <div id="monthCalendar" class="cal-grid"></div>
+        </div>
+        
+        <div class="card"><div class="card-title">📊 四班今日班別</div><div id="allTeamsContainer"></div></div>
+    </div>
+
+    <div id="tab3" class="tab-content">
+        <div class="card">
+            <div class="card-title">📖 工作日誌</div>
+            <div id="journalDatePickerSlot" class="journal-date-picker-slot" aria-label="工作日誌日期選擇"></div>
+            <div class="journal-note" style="margin:8px 0 12px;">拍攝每天各班的紙本工作日誌。日期使用本頁專屬記憶，不影響班表總覽及今日班表。原始照片會完整保存至 Google 雲端硬碟；OCR 將「工作記事」及「交待事項」合併為單一辨識區。</div>
+            <div id="workJournalShiftList"></div>
+        </div>
+        <div class="card">
+            <div class="card-title">🔎 搜尋工作日誌</div>
+            <input type="search" id="journalSearchInput" placeholder="輸入關鍵字，例如設備名稱、工作事項" oninput="searchWorkJournals()">
+            <div id="journalSearchResults" class="journal-note">輸入關鍵字即可搜尋已儲存的文字。</div>
+        </div>
+    </div>
+
+    <div id="tab4" class="tab-content">
+        <div class="card">
+            <div class="card-title">系統設定 (自動儲存)</div>
+            <label style="font-weight:bold; font-size:1.05rem;">我的專屬班別：</label>
+            <select id="setMyTeam" onchange="saveGeneralSettings()">
+                <option value="A">A班</option><option value="B">B班</option><option value="C" selected>C班</option><option value="D">D班</option>
+            </select>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            <label style="font-weight:bold; color: var(--primary); font-size:1.05rem;">預設顯示模式：</label>
+            <select id="setDefaultMode" onchange="saveGeneralSettings()"><option value="false">📅 標準班表</option><option value="true">🏃 實際出勤</option></select>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            
+            <label style="font-weight:bold; font-size:1.05rem;">基準日設定：</label>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <input type="date" id="setBaseDate" onchange="markCoreSettingsDirty()">
+                <button type="button" class="btn" onclick="setToday('setBaseDate')" style="width:auto; white-space:nowrap; background:#E5E7EB; color:#4B5563; padding:8px 12px; font-size:1rem;">📅 今天</button>
+            </div>
+            <label style="font-weight:bold; display:block; margin-top:10px; font-size:1.05rem;">指定基準班別與當天班表：</label>
+            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px;">系統將自動精準推算其他三班狀態。</div>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <select id="setRefTeam" style="flex:1;" onchange="markCoreSettingsDirty()"><option value="A">A班</option><option value="B">B班</option><option value="C" selected>C班</option><option value="D">D班</option></select>
+                <select id="setRefShift" style="flex:2;" onchange="markCoreSettingsDirty()"><option value="0">早班1</option><option value="1">早班2</option><option value="2">中班1</option><option value="3">中班2</option><option value="4">小休</option><option value="5">晚班1</option><option value="6">晚班2</option><option value="7">大休</option></select>
+            </div>
+            <div id="basePreview" style="background: #EFF6FF; border: 1px dashed #93C5FD; padding: 10px; border-radius: 8px; font-size: 1rem; color: #1E3A8A; margin-bottom: 15px; line-height:1.4;">系統推算：請先選擇設定。</div>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            
+            <label style="font-weight:bold; display:block; margin-bottom: 5px; font-size:1.05rem;">各班領班名稱：</label>
+            <div class="setting-grid">
+                <div><label>A班</label><input type="text" id="setTeamA" onchange="saveGeneralSettings()"></div><div><label>B班</label><input type="text" id="setTeamB" onchange="saveGeneralSettings()"></div>
+                <div><label>C班</label><input type="text" id="setTeamC" onchange="saveGeneralSettings()"></div><div><label>D班</label><input type="text" id="setTeamD" onchange="saveGeneralSettings()"></div>
+            </div>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label style="font-weight:bold; color:#DC2626; margin:0; font-size:1.05rem;">✏️ 手動改班 / 請假設定：</label>
+                <button class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none;" onclick="setToday('addManualDate')">📅 今天</button>
+            </div>
+            <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 10px;">優先覆蓋原班表，可用於設定各類假別或調班。</div>
+            <div id="manualShiftList" style="margin-bottom:15px; max-height:160px; overflow-y:auto; background:#F9FAFB; border:1px solid var(--border-color); border-radius:8px; padding:5px;"></div>
+            <div style="display:flex; gap:8px; background:#FEF2F2; padding:10px; border-radius:8px; border:1px solid #FECACA;">
+                <input type="date" id="addManualDate" style="flex:1.5; padding:8px; margin:0;">
+                <select id="addManualTeam" style="flex:1; padding:8px; margin:0;"><option value="A">A班</option><option value="B">B班</option><option value="C">C班</option><option value="D">D班</option></select>
+                <select id="addManualShift" style="flex:1.5; padding:8px; margin:0;"><option value="特休">特休</option><option value="病假">病假</option><option value="事假">事假</option><option value="公假">公假</option><option value="調:早班1">調:早班1</option><option value="調:早班2">調:早班2</option><option value="調:中班1">調:中班1</option><option value="調:中班2">調:中班2</option><option value="調:晚班1">調:晚班1</option><option value="調:晚班2">調:晚班2</option><option value="調:小休">調:小休</option><option value="調:大休">調:大休</option></select>
+                <button class="btn" onclick="addManualShift()" style="flex:1; padding:8px 5px; font-size:1rem; background:#DC2626; margin:0;">新增</button>
+            </div>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label id="holidayAddLabel" style="font-weight:bold; margin:0; font-size:1.05rem;">🎈 國定假日管理：</label>
+                <button class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none;" onclick="setToday('addHolidayDate')">📅 今天</button>
+            </div>
+            <div id="holidayList" style="margin-bottom:10px; max-height:160px; overflow-y:auto; background:#F9FAFB; border:1px solid var(--border-color); border-radius:8px; padding:5px;"></div>
+            <div style="display:flex; gap:8px; background:#FFFBF0; padding:10px; border-radius:8px; border:1px solid #FDE68A;">
+                <input type="date" id="addHolidayDate" style="flex:2; padding:8px; margin:0;">
+                <input type="text" id="addHolidayName" placeholder="如: 中秋節" style="flex:2; padding:8px; margin:0;">
+                <div style="flex:1.5; display:flex; gap:5px;"><button id="btnSubmitHoliday" class="btn" onclick="addHoliday()" style="padding:8px 5px; font-size:1rem; background:#D97706; margin:0;">新增</button><button id="btnCancelHoliday" class="btn btn-delete" onclick="cancelEditHoliday()" style="padding:8px 5px; font-size:1rem; display:none; border:none; margin:0;">取消</button></div>
+            </div>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label style="font-weight:bold; color:#2563EB; margin:0; font-size:1.05rem;">📝 工作提醒管理：</label>
+                <button id="btnTaskToday" class="list-action-btn" style="background:#E5E7EB; color:#4B5563; border:none; display:none;" onclick="setToday('addTaskDate')">📅 今天</button>
+            </div>
+            <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 10px;">系統預設與您自訂的工作皆在此管理。</div>
+            <div id="customTaskList" style="margin-bottom:15px; max-height:250px; overflow-y:auto; background:#F9FAFB; border:1px solid var(--border-color); border-radius:8px; padding:5px;"></div>
+            <div style="background:#EFF6FF; padding:10px; border-radius:8px; border:1px solid #BFDBFE;">
+                <label id="taskAddLabel" style="font-size:1.05rem; font-weight:bold; color:#1E3A8A; display:block; margin-bottom:8px;">➕ 新增自訂工作</label>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <select id="addTaskShift" style="flex:1; padding:8px; margin:0;"><option value="早班">早班(皆提醒)</option><option value="早班1">早班1</option><option value="早班2">早班2</option><option value="中班">中班(皆提醒)</option><option value="中班1">中班1</option><option value="中班2">中班2</option><option value="晚班">晚班(皆提醒)</option><option value="晚班1">晚班1</option><option value="晚班2">晚班2</option><option value="全天">全天</option></select>
+                    <select id="addTaskRule" style="flex:2; padding:8px; margin:0;" onchange="toggleTaskInputs()"><option value="every_shift">每次當班</option><option value="specific_date">單次特定日期</option><option value="weekly">每週特定星期</option><option value="monthly_day">每月幾號</option><option value="monthly_last">每月最後一天</option><option value="last_monday">每月最後一個週一</option><option value="yearly_range">每年月份區間</option><option value="odd_months">單數月</option><option value="even_months">雙數月</option></select>
+                </div>
+                <div id="inputWrap_date" style="display:none; margin-bottom:8px;"><input type="date" id="addTaskDate" style="padding:8px; margin:0;"></div>
+                <div id="inputWrap_week" style="display:none; margin-bottom:8px;"><select id="addTaskWeek" style="padding:8px; margin:0;"><option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option><option value="5">星期五</option><option value="6">星期六</option><option value="0">星期日</option></select></div>
+                <div id="inputWrap_monthDay" style="display:none; margin-bottom:8px;"><input type="number" id="addTaskMonthDay" placeholder="輸入日期 (1-31)" min="1" max="31" style="padding:8px; margin:0;"></div>
+                <div id="inputWrap_monthRange" style="display:none; margin-bottom:8px; gap:5px; align-items:center;"><input type="number" id="addTaskRangeStart" placeholder="開始月" min="1" max="12" style="padding:8px; margin:0;"><span>至</span><input type="number" id="addTaskRangeEnd" placeholder="結束月" min="1" max="12" style="padding:8px; margin:0;"></div>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="addTaskText" placeholder="輸入工作內容" style="flex:2; padding:8px; margin:0;">
+                    <button id="btnSubmitTask" class="btn" onclick="addCustomTask()" style="flex:1.5; padding:8px 5px; font-size:1rem; background:#2563EB; margin:0;">新增</button>
+                    <button id="btnCancelTask" class="btn btn-delete" onclick="cancelEditCustomTask()" style="flex:1; padding:8px 5px; font-size:1rem; display:none; border:none; margin:0;">取消</button>
+                </div>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            <label style="font-weight:bold; color: #10B981; margin:0; font-size:1.05rem;">💾 系統備份與還原</label>
+            <div style="font-size: 0.9rem; color: #6B7280; margin: 5px 0 10px 0;">雲端與本機皆備份完整資料；自動雲端備份只更新同一份雲端檔案。</div>
+            
+            <div id="advanced-cloud-controls" style="display:none; margin-bottom:12px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <button class="btn" onclick="cloudBackup(event)" style="background:#0284C7; font-size:1rem; padding:10px; margin:0;">☁️ 雲端備份</button>
+                    <button class="btn" onclick="cloudRestore(event)" style="background:#4F46E5; font-size:1rem; padding:10px; margin:0;">☁️ 雲端還原</button>
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+                <button class="btn" onclick="exportData()" style="background:#10B981; font-size:1rem; padding:10px; margin:0;">📤 本機備份</button>
+                <button class="btn" onclick="el('importDataInput').click()" style="background:#F59E0B; font-size:1rem; padding:10px; margin:0;">📥 本機還原</button>
+            </div>
+            <input type="file" id="importDataInput" style="display:none;" accept=".json" onchange="importData(event)">
+
+            <!-- 進階模式管理移至四個備份／還原按鈕全部下方，避免插在雲端與本機按鈕之間。 -->
+            <section id="advanced-mode-panel" style="display:none; border:1px solid #BFDBFE; background:#F8FBFF; border-radius:10px; padding:12px; margin-top:12px; margin-bottom:12px;">
+                <div style="font-weight:bold; color:#1D4ED8; margin-bottom:5px;">🔐 進階模式管理</div>
+                <div style="font-size:.86rem; color:#6B7280; line-height:1.5; margin-bottom:10px;">目前已通過雲端密碼驗證。此裝置會啟用自動雲端備份及啟動時資料同步。</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <button type="button" class="btn" onclick="openAdvancedPasswordChangeModal()" style="background:#2563EB; font-size:.95rem; padding:9px; margin:0;">修改進階模式密碼</button>
+                    <button type="button" class="btn" onclick="closeAdvancedMode()" style="background:#6B7280; font-size:.95rem; padding:9px; margin:0;">關閉進階模式</button>
+                </div>
+            </section>
+
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 18px 0;">
+
+            <section style="border:1px solid #FECACA; background:#FFFDFD; border-radius:10px; padding:12px; margin-bottom:8px;">
+                <label style="display:block; color:#B91C1C; font-weight:bold; font-size:1.02rem; margin-bottom:5px;">⚠️ 重設系統設定</label>
+                <div style="font-size:.86rem; color:#6B7280; line-height:1.5; margin-bottom:10px;">恢復基準日期、班別循環、班別名稱、個人班別及預設顯示模式。手動改班、假日、工作提醒、臨時工作、工作日誌及調班紀錄都會保留。</div>
+                <button class="btn btn-danger" onclick="restoreDefaults()" style="width:auto; margin:0; padding:9px 14px; font-size:.95rem;">🔄 恢復系統設定預設值</button>
+            </section>
+</div>
+</div>
+
+<div id="settingsStatusBar" class="settings-status-bar" aria-live="polite">
+    <div class="settings-status-top">
+        <div>
+            <div id="settingsStatusText" class="settings-status-title">本機資料已儲存</div>
+            <div id="settingsCloudStatus" class="settings-status-detail">雲端同步狀態確認中</div>
+        </div>
+        <span id="settingsStatusIcon" aria-hidden="true" style="font-size:1.25rem;">💾</span>
+    </div>
+    <div id="settingsCorePending" class="settings-core-pending">⚠️ 核心排班設定有尚未套用的修改。</div>
+    <button id="applyCoreSettingsBtn" class="btn settings-apply-btn" onclick="applyCoreSettings()">確認並套用排班設定</button>
+</div>
+
+<div class="app-credit-footer" aria-label="製作資訊">蔡宏和製作20260308</div>
+
+<div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(1)"><div class="tab-icon">👤</div><div class="tab-text">今日班表</div></button>
+    <button class="tab-btn" onclick="switchTab(2)"><div class="tab-icon">🗓️</div><div class="tab-text">班表總覽</div></button>
+    <button class="tab-btn" onclick="switchTab(3)"><div class="tab-icon">📖</div><div class="tab-text">工作日誌</div></button>
+    <button id="settings-nav-secret-trigger" class="tab-btn" onclick="switchTab(4)" aria-label="系統設定"><div class="tab-icon">⚙️</div><div class="tab-text">系統設定</div></button>
+</div>
+
+<!-- 臨時工作編輯視窗 -->
+<div id="temporaryTaskModal" class="modal-overlay" onclick="if(event.target===this) closeTemporaryTaskModal()">
+  <div class="app-modal">
+    <div class="modal-head"><h3 id="temporaryTaskModalTitle">新增臨時工作</h3><button class="modal-close" onclick="closeTemporaryTaskModal()">×</button></div>
+    <label class="field-label">所屬班別</label>
+    <select id="temporaryTaskTeam"><option value="A">A班</option><option value="B">B班</option><option value="C">C班</option><option value="D">D班</option></select>
+    <label class="field-label">日期類型</label>
+    <select id="temporaryTaskDateMode" onchange="toggleTemporaryDateMode()"><option value="single">單日</option><option value="range">連續多日</option></select>
+    <label class="field-label" for="temporaryTaskStart">開始日期</label><input type="date" id="temporaryTaskStart">
+    <div id="temporaryTaskEndWrap" style="display:none;"><label class="field-label" for="temporaryTaskEnd">結束日期</label><input type="date" id="temporaryTaskEnd"></div>
+    <label class="field-label" for="temporaryTaskText">工作內容</label><textarea id="temporaryTaskText" placeholder="輸入臨時工作內容" style="min-height:70px;"></textarea>
+    <label class="field-label" for="temporaryTaskTime">工作時間（選填）</label><input type="text" id="temporaryTaskTime" placeholder="例如：08:00～17:00">
+    <label class="field-label" for="temporaryTaskNote">備註（選填）</label><textarea id="temporaryTaskNote" placeholder="其他補充事項"></textarea>
+    <label class="field-label" for="temporaryTaskFiles">附加圖片（不限張數）</label><input type="file" id="temporaryTaskFiles" accept="image/*" multiple>
+    <div id="temporaryTaskExistingPhotos" class="journal-photo-grid"></div>
+    <div id="temporaryTaskUploadStatus" class="journal-note"></div>
+    <div class="modal-actions"><button class="btn" style="background:#6B7280;" onclick="closeTemporaryTaskModal()">取消</button><button id="temporaryTaskSaveBtn" class="btn" onclick="saveTemporaryTask()">儲存臨時工作</button></div>
+  </div>
+</div>
+
+<!-- 班表總覽日期獨立詳情 -->
+<div id="dateDetailModal" class="modal-overlay" onclick="if(event.target===this) closeDateDetail()">
+  <div class="app-modal">
+    <div class="modal-head"><h3 id="dateDetailTitle">日期詳情</h3><button class="modal-close" onclick="closeDateDetail()">×</button></div>
+    <div id="dateDetailShift" style="margin-bottom:12px;"></div>
+    <div class="date-detail-task-title">工作提醒</div>
+    <div class="date-detail-task-action"><button type="button" class="temp-task-entry" onclick="openTemporaryTaskModal(dateDetailDate, dateDetailTeam)">＋新增臨時工作</button></div>
+    <div id="dateDetailTasks"></div>
+    <div class="modal-actions"><button class="btn" style="background:#6B7280;" onclick="closeDateDetail()">返回班表總覽</button></div>
+  </div>
+</div>
+
+<!-- 試挪班別視窗：先選日期，再選該日預排班別；接著選第二日期及班別 -->
+<div id="shiftSwapModal" class="modal-overlay" onclick="if(event.target===this) closeShiftSwapModal()">
+  <div class="app-modal">
+    <div class="modal-head"><h3>⇄ 試挪班別</h3><button class="modal-close" onclick="closeShiftSwapModal()">×</button></div>
+    <div class="journal-note">以標準班表預排，不讀取實際出勤。請依序選擇第一個日期及班別，再選第二個日期及班別。完成後由系統檢查；通過後才會正式套用，標準循環及隔年班表不會被改寫。</div>
+    <label class="field-label" for="swapTeam">所屬班別</label>
+    <select id="swapTeam"><option value="A">A班</option><option value="B">B班</option><option value="C">C班</option><option value="D">D班</option></select>
+
+    <div class="trial-date-assignment">
+      <strong>第一個日期</strong>
+      <label class="field-label" for="swapDateA">選擇日期</label>
+      <input type="date" id="swapDateA">
+      <label class="field-label" for="swapShiftA">調整為哪一個班別</label>
+      <select id="swapShiftA">
+        <option value="早班">早班</option><option value="午班">午班</option><option value="晚班">晚班</option>
+        <option value="公假">公假</option><option value="大休">大休</option><option value="小休">小休</option>
+      </select>
+    </div>
+
+    <div class="trial-date-assignment">
+      <strong>第二個日期</strong>
+      <label class="field-label" for="swapDateB">選擇日期</label>
+      <input type="date" id="swapDateB">
+      <label class="field-label" for="swapShiftB">調整為哪一個班別</label>
+      <select id="swapShiftB">
+        <option value="早班">早班</option><option value="午班">午班</option><option value="晚班">晚班</option>
+        <option value="公假">公假</option><option value="大休">大休</option><option value="小休">小休</option>
+      </select>
+    </div>
+
+    <label class="field-label" for="swapReason">調整原因（選填）</label>
+    <input type="text" id="swapReason" placeholder="例如：出差、受訓、工作調度">
+    <button type="button" class="btn" style="background:#0F766E; padding:9px; font-size:1rem;" onclick="addTrialSwapPair()">加入預排調整</button>
+    <div id="trialSwapPairs" style="margin-top:12px;"></div>
+
+    <hr style="border:0; border-top:1px solid var(--border-color); margin:14px 0;">
+    <strong>排班時間基準</strong>
+    <div class="journal-note" style="margin:5px 0 8px;">
+      早班 07:00–15:00；午班 15:00–23:00；晚班以前一天 23:00 上班、選定日期當天 07:00 下班計算；公假視為工作日，固定以正常班時間 08:30–17:00 檢查，不需另外設定。
+    </div>
+    <button type="button" class="btn" style="background:#0F766E; font-size:1rem; padding:9px; margin-top:10px;" onclick="checkTrialShiftPlan()">執行排班檢查</button>
+    <div id="trialShiftCheckResults" style="margin-top:10px;"></div>
+    <div class="modal-actions"><button class="btn" style="background:#6B7280;" onclick="closeShiftSwapModal()">關閉</button><button id="applyShiftSwapBtn" class="btn" onclick="applyTrialShiftPlan()" disabled style="opacity:.5;">正式套用</button></div>
+    <hr style="border:0; border-top:1px solid var(--border-color); margin:14px 0;">
+    <strong>過去調班紀錄</strong><div id="shiftSwapHistory" class="journal-note" style="margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- 進階模式密碼驗證視窗 -->
+<div id="advancedPasswordModal" class="modal-overlay" onclick="if(event.target===this) closeAdvancedPasswordModal()">
+  <div class="app-modal">
+    <div class="modal-head"><h3>🔐 開啟進階模式</h3><button class="modal-close" type="button" onclick="closeAdvancedPasswordModal()">×</button></div>
+    <div class="journal-note" style="margin-bottom:10px;">請輸入雲端進階模式密碼。第一次使用時，預設密碼為 41927。密碼由共用 GAS 在 Google Drive 驗證，本機不保存密碼。</div>
+    <label class="field-label" for="advancedModePasswordInput">雲端密碼</label>
+    <input id="advancedModePasswordInput" type="password" maxlength="64" autocomplete="current-password" placeholder="輸入進階模式密碼" onkeydown="if(event.key==='Enter') verifyScheduleAdvancedMode()">
+    <div id="advancedModePasswordStatus" class="journal-note" aria-live="polite"></div>
+    <div class="modal-actions"><button type="button" class="btn" style="background:#6B7280;" onclick="closeAdvancedPasswordModal()">取消</button><button id="advancedModeVerifyBtn" type="button" class="btn" onclick="verifyScheduleAdvancedMode()">驗證並進入</button></div>
+  </div>
+</div>
+
+<!-- 修改進階模式密碼視窗 -->
+<div id="advancedPasswordChangeModal" class="modal-overlay" onclick="if(event.target===this) closeAdvancedPasswordChangeModal()">
+  <div class="app-modal">
+    <div class="modal-head"><h3>修改進階模式密碼</h3><button class="modal-close" type="button" onclick="closeAdvancedPasswordChangeModal()">×</button></div>
+    <label class="field-label" for="advancedCurrentPasswordInput">目前密碼</label>
+    <input id="advancedCurrentPasswordInput" type="password" maxlength="64" autocomplete="current-password" placeholder="輸入目前雲端密碼">
+    <label class="field-label" for="advancedNewPasswordInput">新密碼</label>
+    <input id="advancedNewPasswordInput" type="password" maxlength="64" autocomplete="new-password" placeholder="輸入新密碼，最多 64 個字元">
+    <div id="advancedPasswordChangeStatus" class="journal-note" aria-live="polite"></div>
+    <div class="modal-actions"><button type="button" class="btn" style="background:#6B7280;" onclick="closeAdvancedPasswordChangeModal()">取消</button><button id="advancedPasswordChangeBtn" type="button" class="btn" onclick="changeScheduleAdvancedPassword()">確認修改</button></div>
+  </div>
+</div>
+
+<div id="holidayToast" class="toast"></div>
+
+<!-- iOS 安裝教學彈窗 -->
+<div id="iosInstallOverlay">
+    <div class="ios-modal">
+        <button class="ios-modal-close" onclick="el('iosInstallOverlay').style.display='none'">&times;</button>
+        <h3>🍎 iOS 安裝教學</h3>
+        <p style="font-size:1rem; color:var(--text-muted); margin-bottom:15px;">將此系統加入主畫面，即可像 APP 一樣離線快速開啟！</p>
+        
+        <div class="ios-step">
+            1. 點擊瀏覽器下方或上方的 <span class="ios-icon" style="color:#007AFF; border:1px solid #007AFF; border-radius:4px; padding:2px 5px; font-size:1.1rem;">⍗</span>「分享」圖示
+        </div>
+        <div class="ios-step">
+            2. 往下滑動選單，點選 <span class="ios-icon" style="color:#333; background:#E5E5EA; border-radius:6px; padding:3px 6px;">➕</span>「<strong>加入主畫面</strong>」
+        </div>
+        
+        <div style="font-size:2rem; margin-top:20px; animation: slideInUp 1s infinite alternate;">⬇️</div>
+    </div>
+</div>
+
+<script>
+    // --- 共用 Helpers ---
+    const el = id => document.getElementById(id);
+    const getVal = id => el(id).value;
+    const setVal = (id, val) => { if(el(id)) el(id).value = val; };
+    const triggerVibrate = () => { if (navigator.vibrate) navigator.vibrate(50); };
+    const formatDateToYYYYMMDD = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    // --- 常數與資料邏輯 ---
+    const SHIFT_CYCLE = ["早班1", "早班2", "中班1", "中班2", "小休", "晚班1", "晚班2", "大休"];
+    const TEAMS = ["A", "B", "C", "D"];
+    
+    let isActualMode = false; 
+    let currentViewTeam = null, currentMonthViewTeam = null;
+    let calendarViewDate = getTWDate(); 
+    let tempHolidays = {}, tempTasks = [], tempManualShifts = {};
+    let editingHolidayDate = null, editingTaskId = null;
+    let coreSettingsDirty = false;
+    let cloudSyncState = localStorage.getItem("pendingSync") === "true" ? "pending" : "idle";
+    let autoBackupTimer = null;
+    let silentBackupPromise = null;
+    let silentBackupRequested = false;
+    let activeCloudBackupController = null;
+    let settingsSecretTapCount = 0;
+    let settingsSecretTapTimer = null;
+    let startupCloudSyncPromise = null;
+    // 班表查詢日期與工作日誌日期分開記憶；工作日誌只暫時借用同一個日期選擇器。
+    let normalQueryDateValue = "";
+    let workJournalSelectedDate = "";
+    let sharedDatePickerNode = null;
+
+    const defaultTasks = [
+        { id: "t1", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：登錄MI系統的各型泵浦運轉前暨啟動時檢點表" },
+        { id: "t2", shift: "早班", rule: "every_shift", ruleValue: "", text: "早班：填寫CPI放水閥操作記錄表等7份檢查表" },
+        { id: "t3", shift: "中班", rule: "every_shift", ruleValue: "", text: "中班：填寫CPI放水閥操作記錄表" },
+        { id: "t4", shift: "早班", rule: "yearly_range", ruleValue: "3-11", text: "3~11月早班：填寫高氣溫戶外作業評估檢點表" },
+        { id: "t5", shift: "早班", rule: "monthly_day", ruleValue: "1", text: "初一早班：登錄MI系統的儲槽計量設備每月檢查表" },
+        { id: "t6", shift: "早班", rule: "monthly_day", ruleValue: "1", text: "初一早班：列印上個月的管壓趨勢圖" },
+        { id: "t7", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：登錄MI系統的的儲槽操作前後(或每週)保養檢查表" },
+        { id: "t8", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫一般重質輕質液泵浦軸封設備元件每週目視檢查表" },
+        { id: "t9", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫漏油偵測警報系統檢查表" },
+        { id: "t10", shift: "早班", rule: "weekly", ruleValue: "1", text: "週一早班：填寫緊急洗眼沖淋設備檢查表" },
+        { id: "t11", shift: "早班", rule: "last_monday", ruleValue: "", text: "月底週一早班：登錄平板的緊急洗眼沖淋設備檢查表" },
+        { id: "t12", shift: "早班", rule: "last_monday", ruleValue: "", text: "月底週一早班：登錄平板的漏油偵測警報系統檢查表" },
+        { id: "t13", shift: "晚班", rule: "every_shift", ruleValue: "", text: "晚班：填寫結帳量油記錄表" },
+        { id: "t14", shift: "晚班", rule: "every_shift", ruleValue: "", text: "晚班：填寫油槽放水記錄表" },
+        { id: "t15", shift: "中班", rule: "monthly_last", ruleValue: "", text: "每月底中班：填寫機車行駛記錄表" }
+    ];
+
+    const defaultSettings = {
+        baseDate: "2026-01-01", myTeam: "C", defaultMode: false,
+        teams: { "A": { name: "蘇明理", offset: 5 }, "B": { name: "林致漢", offset: 7 }, "C": { name: "蔡宏和", offset: 1 }, "D": { name: "林明宗", offset: 3 } },
+        holidays: { "2026-01-01": "元旦","2026-02-15": "小年夜", "2026-02-16": "除夕", "2026-02-17": "春節", "2026-02-18": "初二", "2026-02-19": "初三", "2026-02-28": "和平紀念日", "2026-04-03": "兒童節", "2026-04-04": "清明節", "2026-05-01": "勞動節", "2026-06-19": "端午節", "2026-09-25": "中秋節", "2026-10-10": "國慶日" },
+        manualShifts: {}
+    };
+
+    let appSettings;
+    try {
+        let savedData = localStorage.getItem("shiftSettings");
+        appSettings = savedData ? JSON.parse(savedData) : JSON.parse(JSON.stringify(defaultSettings));
+    } catch(e) { appSettings = JSON.parse(JSON.stringify(defaultSettings)); }
+    
+    appSettings.defaultMode = appSettings.defaultMode || false;
+    appSettings.holidays = appSettings.holidays || JSON.parse(JSON.stringify(defaultSettings.holidays));
+    appSettings.manualShifts = appSettings.manualShifts || {};
+    appSettings.tasks = Array.isArray(appSettings.tasks) ? appSettings.tasks : JSON.parse(JSON.stringify(defaultTasks));
+    appSettings.teams = appSettings.teams?.["A"] ? appSettings.teams : JSON.parse(JSON.stringify(defaultSettings.teams));
+    TEAMS.forEach(t => appSettings.teams[t].offset = isNaN(appSettings.teams[t].offset) ? defaultSettings.teams[t].offset : appSettings.teams[t].offset);
+    appSettings.baseDate = isNaN(new Date(appSettings.baseDate).getTime()) ? defaultSettings.baseDate : appSettings.baseDate;
+    appSettings.myTeam = appSettings.myTeam || "C";
+
+    // 更新下拉選單選項 (包含領班名字)
+    function populateDropdowns() {
+        const vSel = el("viewTeamSelect");
+        const mSel = el("monthViewSelect");
+        const vVal = vSel?.value || currentViewTeam || appSettings.myTeam;
+        const mVal = mSel?.value || currentMonthViewTeam || appSettings.myTeam;
+
+        let optionsHtml = TEAMS.map(t => `<option value="${t}">${t}班 (${appSettings.teams[t]?.name || "未設定"})</option>`).join("");
+        let allOption = `<option value="ALL">全部</option>`;
+
+        if(vSel) { vSel.innerHTML = optionsHtml + allOption; vSel.value = vVal; }
+        if(mSel) { mSel.innerHTML = optionsHtml + allOption; mSel.value = mVal; }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        isActualMode = appSettings.defaultMode;
+        currentViewTeam = currentMonthViewTeam = appSettings.myTeam;
+        
+        populateDropdowns(); // 初始化選單
+        
+        setVal("viewTeamSelect", currentViewTeam);
+        setVal("monthViewSelect", currentMonthViewTeam);
+        el('btnLogical').className = isActualMode ? 'btn-mode' : 'btn-mode active';
+        el('btnActual').className = isActualMode ? 'btn-mode active' : 'btn-mode';
+
+        // 👇 加上這行，讓小日曆圖示顯示今天的日期數字
+        if (el('dynamicTodayNum')) el('dynamicTodayNum').innerText = getTWDate().getDate();
+
+        var todayString = formatDateToYYYYMMDD(getTWDate());
+        normalQueryDateValue = todayString;
+        var savedJournalDate = localStorage.getItem("ScheduleApp_WorkJournalDate") || "";
+        workJournalSelectedDate = /^\d{4}-\d{2}-\d{2}$/.test(savedJournalDate) ? savedJournalDate : todayString;
+        setVal("queryDate", normalQueryDateValue);
+        sharedDatePickerNode = document.querySelector("#headerControls .date-picker-container");
+        el("queryDate").addEventListener("change", handleSharedDateChange);
+        toggleTaskInputs(); loadSettingsToForm(); renderAppSafe();
+
+        const calContainer = el("monthCalendar");
+        let touchStartX = 0;
+        calContainer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+        calContainer.addEventListener('touchend', e => {
+            let touchEndX = e.changedTouches[0].screenX;
+            if (touchEndX < touchStartX - 40) changeCalendarMonth(1); 
+            if (touchEndX > touchStartX + 40) changeCalendarMonth(-1); 
+        }, {passive: true});
+
+        checkInstallStatus();
+        applyModeUI();
+        bindSettingsSecretTrigger();
+        // 一般模式不呼叫任何雲端 API；只有本機旗標表示已通過驗證的裝置才執行啟動比對。
+        setTimeout(() => { if (isAdvancedMode()) syncCloudOnStartup(); }, 1500);
+    });
+
+    let deferredPrompt;
+    function checkInstallStatus() {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        const installContainer = el('installButtonContainer');
+
+        if (isStandalone) {
+            installContainer.style.display = 'none';
+        } else {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (isIOS) {
+                installContainer.style.display = 'block';
+                el('btnInstall').addEventListener('click', () => {
+                    triggerVibrate();
+                    el('iosInstallOverlay').style.display = 'flex';
+                });
+            } else {
+                window.addEventListener('beforeinstallprompt', e => {
+                    e.preventDefault();
+                    deferredPrompt = e;
+                    installContainer.style.display = 'block';
+                });
+                el('btnInstall').addEventListener('click', () => {
+                    triggerVibrate();
+                    if (!deferredPrompt) return;
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then(c => {
+                        if (c.outcome === 'accepted') {
+                            installContainer.style.display = 'none';
+                        }
+                        deferredPrompt = null;
+                    });
+                });
+            }
+        }
+    }
+
+    function ensureHolidaysForYear(y) {
+        if (y < 2026) return; 
+        if (appSettings.holidays[`${y}-01-01`]) return;
+
+        let newH = {};
+        
+        ["01-01:元旦", "02-28:和平紀念日", "04-04:兒童節", "05-01:勞動節", "10-10:國慶日"].forEach(item => {
+            let p = item.split(":"); 
+            if (!appSettings.holidays[`${y}-${p[0]}`]) newH[`${y}-${p[0]}`] = p[1];
+        });
+
+        let userAlreadySet = Object.keys(appSettings.holidays).some(k => 
+            k.startsWith(y + "-") && (appSettings.holidays[k].includes("春節") || appSettings.holidays[k].includes("端午") || appSettings.holidays[k].includes("中秋"))
+        );
+
+        if (!userAlreadySet) {
+            const vData = {
+                2026: { l: "02-17", q: "04-05", d: "06-19", m: "09-25" },
+                2027: { l: "02-06", q: "04-05", d: "06-09", m: "09-15" },
+                2028: { l: "01-26", q: "04-04", d: "05-28", m: "10-03" },
+                2029: { l: "02-13", q: "04-04", d: "06-16", m: "09-22" },
+                2030: { l: "02-03", q: "04-05", d: "06-05", m: "09-12" },
+                2031: { l: "01-23", q: "04-05", d: "06-24", m: "10-01" },
+                2032: { l: "02-11", q: "04-04", d: "06-12", m: "09-19" },
+                2033: { l: "01-31", q: "04-04", d: "06-01", m: "09-08" },
+                2034: { l: "02-19", q: "04-05", d: "06-20", m: "09-27" },
+                2035: { l: "02-08", q: "04-05", d: "06-10", m: "09-16" },
+                2036: { l: "01-28", q: "04-04", d: "06-28", m: "10-04" },
+                2037: { l: "02-15", q: "04-04", d: "06-18", m: "09-24" },
+                2038: { l: "02-04", q: "04-05", d: "06-07", m: "09-13" },
+                2039: { l: "01-24", q: "04-05", d: "06-26", m: "10-02" },
+                2040: { l: "02-12", q: "04-04", d: "06-14", m: "09-21" },
+                2041: { l: "02-01", q: "04-04", d: "06-03", m: "09-10" },
+                2042: { l: "01-22", q: "04-05", d: "06-22", m: "09-28" },
+                2043: { l: "02-10", q: "04-05", d: "06-11", m: "09-17" },
+                2044: { l: "01-30", q: "04-04", d: "05-31", m: "10-05" },
+                2045: { l: "02-17", q: "04-04", d: "06-19", m: "09-25" },
+                2046: { l: "02-06", q: "04-05", d: "06-08", m: "09-15" },
+                2047: { l: "01-26", q: "04-05", d: "06-27", m: "10-04" },
+                2048: { l: "02-14", q: "04-04", d: "06-15", m: "09-22" },
+                2049: { l: "02-02", q: "04-04", d: "06-05", m: "09-11" },
+                2050: { l: "01-23", q: "04-05", d: "06-24", m: "09-30" }
+            };
+
+            let vYearData = vData[y];
+            let isFallback = false;
+
+            if (!vYearData && y > 2050) {
+                isFallback = true;
+                let prevL = null, prevQ = null, prevD = null, prevM = null;
+                for (const [dateStr, name] of Object.entries(appSettings.holidays)) {
+                    if (dateStr.startsWith((y - 1) + "-")) {
+                        let md = dateStr.substring(5);
+                        if (name.includes("春節") && !name.includes("待確認")) prevL = md;
+                        if (name.includes("清明") && !name.includes("待確認")) prevQ = md;
+                        if (name.includes("端午") && !name.includes("待確認")) prevD = md;
+                        if (name.includes("中秋") && !name.includes("待確認")) prevM = md;
+                    }
+                }
+                vYearData = {
+                    l: prevL || "02-10",
+                    q: prevQ || "04-04",
+                    d: prevD || "06-10",
+                    m: prevM || "09-15"
+                };
+            }
+
+            if (vYearData) {
+                let lParts = vYearData.l.split('-');
+                let lDate = new Date(y, parseInt(lParts[0]) - 1, parseInt(lParts[1]));
+                let suffix = isFallback ? "(待確認)" : "";
+                
+                [[-2, `小年夜${suffix}`], [-1, `除夕${suffix}`], [0, `春節${suffix}`], [1, `初二${suffix}`], [2, `初三${suffix}`]].forEach(o => {
+                    let d = new Date(lDate); d.setDate(lDate.getDate() + o[0]);
+                    newH[formatDateToYYYYMMDD(d)] = o[1];
+                });
+                
+                let qStr = `${y}-${vYearData.q}`;
+                newH[qStr] = newH[qStr] ? newH[qStr] + `/清明節${suffix}` : `清明節${suffix}`;
+                
+                newH[`${y}-${vYearData.d}`] = `端午節${suffix}`;
+                newH[`${y}-${vYearData.m}`] = `中秋節${suffix}`;
+            }
+            
+            if (isFallback) {
+                setTimeout(() => {
+                    alert(`⚠️ 系統提示\n\n${y} 年的農曆變動假日（春節、清明、端午、中秋）已自動沿用前一年的日期，並標註為「(待確認)」。\n\n因為農曆每年不同，請務必至「系統設定 -> 國定假日管理」修正為 ${y} 年正確的日期！`);
+                }, 300);
+            }
+        }
+        
+        const generatedHolidayCount = Object.keys(newH).length;
+        Object.assign(appSettings.holidays, newH);
+        if (generatedHolidayCount) persistSettingsToLocal(true);
+        else persistSettingsToLocal(false);
+        
+        if (tempHolidays) Object.assign(tempHolidays, newH);
+        if (el("holidayList")) renderHolidayList();
+    }
+
+    function setToday(inputId) { triggerVibrate(); setVal(inputId, formatDateToYYYYMMDD(getTWDate())); el(inputId).dispatchEvent(new Event('change')); }
+
+    function isWorkJournalTabActive() { return !!el("tab3")?.classList.contains("active"); }
+    function preserveWorkJournalEditors() {
+        if (!workJournalSelectedDate) return;
+        var changed = false;
+        ["晚班", "早班", "午班"].forEach(function (shift) {
+            var editor = el("journalText_" + shift);
+            if (!editor) return;
+            var record = getJournalRecord(workJournalSelectedDate, shift, false);
+            if (!record && !String(editor.value || "").trim()) return;
+            if (!record) record = getJournalRecord(workJournalSelectedDate, shift, true);
+            if (record.text !== editor.value) {
+                record.text = editor.value;
+                record.updatedAt = new Date().toISOString();
+                changed = true;
+            }
+        });
+        if (changed) saveExtendedAppData();
+    }
+    function handleSharedDateChange() {
+        var selected = getVal("queryDate") || formatDateToYYYYMMDD(getTWDate());
+        if (isWorkJournalTabActive()) {
+            if (workJournalSelectedDate && selected !== workJournalSelectedDate) preserveWorkJournalEditors();
+            workJournalSelectedDate = selected;
+            try { localStorage.setItem("ScheduleApp_WorkJournalDate", selected); } catch (e) {}
+            renderWorkJournal();
+        } else {
+            normalQueryDateValue = selected;
+            renderAppSafe();
+        }
+    }
+    function moveSharedDatePickerToJournal(moveToJournal) {
+        if (!sharedDatePickerNode) sharedDatePickerNode = document.querySelector(".date-picker-container");
+        if (!sharedDatePickerNode) return;
+        var headerControlsNode = el("headerControls");
+        var journalSlot = el("journalDatePickerSlot");
+        if (moveToJournal) {
+            if (journalSlot && sharedDatePickerNode.parentNode !== journalSlot) journalSlot.appendChild(sharedDatePickerNode);
+        } else if (headerControlsNode && sharedDatePickerNode.parentNode !== headerControlsNode) {
+            headerControlsNode.insertBefore(sharedDatePickerNode, headerControlsNode.firstChild);
+        }
+    }
+    
+    function setMode(mode) { triggerVibrate(); isActualMode = mode; el('btnLogical').className = mode ? 'btn-mode' : 'btn-mode active'; el('btnActual').className = mode ? 'btn-mode active' : 'btn-mode'; renderAppSafe(); }
+    function changeViewTeam() { triggerVibrate(); currentViewTeam = getVal("viewTeamSelect"); renderAppSafe(); }
+    function changeMonthViewTeam() { triggerVibrate(); currentMonthViewTeam = getVal("monthViewSelect"); renderMonthTable(); }
+    
+    function changeCalendarMonth(offset) {
+        triggerVibrate();
+        calendarViewDate.setMonth(calendarViewDate.getMonth() + offset);
+        renderMonthTable();
+    }
+
+    function changeDate(days) {
+        triggerVibrate();
+        var current = getVal("queryDate") || formatDateToYYYYMMDD(getTWDate());
+        let d = new Date(current.replace(/-/g, '/'));
+        d.setDate(d.getDate() + days);
+        setVal("queryDate", formatDateToYYYYMMDD(d));
+        el("queryDate").dispatchEvent(new Event("change"));
+    }
+
+    function getLogicalShift(teamId, targetDateStr) {
+        if (appSettings.manualShifts?.[`${targetDateStr}_${teamId}`]) return appSettings.manualShifts[`${targetDateStr}_${teamId}`];
+        const tDate = new Date(targetDateStr.replace(/-/g, '/')), bDate = new Date(appSettings.baseDate.replace(/-/g, '/'));
+        const diffDays = Math.round((tDate - bDate) / 86400000) || 0;
+        const getShift = d => SHIFT_CYCLE[(((appSettings.teams[teamId].offset || 0) + d) % 8 + 8) % 8];
+        let shift = getShift(diffDays);
+
+        if (shift === "晚班1") {
+            let monDate = new Date(tDate); monDate.setDate(tDate.getDate() + (tDate.getDay() === 0 ? -6 : 1 - tDate.getDay()));
+            let restCount = 0;
+            for (let i = 0; i < 7; i++) {
+                let curD = new Date(monDate); curD.setDate(monDate.getDate() + i);
+                let cShift = getShift(Math.round((curD - bDate) / 86400000) || 0);
+                if (cShift === "小休" || cShift === "大休") restCount++;
+            }
+            if (restCount === 1) shift = "$" + shift;
+        }
+        return shift;
+    }
+
+    function getActualShift(logicalShift, teamId, targetDateStr) {
+        if (!logicalShift) return "早班1"; 
+        if (!isActualMode) return logicalShift; 
+        
+        let core = logicalShift.replace("$", "");
+        const isOverride = core.startsWith("調:");
+        let comp = isOverride ? core.replace("調:", "") : core;
+        let resultCore = core;
+        let isOvertime = logicalShift.includes("$");
+
+        if (comp === "小休") {
+            resultCore = (isOverride ? "調:" : "") + "晚班1";
+            if (teamId && targetDateStr) {
+                let tDate = new Date(targetDateStr.replace(/-/g, '/'));
+                tDate.setDate(tDate.getDate() + 1);
+                let tomorrowLogical = getLogicalShift(teamId, formatDateToYYYYMMDD(tDate));
+                if (tomorrowLogical && tomorrowLogical.includes("$")) {
+                    isOvertime = true;
+                }
+            }
+        }
+        else if (comp === "晚班1") {
+            resultCore = (isOverride ? "調:" : "") + "晚班2";
+            isOvertime = false; 
+        }
+        else if (comp === "晚班2") {
+            resultCore = (isOverride ? "調:" : "") + "小休";
+            isOvertime = false;
+        }
+        
+        return (isOvertime ? "$" : "") + resultCore;
+    }
+
+    const badgeStyles = {
+        "shift-morn": { bg: "var(--morn-color)", fg: "var(--morn-text)" },
+        "shift-mid": { bg: "var(--mid-color)", fg: "var(--mid-text)" },
+        "shift-night": { bg: "var(--night-color)", fg: "var(--night-text)" },
+        "shift-override": { bg: "#FEF2F2", fg: "#991B1B", border: "1px dashed #FCA5A5" },
+        "shift-rest": { bg: "var(--rest-color)", fg: "var(--rest-text)" }
+    };
+    function getBadgeClass(txt) { if (!txt) return "shift-rest"; if (txt.includes("調:") || txt.includes("假") || txt.includes("特休")) return "shift-override"; if (txt.includes("早")) return "shift-morn"; if (txt.includes("中") || txt.includes("午")) return "shift-mid"; if (txt.includes("晚")) return "shift-night"; return "shift-rest"; }
+
+    function renderAppSafe() { try { renderApp(); } catch (err) { el("myTeamName").innerText = "⚠️ 資料發生錯誤"; el("myShiftBadge").innerText = "請恢復預設"; } }
+
+    function renderApp() {
+        const qStr = getVal("queryDate"); if (!qStr) return;
+        const targetDate = new Date(qStr.replace(/-/g, '/'));
+        
+        ensureHolidaysForYear(targetDate.getFullYear()); 
+        
+        const dateKey = formatDateToYYYYMMDD(targetDate);
+        
+        let dayText = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][targetDate.getDay()];
+        if (appSettings.holidays?.[dateKey]) dayText += ` <span style="color:#DC2626; font-size:1.1rem; margin-left:8px;">🎈 ${appSettings.holidays[dateKey]}</span>`;
+        el("dayOfWeekDisplay").innerHTML = dayText;
+
+        // 計算視角班別，如果是 "ALL"，則使用預設班別來計算提醒
+        let viewTeamId = currentViewTeam || appSettings.myTeam;
+        let isAllView = viewTeamId === "ALL";
+        let calcTeamId = isAllView ? appSettings.myTeam : viewTeamId;
+        
+        let myShiftTextForCalc = ""; 
+        let allTeamsHTML = "";
+        
+        TEAMS.forEach(id => {
+            let shiftText = getActualShift(getLogicalShift(id, dateKey), id, dateKey);
+            
+            if (id === calcTeamId) {
+                myShiftTextForCalc = shiftText; // 紀錄給提醒、工作列表用
+            }
+            
+            // 處理單一班別顯示邏輯
+            if (!isAllView && id === viewTeamId) {
+                el("myTeamName").innerText = `${id}班 (${appSettings.teams[id]?.name || "未設定"})`;
+                el("myShiftBadge").innerText = shiftText.replace("調:", ""); 
+                el("myShiftBadge").className = `shift-badge ${getBadgeClass(shiftText)}`;
+            }
+            
+            // 處理全部班別 HTML
+            allTeamsHTML += `<div class="team-row"><span class="team-name">${id}班 (${appSettings.teams[id]?.name || ""})</span><span class="shift-badge ${getBadgeClass(shiftText)}">${shiftText.replace("調:", "")}</span></div>`;
+        });
+        
+        el("allTeamsContainer").innerHTML = allTeamsHTML; // 同步更新下方總覽
+
+        // 切換 UI 顯示模式 (單一 / 全部)
+        if (isAllView) {
+            el("singleTeamView").style.display = "none";
+            el("allTeamsTodayView").innerHTML = allTeamsHTML;
+            el("allTeamsTodayView").style.display = "block";
+        } else {
+            el("singleTeamView").style.display = "flex";
+            el("allTeamsTodayView").style.display = "none";
+        }
+
+        // --- 提醒與工作顯示 (使用 calcTeamId，即退回預設個人班別) ---
+        let cReminders = [], rOvertimes = [], isTodayRestOvertime = false;
+        let sDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1), eDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 2, 0); 
+        for (let d = new Date(sDate); d <= eDate; d.setDate(d.getDate() + 1)) {
+            let k = formatDateToYYYYMMDD(d), lShift = getLogicalShift(calcTeamId, k);
+            if (lShift?.startsWith("$") && appSettings.holidays?.[k] && d >= targetDate) cReminders.push(`${d.getMonth()+1}/${d.getDate()} (${appSettings.holidays[k]})`);
+        }
+        
+        let cY = targetDate.getFullYear(), cM = targetDate.getMonth(), dNum = targetDate.getDate();
+        let cycStart = new Date(cY, dNum >= 16 ? cM : cM - 1, 16), cycEnd = new Date(cY, dNum >= 16 ? cM + 1 : cM, 15);
+        for (let d = new Date(cycStart); d <= cycEnd; d.setDate(d.getDate() + 1)) {
+            let k = formatDateToYYYYMMDD(d);
+            if (getLogicalShift(calcTeamId, k)?.startsWith("$")) {
+                rOvertimes.push(`${d.getMonth()+1}/${d.getDate()}`);
+                if (k === dateKey) isTodayRestOvertime = true;
+            }
+        }
+
+        const cEl = el("holidayConflictContainer"), rEl = el("restDayReminderContainer");
+        let prefix = isAllView ? `[${calcTeamId}班] ` : ""; // 加上標籤提醒使用者目前是誰的提醒
+        
+        if (cReminders.length) { cEl.innerHTML = `<div style="font-weight:bold; color:#B91C1C;">🚨 ${prefix}換班提醒：休息日出勤遇國定假日！</div><ul style="margin:0; padding-left:22px; font-weight:bold;">${cReminders.map(c=>`<li>${c}，請記得換班。</li>`).join("")}</ul>`; cEl.style.display = "block"; } else cEl.style.display = "none";
+        
+        if (rOvertimes.length) { rEl.innerHTML = `${isTodayRestOvertime ? `<div style="font-size:1.15rem; font-weight:bold; margin-bottom:8px; border-bottom:1px solid #FCA5A5; padding-bottom:5px;">🚨 今日為休息日出勤！</div>` : ""}<strong>⚠️ ${prefix}休息日出勤提醒</strong><br><span style="font-size:0.95rem; color:#DC2626;">(結算週期: ${cycStart.getMonth()+1}/16 ~ ${cycEnd.getMonth()+1}/15)</span><br>本週期的休息日出勤：${rOvertimes.join(", ")}<div style="margin-top:8px; font-size:1rem; font-weight:bold; color:#991B1B;">💡 休息日出勤若請假，請記得調整。</div>`; rEl.style.display = "block"; } else rEl.style.display = "none";
+
+        // 更新工作提醒標題的班別提示
+        el("taskTeamLabel").innerText = isAllView ? `(顯示專屬班別 ${calcTeamId}班)` : "";
+        renderTasks(targetDate, calcTeamId, myShiftTextForCalc); 
+        
+        calendarViewDate = new Date(targetDate);
+        renderMonthTable();
+    }
+
+    function renderTasks(date, myTeamId, myShiftText) {
+        let regT = [], perT = [], monT = [], cleanMyShift = (myShiftText || "").replace("$", "").replace("調:", "");
+        
+        let activeShifts = ["全天", cleanMyShift];
+        if (cleanMyShift.startsWith("早")) activeShifts.push("早班");
+        if (cleanMyShift.startsWith("中")) activeShifts.push("中班");
+        if (cleanMyShift.startsWith("晚")) activeShifts.push("晚班");
+
+        const cY = date.getFullYear(), cM = date.getMonth(), cD = date.getDate(), cW = date.getDay();
+        const mDays = new Date(cY, cM + 1, 0).getDate(), tStr = formatDateToYYYYMMDD(date);
+
+        appSettings.tasks.forEach(t => {
+            if (!activeShifts.includes(t.shift)) return;
+            let match = false;
+            switch(t.rule) {
+                case 'every_shift': match = true; break;
+                case 'specific_date': match = t.ruleValue === tStr; break;
+                case 'weekly': match = cW === parseInt(t.ruleValue); break;
+                case 'monthly_day': match = cD === parseInt(t.ruleValue); break;
+                case 'monthly_last': match = cD === mDays; break;
+                case 'last_monday': match = cW === 1 && new Date(cY, cM, cD + 7).getMonth() !== cM; break;
+                case 'yearly_range': let p = t.ruleValue.split('-'); match = (cM+1) >= parseInt(p[0]) && (cM+1) <= parseInt(p[1]); break;
+                case 'odd_months': match = (cM+1) % 2 !== 0; break;
+                case 'even_months': match = (cM+1) % 2 === 0; break;
+            }
+            if (match) t.rule === 'every_shift' ? regT.push(t.text) : perT.push(t.text);
+        });
+
+        let mElapsed = (cY - 2026) * 12 + cM;
+        if (["D", "A", "B", "C"][(Math.floor(mElapsed/2) % 4 + 4) % 4] === myTeamId) monT.push(`輪值：本月做月盤查量油取樣 (營業油槽，20日附近)`);
+        if ((cM + 1) % 2 !== 0 && ["B", "C", "D", "A"][(Math.floor(mElapsed/2) % 4 + 4) % 4] === myTeamId) monT.push(`輪值：本月做全規範取樣 (每月10號前)`);
+
+        let html = `<li style="background:transparent; border:none; padding:0 0 5px; margin:0 0 8px; font-weight:bold; color:var(--primary); border-bottom:2px solid var(--border-color); border-radius:0; font-size:1.15rem;">📅 今日當班工作</li>`;
+        let tTasks = perT.concat(regT);
+        html += tTasks.length ? tTasks.map(t => `<li>📍 ${t}</li>`).join("") : `<li class="no-task">🎉 今日無排程工作。</li>`;
+        html += `<li style="background:transparent; border:none; padding:0 0 5px; margin:15px 0 8px; font-weight:bold; color:#D97706; border-bottom:2px solid var(--border-color); border-radius:0; font-size:1.15rem;">🗓️ 本月輪值任務</li>`;
+        html += monT.length ? monT.map(t => `<li style="background:#FFFBEB; color:#B45309; border-left-color:#F59E0B;">📌 ${t}</li>`).join("") : `<li class="no-task" style="background:#FFFBEB; color:#B45309; border-left-color:#F59E0B;">本月無輪值工作。</li>`;
+        el("taskList").innerHTML = html;
+    }
+
+    function renderMonthTable() {
+        const y = calendarViewDate.getFullYear();
+        const m = calendarViewDate.getMonth();
+        
+        ensureHolidaysForYear(y);
+
+        const days = new Date(y, m + 1, 0).getDate();
+        const fw = new Date(y, m, 1).getDay();
+        const prevMonthDays = new Date(y, m, 0).getDate();
+        
+        if(el("calendarTitle")) el("calendarTitle").innerText = `🗓️ ${y}年${m + 1}月班表總覽`;
+        
+        const qStr = getVal("queryDate"); 
+        const gDate = qStr ? new Date(qStr.replace(/-/g, '/')) : getTWDate();
+
+        let html = ["日", "一", "二", "三", "四", "五", "六"].map(wd => `<div class="cal-header">${wd}</div>`).join("");
+        
+        let viewMode = currentMonthViewTeam || appSettings.myTeam;
+
+        const renderCell = (iterY, iterM, iterDay, isCurrentMonth) => {
+            let iterDate = new Date(iterY, iterM, iterDay);
+            let iterStr = formatDateToYYYYMMDD(iterDate);
+            let hName = appSettings.holidays?.[iterStr];
+            let onClick = hName ? `onclick="showHolidayToast('${iterDate.getMonth()+1}/${iterDate.getDate()}', '${hName.replace(/'/g, "\\'")}')"` : "";
+            let isToday = (iterDate.getFullYear() === gDate.getFullYear() && iterDate.getMonth() === gDate.getMonth() && iterDate.getDate() === gDate.getDate());
+            
+            let cellStyle = isCurrentMonth ? "" : "opacity: 0.45; background: #F9FAFB;";
+            let numColor = isCurrentMonth ? "var(--text-main)" : "#9CA3AF";
+            let todayClass = isToday ? "today" : "";
+            
+            let cellHtml = `<div class="cal-cell ${todayClass}" ${onClick} style="${hName ? "cursor:pointer;" : ""} ${cellStyle}">`;
+            cellHtml += `<div class="cal-day-num" style="color:${numColor}">${iterDate.getDate()}${hName ? `<span style="font-size:0.9rem;">🎈</span>` : ""}</div>`;
+            
+            if (viewMode === "ALL") {
+                cellHtml += `<div class="cal-shift-all">` + TEAMS.map(id => {
+                    let sTxt = getActualShift(getLogicalShift(id, iterStr), id, iterStr), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
+                    let shiftStr = sTxt.replace("班","").replace("調:","✏️");
+                    
+                    return `<span style="background:${s.bg}; color:${s.fg}; border-left:3px solid ${s.fg};"><span class="shift-prefix">${id}:</span><span class="shift-name">${shiftStr}</span></span>`;
+                }).join("") + `</div>`;
+            } else {
+                let sTxt = getActualShift(getLogicalShift(viewMode, iterStr), viewMode, iterStr), cls = getBadgeClass(sTxt), s = badgeStyles[cls] || badgeStyles["shift-rest"];
+                cellHtml += `<div class="cal-shift-single" style="background:${s.bg}; color:${s.fg}; ${s.border||""}">${sTxt.replace("班","").replace("調:","✏️")}</div>`;
+            }
+            cellHtml += `</div>`;
+            return cellHtml;
+        };
+
+        for (let i = 0; i < fw; i++) {
+            let pDay = prevMonthDays - fw + i + 1;
+            html += renderCell(y, m - 1, pDay, false);
+        }
+        
+        for (let day = 1; day <= days; day++) {
+            html += renderCell(y, m, day, true);
+        }
+        
+        let extraCells = (7 - (fw + days) % 7) % 7;
+        for (let i = 0; i < extraCells; i++) {
+            let nDay = i + 1;
+            html += renderCell(y, m + 1, nDay, false);
+        }
+        
+        if(el("monthCalendar")) el("monthCalendar").innerHTML = html;
+    }
+
+    let toastTimeout;
+    function showHolidayToast(d, name) { triggerVibrate(); let t = el("holidayToast"); if(!t) return; t.innerHTML = `📅 <strong>${d}</strong><br>🎈 ${name}`; t.classList.add("show"); clearTimeout(toastTimeout); toastTimeout = setTimeout(() => t.classList.remove("show"), 3000); }
+
+    function updateBasePreview() {
+        const dVal = getVal("setBaseDate"), rTeam = getVal("setRefTeam"), rShift = parseInt(getVal("setRefShift"), 10) || 0;
+        if (!dVal) return el("basePreview").innerHTML = "請先選擇基準日。";
+        let offsets = {}, pos = {'C':0, 'D':2, 'A':4, 'B':6}, bPos = pos[rTeam];
+        TEAMS.forEach(t => offsets[t] = (rShift + (pos[t] - bPos + 8) % 8) % 8);
+        const previewTitle = coreSettingsDirty ? "預覽（尚未套用）" : "目前基準設定";
+        el("basePreview").innerHTML = `<strong style="display:block; margin-bottom:4px;">✨ ${previewTitle}：${dVal}</strong><span style="color:#DC2626; font-weight:bold;">${rTeam}班</span> 為「${SHIFT_CYCLE[rShift]}」 ➜<br><span style="color:#4B5563;">${TEAMS.filter(t=>t!==rTeam).map(t=>`${t}班「${SHIFT_CYCLE[offsets[t]]}」`).join(" / ")}</span>`;
+    }
+
+    function loadSettingsToForm() {
+        setVal("setBaseDate", appSettings.baseDate);
+        setVal("setMyTeam", appSettings.myTeam);
+        setVal("setDefaultMode", appSettings.defaultMode ? "true" : "false");
+        // 以目前個人班別及其已儲存的循環位置，重建等效的基準參照。
+        setVal("setRefTeam", appSettings.myTeam);
+        setVal("setRefShift", isNaN(appSettings.teams[appSettings.myTeam].offset) ? 0 : appSettings.teams[appSettings.myTeam].offset);
+        TEAMS.forEach(t => setVal(`setTeam${t}`, appSettings.teams[t].name || ""));
+        populateDropdowns();
+        tempHolidays = JSON.parse(JSON.stringify(appSettings.holidays || {}));
+        tempTasks = JSON.parse(JSON.stringify(appSettings.tasks || []));
+        tempManualShifts = JSON.parse(JSON.stringify(appSettings.manualShifts || {}));
+        coreSettingsDirty = false;
+        updateBasePreview();
+        cancelEditHoliday();
+        cancelEditCustomTask();
+        renderHolidayList(); renderTaskList(); renderManualShiftList();
+        updateSettingsStatus();
+    }
+
+    const SCHEDULE_LOCAL_MODIFIED_KEY = "ScheduleApp_LocalModifiedAt";
+    const ADVANCED_MODE_KEY = "ScheduleApp_AdvancedMode_CloudVerified";
+    const CLOUD_FILE_NAME = "供油班表_雲端備份.json";
+
+    function isAdvancedMode() {
+        return localStorage.getItem(ADVANCED_MODE_KEY) === "1";
+    }
+
+    function persistSettingsToLocal(syncCloud) {
+        try {
+            localStorage.setItem("shiftSettings", JSON.stringify(appSettings));
+            localStorage.setItem(SCHEDULE_LOCAL_MODIFIED_KEY, new Date().toISOString());
+            if (syncCloud && isAdvancedMode()) {
+                localStorage.setItem("pendingSync", "true");
+                cloudSyncState = "pending";
+                scheduleSilentCloudBackup();
+            }
+            // 一般模式只儲存在本機，不設新的雲端待同步工作。
+            updateSettingsStatus();
+            return true;
+        } catch (error) {
+            cloudSyncState = "localError";
+            updateSettingsStatus();
+            alert("本機儲存失敗！可能是裝置儲存空間不足，請先執行本機備份並檢查儲存空間。\n\n" + (error.message || error));
+            return false;
+        }
+    }
+
+    function updateSettingsStatus() {
+        if (!el("settingsStatusText")) return;
+        const advanced = isAdvancedMode();
+        const pending = localStorage.getItem("pendingSync") === "true";
+        let title = "本機資料已儲存", cloud = advanced ? "雲端：尚未記錄最近一次同步時間" : "一般模式：僅儲存本機，不執行雲端同步。", icon = "💾";
+        if (cloudSyncState === "localError") { title = "本機儲存失敗"; cloud = "請先確認裝置儲存空間。"; icon = "⚠️"; }
+        else if (advanced && cloudSyncState === "syncing") { cloud = "雲端：正在同步最新資料…"; icon = "☁️"; }
+        else if (advanced && cloudSyncState === "error") { cloud = "雲端：同步失敗，資料仍保留在本機，等待重試。"; icon = "⚠️"; }
+        else if (advanced && (pending || cloudSyncState === "pending")) { cloud = navigator.onLine ? "雲端：等待同步，系統會自動處理。" : "雲端：目前離線，網路恢復後自動重試。"; icon = "⏳"; }
+        else if (advanced) {
+            const last = localStorage.getItem("lastCloudSyncAt");
+            if (last) {
+                const d = new Date(last);
+                cloud = "雲端：最近同步成功 " + d.toLocaleString("zh-TW", {hour12:false});
+            } else cloud = "雲端：尚未執行過備份";
+        }
+        el("settingsStatusText").innerText = title;
+        el("settingsCloudStatus").innerText = cloud;
+        el("settingsStatusIcon").innerText = icon;
+        el("settingsCorePending").style.display = coreSettingsDirty ? "block" : "none";
+        el("applyCoreSettingsBtn").style.display = coreSettingsDirty ? "block" : "none";
+    }
+
+    function saveGeneralSettings() {
+        const nextMyTeam = getVal("setMyTeam");
+        const nextMode = getVal("setDefaultMode") === "true";
+        const nextNames = {};
+        TEAMS.forEach(t => nextNames[t] = (getVal(`setTeam${t}`) || "").trim());
+        let changed = appSettings.myTeam !== nextMyTeam || appSettings.defaultMode !== nextMode || TEAMS.some(t => (appSettings.teams[t].name || "") !== nextNames[t]);
+        if (!changed) return;
+        appSettings.myTeam = nextMyTeam;
+        appSettings.defaultMode = nextMode;
+        TEAMS.forEach(t => appSettings.teams[t].name = nextNames[t]);
+        isActualMode = nextMode;
+        currentViewTeam = currentMonthViewTeam = nextMyTeam;
+        populateDropdowns();
+        setVal("viewTeamSelect", nextMyTeam); setVal("monthViewSelect", nextMyTeam);
+        el("btnLogical").className = nextMode ? "btn-mode" : "btn-mode active";
+        el("btnActual").className = nextMode ? "btn-mode active" : "btn-mode";
+        if (persistSettingsToLocal(true)) {
+            renderAppSafe();
+            if (el("tab2")?.classList.contains("active")) renderMonthTable();
+        }
+    }
+
+    function markCoreSettingsDirty() {
+        coreSettingsDirty = true;
+        updateBasePreview();
+        updateSettingsStatus();
+    }
+
+    function applyCoreSettings() {
+        triggerVibrate();
+        const baseDate = getVal("setBaseDate"), refTeam = getVal("setRefTeam"), refShift = parseInt(getVal("setRefShift"), 10);
+        if (!baseDate) return alert("請設定基準日。");
+        if (!TEAMS.includes(refTeam) || !Number.isInteger(refShift) || refShift < 0 || refShift > 7) return alert("請確認基準班別與當天班表。");
+        const pos = {'C':0, 'D':2, 'A':4, 'B':6}, basePos = pos[refTeam];
+        appSettings.baseDate = baseDate;
+        TEAMS.forEach(t => { appSettings.teams[t].offset = (refShift + (pos[t] - basePos + 8) % 8) % 8; });
+        if (!persistSettingsToLocal(true)) return;
+        coreSettingsDirty = false;
+        updateBasePreview(); updateSettingsStatus();
+        renderAppSafe(); renderMonthTable();
+        alert("✅ 核心排班設定已確認並套用！\n本機已儲存，雲端將於背景自動同步。");
+    }
+
+    const renderList = (id, data, emptyTxt, htmlFn) => { el(id).innerHTML = data.length ? data.map(htmlFn).join("") : `<div style='color:var(--text-muted); text-align:center; padding:10px; font-size:1.05rem;'>${emptyTxt}</div>`; };
+
+    function commitManagementSettings() {
+        appSettings.holidays = JSON.parse(JSON.stringify(tempHolidays));
+        appSettings.tasks = JSON.parse(JSON.stringify(tempTasks));
+        appSettings.manualShifts = JSON.parse(JSON.stringify(tempManualShifts));
+        return persistSettingsToLocal(true);
+    }
+
+    function renderManualShiftList() {
+        renderList("manualShiftList", Object.keys(tempManualShifts).sort(), "目前無紀錄", k => `<div class="list-item"><span><strong>${k.split("_")[0]}</strong> (${k.split("_")[1]}班) - <span style="color:#DC2626; font-weight:bold;">${tempManualShifts[k]}</span></span><div><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { delete tempManualShifts['${k}']; commitManagementSettings(); renderManualShiftList(); renderAppSafe(); }">✖</span></div></div>`);
+    }
+    function addManualShift() {
+        triggerVibrate(); const d = getVal("addManualDate"), t = getVal("addManualTeam"), sh = getVal("addManualShift");
+        if (!d) return alert("請選日期");
+        tempManualShifts[`${d}_${t}`] = sh;
+        if (commitManagementSettings()) { renderManualShiftList(); setVal("addManualDate", ""); renderAppSafe(); alert("手動改班／請假已儲存。"); }
+    }
+
+    function renderHolidayList() {
+        renderList("holidayList", Object.keys(tempHolidays).sort(), "無設定", d => `<div class="list-item ${d===editingHolidayDate?"editing-item":""}"><span><strong>${d}</strong> - ${tempHolidays[d]}</span><div><span class="list-action-btn btn-edit" onclick="startEditHoliday('${d}')">✎</span><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { if('${d}'===editingHolidayDate) cancelEditHoliday(); delete tempHolidays['${d}']; commitManagementSettings(); renderHolidayList(); renderAppSafe(); }">✖</span></div></div>`);
+    }
+    function startEditHoliday(d) { triggerVibrate(); editingHolidayDate = d; setVal("addHolidayDate", d); setVal("addHolidayName", tempHolidays[d]); el("holidayAddLabel").innerText = "✏️ 編輯假日"; el("btnSubmitHoliday").innerText = "✅ 更新"; el("btnCancelHoliday").style.display = "inline-block"; renderHolidayList(); }
+    function cancelEditHoliday() { triggerVibrate(); editingHolidayDate = null; setVal("addHolidayDate", ""); setVal("addHolidayName", ""); el("holidayAddLabel").innerText = "🎈 國定假日管理："; el("btnSubmitHoliday").innerText = "新增"; el("btnCancelHoliday").style.display = "none"; if (el("holidayList")) renderHolidayList(); }
+    function addHoliday() {
+        triggerVibrate(); const d = getVal("addHolidayDate"), n = (getVal("addHolidayName") || "").trim();
+        if (!d || !n) return alert("請填寫完整日期及假日名稱。");
+        if (editingHolidayDate && d !== editingHolidayDate) delete tempHolidays[editingHolidayDate];
+        else if (!editingHolidayDate && tempHolidays[d] && !confirm("這個日期已有假日設定，要覆蓋嗎？")) return;
+        tempHolidays[d] = n;
+        if (commitManagementSettings()) { cancelEditHoliday(); renderHolidayList(); renderAppSafe(); alert("國定假日已儲存。"); }
+    }
+
+    function toggleTaskInputs() {
+        const r = getVal("addTaskRule"); ['inputWrap_date', 'inputWrap_week', 'inputWrap_monthDay', 'inputWrap_monthRange'].forEach(i => el(i).style.display = 'none'); el('btnTaskToday').style.display = r === 'specific_date' ? 'inline-block' : 'none';
+        if (r === 'specific_date') el("inputWrap_date").style.display = 'block'; else if (r === 'weekly') el("inputWrap_week").style.display = 'block'; else if (r === 'monthly_day') el("inputWrap_monthDay").style.display = 'block'; else if (r === 'yearly_range') el("inputWrap_monthRange").style.display = 'flex';
+    }
+    const getRuleLbl = (r, v) => ({'every_shift':"每次當班", 'specific_date':v, 'weekly':`每週${["日","一","二","三","四","五","六"][v]}`, 'monthly_day':`每月${v}日`, 'monthly_last':"每月底", 'last_monday':"月底週一", 'yearly_range':`${v}月區間`, 'odd_months':"單數月", 'even_months':"雙數月"}[r] || "自訂");
+    function renderTaskList() {
+        renderList("customTaskList", tempTasks, "無設定", t => `<div class="list-item ${t.id===editingTaskId?"editing-item":""}" style="flex-wrap:wrap; gap:5px;"><div style="flex:1; min-width:220px;"><span class="task-badge">${t.shift}</span><span class="task-badge" style="background:#DBEAFE; color:#1E3A8A;">${getRuleLbl(t.rule,t.ruleValue)}</span><span>${t.text}</span></div><div><span class="list-action-btn btn-edit" onclick="startEditCustomTask('${t.id}')">✎</span><span class="list-action-btn btn-delete" onclick="triggerVibrate(); if(confirm('刪除？')) { if('${t.id}'===editingTaskId) cancelEditCustomTask(); tempTasks = tempTasks.filter(x=>x.id!=='${t.id}'); commitManagementSettings(); renderTaskList(); renderAppSafe(); }">✖</span></div></div>`);
+    }
+    function startEditCustomTask(id) { triggerVibrate(); const t = tempTasks.find(x => x.id === id); if(!t) return; editingTaskId = id; setVal("addTaskShift", t.shift); setVal("addTaskRule", t.rule); setVal("addTaskText", t.text); toggleTaskInputs(); if(t.rule==='specific_date') setVal("addTaskDate", t.ruleValue); else if(t.rule==='weekly') setVal("addTaskWeek", t.ruleValue); else if(t.rule==='monthly_day') setVal("addTaskMonthDay", t.ruleValue); else if(t.rule==='yearly_range') { let p = t.ruleValue.split('-'); setVal("addTaskRangeStart", p[0]); setVal("addTaskRangeEnd", p[1]); } el("taskAddLabel").innerText = "✏️ 編輯提醒"; el("btnSubmitTask").innerText = "✅ 更新"; el("btnCancelTask").style.display = "inline-block"; renderTaskList(); el("taskAddLabel").scrollIntoView({behavior:'smooth'}); }
+    function cancelEditCustomTask() { triggerVibrate(); editingTaskId = null; setVal("addTaskShift", "早班"); setVal("addTaskRule", "every_shift"); setVal("addTaskText", ""); setVal("addTaskDate", ""); setVal("addTaskWeek", "1"); setVal("addTaskMonthDay", ""); setVal("addTaskRangeStart", ""); setVal("addTaskRangeEnd", ""); toggleTaskInputs(); el("taskAddLabel").innerText = "➕ 新增自訂工作"; el("btnSubmitTask").innerText = "新增"; el("btnCancelTask").style.display = "none"; if (el("customTaskList")) renderTaskList(); }
+    function addCustomTask() {
+        triggerVibrate(); const sh = getVal("addTaskShift"), rule = getVal("addTaskRule"), txt = (getVal("addTaskText") || "").trim(); let value = "";
+        if (!txt) return alert("請輸入工作內容。");
+        if (rule === 'specific_date') { value = getVal("addTaskDate"); if (!value) return alert("請選擇日期。"); }
+        else if (rule === 'weekly') value = getVal("addTaskWeek");
+        else if (rule === 'monthly_day') { value = getVal("addTaskMonthDay"); if (!value || value < 1 || value > 31) return alert("日期設定錯誤。"); }
+        else if (rule === 'yearly_range') { const st = getVal("addTaskRangeStart"), en = getVal("addTaskRangeEnd"); if (!st || !en || st < 1 || en > 12 || Number(st) > Number(en)) return alert("月份區間設定錯誤。"); value = `${st}-${en}`; }
+        if (editingTaskId) { const idx = tempTasks.findIndex(t => t.id === editingTaskId); if (idx !== -1) tempTasks[idx] = {id:editingTaskId,shift:sh,rule,ruleValue:value,text:txt}; }
+        else tempTasks.push({id:"t_" + Date.now(),shift:sh,rule,ruleValue:value,text:txt});
+        if (commitManagementSettings()) { cancelEditCustomTask(); renderTaskList(); renderAppSafe(); alert("工作提醒已儲存。"); }
+    }
+
+    function restoreDefaults() {
+        triggerVibrate();
+        if (!confirm("確定恢復系統設定預設值？\n\n將重設：基準日期、班別循環、班別名稱、個人班別及預設顯示模式。\n\n會保留：手動改班／請假、國定假日、自訂工作提醒、臨時工作、工作日誌及調班紀錄。")) return;
+        const keep = {
+            holidays: JSON.parse(JSON.stringify(appSettings.holidays || {})),
+            manualShifts: JSON.parse(JSON.stringify(appSettings.manualShifts || {})),
+            tasks: JSON.parse(JSON.stringify(appSettings.tasks || defaultTasks)),
+            temporaryTasks: JSON.parse(JSON.stringify(appSettings.temporaryTasks || [])),
+            workJournals: JSON.parse(JSON.stringify(appSettings.workJournals || [])),
+            shiftSwapOverrides: JSON.parse(JSON.stringify(appSettings.shiftSwapOverrides || {})),
+            shiftSwapRecords: JSON.parse(JSON.stringify(appSettings.shiftSwapRecords || [])),
+            shiftTimeRules: JSON.parse(JSON.stringify(appSettings.shiftTimeRules || {}))
+        };
+        appSettings = JSON.parse(JSON.stringify(defaultSettings));
+        Object.assign(appSettings, keep);
+        currentViewTeam = currentMonthViewTeam = appSettings.myTeam;
+        isActualMode = appSettings.defaultMode;
+        setVal("viewTeamSelect", appSettings.myTeam); setVal("monthViewSelect", appSettings.myTeam);
+        coreSettingsDirty = false;
+        loadSettingsToForm();
+        if (!persistSettingsToLocal(true)) return;
+        renderAppSafe(); renderMonthTable(); updateSettingsStatus();
+        alert("已恢復系統設定預設值。手動改班、假日、工作提醒、臨時工作、工作日誌及調班紀錄均已保留。");
+    }
+
+    // ==========================================
+    // --- 備份與還原共用邏輯 ---
+    // ==========================================
+    function processImportData(importedData, sourceName, importMeta) {
+        if (typeof importedData === "string") importedData = JSON.parse(importedData);
+        if (!importedData || typeof importedData !== "object" || !importedData.baseDate || !importedData.teams) {
+            alert(`❌ ${sourceName}檔案格式不正確，無法還原！`);
+            return false;
+        }
+        try {
+            const restored = JSON.parse(JSON.stringify(importedData));
+            const restoredTeams = JSON.parse(JSON.stringify(defaultSettings.teams));
+            TEAMS.forEach(t => {
+                if (restored.teams[t] && typeof restored.teams[t] === "object") {
+                    restoredTeams[t] = Object.assign({}, restoredTeams[t], restored.teams[t]);
+                }
+            });
+            restored.teams = restoredTeams;
+            restored.holidays = Object.assign(JSON.parse(JSON.stringify(defaultSettings.holidays)), restored.holidays || {});
+            restored.manualShifts = restored.manualShifts && typeof restored.manualShifts === "object" ? restored.manualShifts : {};
+            restored.tasks = Array.isArray(restored.tasks) ? restored.tasks : JSON.parse(JSON.stringify(defaultTasks));
+            restored.temporaryTasks = Array.isArray(restored.temporaryTasks) ? restored.temporaryTasks : [];
+            restored.workJournals = Array.isArray(restored.workJournals) ? restored.workJournals : [];
+            restored.shiftSwapOverrides = restored.shiftSwapOverrides && typeof restored.shiftSwapOverrides === "object" ? restored.shiftSwapOverrides : {};
+            restored.shiftSwapRecords = Array.isArray(restored.shiftSwapRecords) ? restored.shiftSwapRecords : [];
+            restored.shiftTimeRules = normalizeShiftTimeRules(restored.shiftTimeRules);
+            if (!restored.myTeam || !TEAMS.includes(restored.myTeam)) restored.myTeam = defaultSettings.myTeam;
+            if (!restored.baseDate || isNaN(new Date(restored.baseDate).getTime())) restored.baseDate = defaultSettings.baseDate;
+            TEAMS.forEach(t => {
+                const n = Number(restored.teams[t].offset);
+                restored.teams[t].offset = Number.isFinite(n) ? ((n % 8) + 8) % 8 : defaultSettings.teams[t].offset;
+                restored.teams[t].name = String(restored.teams[t].name || defaultSettings.teams[t].name);
+            });
+            localStorage.setItem("shiftSettings", JSON.stringify(restored));
+            const importAt = new Date().toISOString();
+            localStorage.setItem(SCHEDULE_LOCAL_MODIFIED_KEY, importAt);
+            if (sourceName === "雲端") {
+                // 雲端還原後兩端已對齊，不要在重新載入時把剛還原的資料再當成新修改推回雲端。
+                localStorage.removeItem("pendingSync");
+                localStorage.setItem("lastCloudSyncAt", (importMeta && importMeta.modifiedAt) || importAt);
+                localStorage.setItem(SCHEDULE_LOCAL_MODIFIED_KEY, (importMeta && importMeta.modifiedAt) || importAt);
+                cloudSyncState = "synced";
+            } else {
+                localStorage.setItem("pendingSync", "true");
+                cloudSyncState = "pending";
+            }
+            const syncMessage = isAdvancedMode() ? "重新載入後會依進階模式規則同步雲端。" : "目前為一般模式，資料只儲存在本機；進入進階模式後才會同步雲端。";
+            alert(`✅ ${sourceName}資料還原成功！\n所有備份中的歷史假日、手動改班、工作提醒、臨時工作、工作日誌及照片連結均予以保留。\n${syncMessage}`);
+            window.location.reload();
+            return true;
+        } catch (error) {
+            alert(`❌ ${sourceName}資料還原失敗：${error.message || error}`);
+            return false;
+        }
+    }
+
+    function exportData() {
+        triggerVibrate();
+        let objectUrl = "";
+        try {
+            const backupJson = JSON.stringify(appSettings, null, 2);
+            const blob = new Blob([backupJson], { type: "application/json;charset=utf-8" });
+            objectUrl = URL.createObjectURL(blob);
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.href = objectUrl;
+            dlAnchorElem.download = "供油班表_本機備份.json";
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            document.body.removeChild(dlAnchorElem);
+            setTimeout(() => { if (objectUrl) URL.revokeObjectURL(objectUrl); }, 1500);
+            alert("✅ 本機備份檔已產生。\n檔名：供油班表_本機備份.json");
+        } catch (error) {
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            alert("❌ 本機備份失敗：" + (error.message || error));
+        }
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        if (!confirm("本機還原會以備份檔完整覆蓋目前資料，確定繼續嗎？")) { el('importDataInput').value = ""; return; }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try { processImportData(JSON.parse(e.target.result), "本機"); }
+            catch (err) { alert("❌ 讀取檔案失敗！請確認檔案格式。\n" + (err.message || err)); }
+            el('importDataInput').value = "";
+        };
+        reader.readAsText(file);
+    }
+
+    // ==========================================
+    // --- GAS 雲端備份與自動安靜備份 ---
+    // ==========================================
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw0wAnCPZkw3nlyx0Eg08Ejk49oG_itD82PqH9IP4X7S4oR5br1NTCmlUJsNfME2kbZ/exec";
+
+    function updateAppModeIndicator() {
+        const advanced = isAdvancedMode();
+        const indicator = el("appModeIndicator");
+        const label = el("appModeLabel");
+        const header = el("mainHeaderSection");
+        if (label) label.textContent = advanced ? "進階模式" : "";
+        if (indicator) {
+            indicator.classList.toggle("is-advanced", advanced);
+            indicator.setAttribute("aria-hidden", advanced ? "false" : "true");
+            if (advanced) indicator.setAttribute("aria-label", "進階模式");
+            else indicator.removeAttribute("aria-label");
+        }
+        if (header) header.classList.toggle("has-advanced-mode", advanced);
+    }
+
+    function applyModeUI() {
+        const advanced = isAdvancedMode();
+        updateAppModeIndicator();
+        const cloud = el("advanced-cloud-controls");
+        const panel = el("advanced-mode-panel");
+        if (cloud) cloud.style.display = advanced ? "block" : "none";
+        if (panel) panel.style.display = advanced ? "block" : "none";
+        if (!advanced) {
+            if (autoBackupTimer) clearTimeout(autoBackupTimer);
+            autoBackupTimer = null;
+            silentBackupRequested = false;
+            if (activeCloudBackupController) {
+                try { activeCloudBackupController.abort(); } catch (e) {}
+                activeCloudBackupController = null;
+            }
+        }
+        updateSettingsStatus();
+    }
+
+    function bindSettingsSecretTrigger() {
+        const button = el("settings-nav-secret-trigger");
+        if (!button || button.dataset.secretTapBound === "1") return;
+        button.dataset.secretTapBound = "1";
+        button.addEventListener("click", function () {
+            if (isAdvancedMode()) return;
+            settingsSecretTapCount += 1;
+            if (settingsSecretTapTimer) clearTimeout(settingsSecretTapTimer);
+            if (settingsSecretTapCount >= 5) {
+                settingsSecretTapCount = 0;
+                settingsSecretTapTimer = null;
+                openAdvancedPasswordModal();
+                return;
+            }
+            settingsSecretTapTimer = setTimeout(function () {
+                settingsSecretTapCount = 0;
+                settingsSecretTapTimer = null;
+            }, 2500);
+        });
+    }
+
+    function openAdvancedPasswordModal() {
+        if (isAdvancedMode()) return;
+        setVal("advancedModePasswordInput", "");
+        if (el("advancedModePasswordStatus")) el("advancedModePasswordStatus").innerText = "";
+        el("advancedPasswordModal").classList.add("show");
+        setTimeout(function () { el("advancedModePasswordInput")?.focus(); }, 80);
+    }
+    function closeAdvancedPasswordModal() {
+        el("advancedPasswordModal")?.classList.remove("show");
+        setVal("advancedModePasswordInput", "");
+    }
+    function openAdvancedPasswordChangeModal() {
+        if (!isAdvancedMode()) return;
+        setVal("advancedCurrentPasswordInput", "");
+        setVal("advancedNewPasswordInput", "");
+        if (el("advancedPasswordChangeStatus")) el("advancedPasswordChangeStatus").innerText = "";
+        el("advancedPasswordChangeModal").classList.add("show");
+        setTimeout(function () { el("advancedCurrentPasswordInput")?.focus(); }, 80);
+    }
+    function closeAdvancedPasswordChangeModal() {
+        el("advancedPasswordChangeModal")?.classList.remove("show");
+        setVal("advancedCurrentPasswordInput", "");
+        setVal("advancedNewPasswordInput", "");
+    }
+
+    async function postScheduleModeAction(payload) {
+        const response = await fetch(GAS_WEB_APP_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const result = await response.json();
+        if (!result || result.status !== "success") throw new Error((result && result.message) || "共用 GAS 驗證失敗。");
+        return result;
+    }
+
+    async function verifyScheduleAdvancedMode() {
+        const password = getVal("advancedModePasswordInput");
+        const status = el("advancedModePasswordStatus");
+        const button = el("advancedModeVerifyBtn");
+        if (!password) { status.innerText = "請輸入雲端密碼。"; return; }
+        button.disabled = true; button.innerText = "驗證中…";
+        status.innerText = "正在向共用 GAS 驗證密碼，未收到成功回應前不會開啟進階模式。";
+        try {
+            const result = await postScheduleModeAction({ action: "schedule_advanced_password_verify", password: password });
+            // 僅保存「本裝置已通過雲端驗證」旗標，絕不保存密碼。
+            localStorage.setItem(ADVANCED_MODE_KEY, "1");
+            applyModeUI();
+            closeAdvancedPasswordModal();
+            alert(result.initialized ? "首次雲端密碼已建立，進階模式已開啟。" : "雲端密碼驗證成功，進階模式已開啟。");
+            setTimeout(function () { if (isAdvancedMode()) syncCloudOnStartup(); }, 0);
+        } catch (error) {
+            status.innerText = "驗證失敗：" + (error.message || error) + "。目前仍維持一般模式。";
+            setVal("advancedModePasswordInput", "");
+        } finally {
+            button.disabled = false; button.innerText = "驗證並進入";
+        }
+    }
+
+    async function changeScheduleAdvancedPassword() {
+        if (!isAdvancedMode()) return;
+        const currentPassword = getVal("advancedCurrentPasswordInput");
+        const newPassword = getVal("advancedNewPasswordInput");
+        const status = el("advancedPasswordChangeStatus");
+        const button = el("advancedPasswordChangeBtn");
+        if (!currentPassword) { status.innerText = "請輸入目前密碼。"; return; }
+        if (!newPassword || !newPassword.trim()) { status.innerText = "新密碼不可空白。"; return; }
+        if (newPassword.length > 64) { status.innerText = "新密碼最多 64 個字元。"; return; }
+        button.disabled = true; button.innerText = "修改中…";
+        try {
+            const result = await postScheduleModeAction({
+                action: "schedule_advanced_password_change",
+                currentPassword: currentPassword,
+                newPassword: newPassword
+            });
+            closeAdvancedPasswordChangeModal();
+            alert(result.message || "供油班表雲端進階模式密碼已更新。");
+        } catch (error) {
+            status.innerText = "修改失敗：" + (error.message || error);
+        } finally {
+            button.disabled = false; button.innerText = "確認修改";
+        }
+    }
+
+    function closeAdvancedMode() {
+        if (!isAdvancedMode()) return;
+        if (!confirm("確定關閉進階模式？\n關閉後會停用自動雲端備份、啟動雲端比對，並隱藏雲端備份／還原按鈕。\n本機資料及雲端備份都不會刪除。")) return;
+        localStorage.removeItem(ADVANCED_MODE_KEY);
+        if (settingsSecretTapTimer) clearTimeout(settingsSecretTapTimer);
+        settingsSecretTapTimer = null; settingsSecretTapCount = 0;
+        applyModeUI();
+        alert("已返回一般模式。本機資料及既有雲端備份均保留。");
+    }
+
+    async function syncCloudOnStartup() {
+        if (!isAdvancedMode() || !navigator.onLine) return false;
+        if (startupCloudSyncPromise) return startupCloudSyncPromise;
+        const run = async function () {
+            if (!isAdvancedMode()) return false;
+            const localRaw = localStorage.getItem("shiftSettings");
+            const hasLocal = !!localRaw;
+            const localStamp = Date.parse(localStorage.getItem(SCHEDULE_LOCAL_MODIFIED_KEY) || "");
+            const lastSeenCloudStamp = Date.parse(localStorage.getItem("lastCloudSyncAt") || "");
+            try {
+                const result = await postScheduleModeAction({ action: "schedule_cloud_load" });
+                if (!isAdvancedMode()) return false;
+                if (!result.found || !result.data) {
+                    if (hasLocal) {
+                        localStorage.setItem("pendingSync", "true");
+                        cloudSyncState = "pending";
+                        return await silentCloudBackup();
+                    }
+                    return false;
+                }
+                const cloudData = typeof result.data === "string" ? JSON.parse(result.data) : result.data;
+                const cloudStamp = Date.parse(result.modifiedAt || "");
+                if (!hasLocal) {
+                    processImportData(cloudData, "雲端", { modifiedAt: result.modifiedAt });
+                    return true;
+                }
+                const hasPendingLocal = localStorage.getItem("pendingSync") === "true";
+                if (Number.isFinite(lastSeenCloudStamp)) {
+                    // 以「上次成功同步時間」作共同基準。pendingSync 也代表本機仍有未推送修改。
+                    // 若本機與雲端都在基準後改動，按最後修改時間判斷；不會只因 pendingSync 就盲目覆蓋雲端。
+                    const localChanged = hasPendingLocal || (Number.isFinite(localStamp) && localStamp > lastSeenCloudStamp);
+                    const cloudChanged = Number.isFinite(cloudStamp) && cloudStamp > lastSeenCloudStamp;
+                    if (localChanged && cloudChanged) {
+                        if (!Number.isFinite(localStamp)) {
+                            const useCloud = confirm("本機有待同步修改，雲端也有新的備份，但本機缺少修改時間。\n\n按「確定」：以雲端備份覆蓋本機。\n按「取消」：保留本機資料並上傳到雲端。");
+                            if (useCloud) {
+                                processImportData(cloudData, "雲端", { modifiedAt: result.modifiedAt });
+                                return true;
+                            }
+                            return await silentCloudBackup();
+                        }
+                        if (cloudStamp > localStamp) {
+                            processImportData(cloudData, "雲端", { modifiedAt: result.modifiedAt });
+                            return true;
+                        }
+                        return await silentCloudBackup();
+                    }
+                    if (cloudChanged) {
+                        processImportData(cloudData, "雲端", { modifiedAt: result.modifiedAt });
+                        return true;
+                    }
+                    if (localChanged) return await silentCloudBackup();
+                    // 兩端都沒有比上次成功同步時間更新，無須重複覆蓋或上傳。
+                    return true;
+                }
+                // 舊裝置尚無共同同步基準：不自行覆蓋。由使用者決定保留本機或以雲端為準。
+                const useCloud = confirm("首次啟用進階模式時，本機與雲端都有資料，但缺少足夠的同步時間紀錄。\n\n按「確定」：以雲端備份覆蓋本機。\n按「取消」：保留本機資料並上傳到雲端。");
+                if (useCloud) {
+                    processImportData(cloudData, "雲端", { modifiedAt: result.modifiedAt });
+                    return true;
+                }
+                localStorage.setItem("pendingSync", "true");
+                return await silentCloudBackup();
+            } catch (error) {
+                console.warn("進階模式啟動雲端比對失敗；本機資料保持不變：", error);
+                cloudSyncState = "error"; updateSettingsStatus();
+                return false;
+            }
+        };
+        const promise = run();
+        startupCloudSyncPromise = promise;
+        return promise.finally(function () { if (startupCloudSyncPromise === promise) startupCloudSyncPromise = null; });
+    }
+
+    // 自動雲端備份：資料有變更後等待 4 秒，合併連續操作，只上傳最新完整快照。
+    var cloudBackupDebounceMs = 4000;
+
+    function scheduleSilentCloudBackup() {
+        if (!isAdvancedMode()) {
+            if (autoBackupTimer) clearTimeout(autoBackupTimer);
+            autoBackupTimer = null;
+            updateSettingsStatus();
+            return;
+        }
+        if (autoBackupTimer) clearTimeout(autoBackupTimer);
+        updateSettingsStatus();
+        autoBackupTimer = setTimeout(function () {
+            autoBackupTimer = null;
+            if (isAdvancedMode()) silentCloudBackup();
+        }, cloudBackupDebounceMs);
+    }
+
+    function silentCloudBackup() {
+        if (!isAdvancedMode()) {
+            if (autoBackupTimer) clearTimeout(autoBackupTimer);
+            autoBackupTimer = null;
+            return Promise.resolve(false);
+        }
+        if (localStorage.getItem("pendingSync") !== "true") return Promise.resolve(true);
+        if (!navigator.onLine) { cloudSyncState = "pending"; updateSettingsStatus(); return Promise.resolve(false); }
+        if (autoBackupTimer) { clearTimeout(autoBackupTimer); autoBackupTimer = null; }
+        if (silentBackupPromise) {
+            silentBackupRequested = true;
+            return silentBackupPromise.then(function () {
+                if (localStorage.getItem("pendingSync") === "true") return silentCloudBackup();
+                return true;
+            });
+        }
+
+        const run = async function () {
+            let allSucceeded = true;
+            do {
+                if (!isAdvancedMode()) { allSucceeded = false; break; }
+                silentBackupRequested = false;
+                const snapshot = localStorage.getItem("shiftSettings") || JSON.stringify(appSettings);
+                cloudSyncState = "syncing";
+                updateSettingsStatus();
+                try {
+                    const backupData = JSON.parse(snapshot);
+                    const controller = new AbortController();
+                    activeCloudBackupController = controller;
+                    let response;
+                    try {
+                        response = await fetch(GAS_WEB_APP_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
+                            body: JSON.stringify({ action: "auto_backup", fileName: CLOUD_FILE_NAME, backupData: backupData }),
+                            signal: controller.signal
+                        });
+                    } finally {
+                        if (activeCloudBackupController === controller) activeCloudBackupController = null;
+                    }
+                    if (!isAdvancedMode()) { allSucceeded = false; break; }
+                    if (!response.ok) throw new Error("HTTP " + response.status);
+                    const result = await response.json();
+                    if (result.status !== "success") throw new Error(result.message || "雲端備份未成功");
+
+                    if (localStorage.getItem("shiftSettings") === snapshot) {
+                        localStorage.removeItem("pendingSync");
+                        localStorage.setItem("lastCloudSyncAt", new Date().toISOString());
+                        cloudSyncState = "synced";
+                        break;
+                    }
+                    // 上傳期間有新資料，保留待同步標記，下一圈改送最新版本。
+                    localStorage.setItem("pendingSync", "true");
+                } catch (error) {
+                    allSucceeded = false;
+                    cloudSyncState = "error";
+                    console.warn("自動雲端備份失敗，資料仍保留在本機待重試：", error);
+                    break;
+                }
+            } while (localStorage.getItem("pendingSync") === "true");
+            return allSucceeded && localStorage.getItem("pendingSync") !== "true";
+        };
+
+        const activePromise = run();
+        silentBackupPromise = activePromise;
+        return activePromise.finally(function () {
+            if (silentBackupPromise === activePromise) silentBackupPromise = null;
+            updateSettingsStatus();
+            if (silentBackupRequested) {
+                const shouldRetry = isAdvancedMode() && localStorage.getItem("pendingSync") === "true";
+                silentBackupRequested = false;
+                // 若另一個動作在上傳期間要求同步，完成目前請求後再讀取最新快照。
+                if (shouldRetry) setTimeout(function () { if (isAdvancedMode()) silentCloudBackup(); }, 0);
+            }
+        });
+    }
+
+    window.addEventListener("online", function () {
+        if (isAdvancedMode()) syncCloudOnStartup();
+        updateSettingsStatus();
+    });
+    window.addEventListener("offline", updateSettingsStatus);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden && isAdvancedMode() && localStorage.getItem("pendingSync") === "true") silentCloudBackup();
+    });
+
+    async function cloudBackup(event) {
+        if (!isAdvancedMode()) { alert("請先通過雲端密碼驗證並進入進階模式。"); return false; }
+        triggerVibrate();
+        const btn = event.currentTarget || event.target;
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ 備份中…";
+        btn.disabled = true;
+        try {
+            // 手動備份強制上傳目前完整資料，仍共用固定雲端檔案及同步佇列。
+            if (!persistSettingsToLocal(false)) throw new Error("本機儲存失敗，已取消雲端備份。");
+            localStorage.setItem("pendingSync", "true");
+            cloudSyncState = "pending";
+            updateSettingsStatus();
+            const ok = await silentCloudBackup();
+            if (ok && localStorage.getItem("pendingSync") !== "true") {
+                const d = new Date(localStorage.getItem("lastCloudSyncAt") || Date.now());
+                alert("✅ 雲端備份成功！\n固定檔案：" + CLOUD_FILE_NAME + "\n時間：" + d.toLocaleString("zh-TW", {hour12:false}));
+            } else {
+                alert("❌ 雲端備份尚未完成。資料已保留在本機，系統會在網路恢復或下次切回程式時重試。");
+            }
+        } catch (error) {
+            cloudSyncState = "error"; updateSettingsStatus();
+            alert("❌ 雲端備份失敗：" + (error.message || error));
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+            updateSettingsStatus();
+        }
+    }
+
+    function cloudRestore(event) {
+        if (!isAdvancedMode()) { alert("請先通過雲端密碼驗證並進入進階模式。"); return; }
+        if (!confirm("⚠️ 警告：雲端還原將覆蓋手機資料，確定繼續嗎？")) return;
+        triggerVibrate();
+        const btn = event.target; 
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ 還原中..."; 
+        btn.disabled = true;
+
+        fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: "restore_from_cloud", fileName: CLOUD_FILE_NAME })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.data) {
+                const importedData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+                processImportData(importedData, "雲端", { modifiedAt: res.modifiedAt });
+            } else alert("❌ 還原失敗：" + (res.message || "雲端找不到資料")); 
+        })
+        .catch(e => alert("❌ 連線錯誤，請確認網路連線。"))
+        .finally(() => { btn.innerText = originalText; btn.disabled = false; });
+    }
+
+
+    // =====================================================
+    // 功能：臨時工作、工作日誌、獨立日期詳情、試挪班別及紙本工作日誌 OCR。
+    // OCR 將「工作記事及交待事項」合併成單一裁切區域辨識。
+    // =====================================================
+    appSettings.temporaryTasks = Array.isArray(appSettings.temporaryTasks) ? appSettings.temporaryTasks : [];
+    appSettings.workJournals = Array.isArray(appSettings.workJournals) ? appSettings.workJournals : [];
+    var recoveredInterruptedOcr = false;
+    appSettings.workJournals.forEach(function (journal) {
+        (Array.isArray(journal.photos) ? journal.photos : []).forEach(function (photo) {
+            if (photo && photo.ocrStatus === "processing") {
+                photo.ocrStatus = "failed";
+                photo.ocrError = "上次辨識時程式中斷，原始照片仍保留；請按「重新 OCR」。";
+                recoveredInterruptedOcr = true;
+            }
+        });
+    });
+    appSettings.shiftSwapOverrides = appSettings.shiftSwapOverrides || {};
+    appSettings.shiftSwapRecords = Array.isArray(appSettings.shiftSwapRecords) ? appSettings.shiftSwapRecords : [];
+    // 固定班別時間：早班 07:00-15:00、午班 15:00-23:00。
+    // 晚班以「所選日期」為下班日：前一天 23:00 上班、所選日期 07:00 下班。
+    // 公假視為工作日，檢查時間固定採正常班 08:30-17:00，不提供個別調整。
+    function normalizeShiftTimeRules(value) {
+        return {
+            early: { start: "07:00", end: "15:00" },
+            mid:   { start: "15:00", end: "23:00" },
+            late:  { start: "23:00", end: "07:00" },
+            public:{ start: "08:30", end: "17:00" }
+        };
+    }
+    appSettings.shiftTimeRules = normalizeShiftTimeRules(appSettings.shiftTimeRules);
+    var dateDetailDate = "", dateDetailTeam = "", temporaryEditingId = null, temporaryEditingPhotos = [], trialSwapPairs = [], lastTrialCheck = null;
+    var driveImageCache = {};
+    // 手機返回鍵導覽：照片檢視優先關閉，其次回到上一個程式分頁，最上層才詢問離開。
+    var scheduleTabHistory = [];
+    var schedulePhotoViewer = null;
+    var schedulePhotoViewerClose = null;
+    var scheduleIgnoreNextPopState = false;
+    var scheduleNavigationReady = false;
+    var scheduleAllowLeave = false;
+    // 背景 OCR 使用序列佇列，避免多張照片同時呼叫 Gemini；離開再返回時可續跑。
+    var journalOcrQueue = Promise.resolve(); // 保留舊版相容變數，不再負責 Gemini 呼叫。
+    var journalOcrInFlight = {};
+    var journalOcrStatusInFlight = {};
+
+    function saveExtendedAppData() {
+        return persistSettingsToLocal(true);
+    }
+    if (recoveredInterruptedOcr) saveExtendedAppData();
+    function htmlEscape(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;", "'":"&#39;"}[ch]));
+    }
+    function formatShiftLabel(value) { return String(value || "").replace(/^\$/, "").replace(/^調:/, "調："); }
+    function dateAdd(dateStr, days) {
+        var d = new Date(dateStr.replace(/-/g,"/") + " 00:00:00"); d.setDate(d.getDate()+days); return formatDateToYYYYMMDD(d);
+    }
+    function getBaseCoreShift(teamId, targetDateStr) {
+        var tDate = new Date(targetDateStr.replace(/-/g, '/') + " 00:00:00");
+        var bDate = new Date(appSettings.baseDate.replace(/-/g, '/') + " 00:00:00");
+        var diffDays = Math.round((tDate - bDate) / 86400000) || 0;
+        return SHIFT_CYCLE[(((appSettings.teams[teamId].offset || 0) + diffDays) % 8 + 8) % 8];
+    }
+    function addWeeklyRestMarker(teamId, targetDateStr, coreShift, coreGetter) {
+        if (String(coreShift).replace(/^\$/, "") !== "晚班1") return coreShift;
+        var d = new Date(targetDateStr.replace(/-/g, '/') + " 00:00:00");
+        d.setDate(d.getDate() + (d.getDay() === 0 ? -6 : 1 - d.getDay()));
+        var restCount = 0;
+        for (var i = 0; i < 7; i++) {
+            var cur = new Date(d); cur.setDate(d.getDate() + i);
+            var core = String(coreGetter(teamId, formatDateToYYYYMMDD(cur))).replace(/^\$/, "");
+            if (core === "小休" || core === "大休") restCount++;
+        }
+        return restCount === 1 ? "$" + String(coreShift).replace(/^\$/, "") : String(coreShift).replace(/^\$/, "");
+    }
+    function getBaseLogicalShift(teamId, targetDateStr) {
+        return addWeeklyRestMarker(teamId, targetDateStr, getBaseCoreShift(teamId, targetDateStr), getBaseCoreShift);
+    }
+    function getCurrentCoreShift(teamId, targetDateStr) {
+        var key = `${targetDateStr}_${teamId}`;
+        var value = appSettings.shiftSwapOverrides?.[key] || getBaseCoreShift(teamId, targetDateStr);
+        return String(value).replace(/^\$/, "");
+    }
+
+    // 舊手動改班優先；正式試挪覆蓋次之；最後才使用標準循環。
+    function getLogicalShift(teamId, targetDateStr) {
+        var key = `${targetDateStr}_${teamId}`;
+        if (appSettings.manualShifts && appSettings.manualShifts[key]) return appSettings.manualShifts[key];
+        var core = getCurrentCoreShift(teamId, targetDateStr);
+        return addWeeklyRestMarker(teamId, targetDateStr, core, getCurrentCoreShift);
+    }
+
+    // 依指定日期與所選班別取得臨時工作；只顯示該班別且日期涵蓋當天的項目。
+    // 同時相容早期測試資料可能使用 date / teamId 欄位的情況。
+    function getTemporaryTasksForDate(dateStr, teamId) {
+        var list = Array.isArray(appSettings.temporaryTasks) ? appSettings.temporaryTasks : [];
+        return list.filter(function (task) {
+            if (!task) return false;
+            var ownerTeam = String(task.team || task.teamId || "");
+            var start = String(task.startDate || task.date || "");
+            var end = String(task.endDate || start || "");
+            return ownerTeam === String(teamId) && !!start && start <= String(dateStr) && String(dateStr) <= end;
+        });
+    }
+
+    function renderTemporaryTaskLines(dateStr, teamId) {
+        var tasks = getTemporaryTasksForDate(dateStr, teamId);
+        if (!tasks.length) return "";
+        return `<li style="background:transparent;border:0;padding:0 0 5px;margin:0 0 8px;font-weight:bold;color:#0F766E;border-bottom:2px solid var(--border-color);border-radius:0;font-size:1.15rem;">📌 臨時工作項目</li>` + tasks.map(t => {
+            var dateText = t.startDate === (t.endDate || t.startDate) ? t.startDate : `${t.startDate}～${t.endDate}`;
+            var photoCount = (t.photos || []).length;
+            var photos = photoCount ? `<button class="subtle-btn" style="margin-top:5px;font-size:.8rem;padding:4px 8px;" onclick="toggleTemporaryPhotos('${t.id}')">📷 查看圖片（${photoCount}）</button><div id="temporaryPhotos_${t.id}" class="journal-photo-grid" style="display:none;">${(t.photos||[]).map(ph=>`<div class="journal-photo"><img data-drive-file="${htmlEscape(ph.fileId)}" alt="臨時工作照片" onclick="openDrivePhoto('${htmlEscape(ph.fileId||"")}')"></div>`).join("")}</div>` : "";
+            var actions = `<div style="display:flex;gap:12px;justify-content:flex-end;margin-top:6px;"><button class="subtle-btn" onclick="editTemporaryTask('${t.id}')">編輯</button><button class="subtle-btn" style="color:#B91C1C;" onclick="deleteTemporaryTask('${t.id}')">刪除</button></div>`;
+            return `<li style="background:#F0FDFA;color:#115E59;border-left:4px solid #14B8A6;">${htmlEscape(t.text)}${t.time?`<div style="font-size:.88rem;margin-top:3px;">時間：${htmlEscape(t.time)}</div>`:""}${t.note?`<div style="font-size:.88rem;margin-top:3px;">備註：${htmlEscape(t.note)}</div>`:""}<div style="font-size:.8rem;color:#0F766E;margin-top:4px;">${htmlEscape(dateText)}</div>${photos}${actions}</li>`;
+        }).join("");
+    }
+    function buildTaskListHTML(date, teamId, shiftText) {
+        var regT=[], perT=[], monT=[], cleanShift=(shiftText||"").replace("$","").replace("調:","");
+        var activeShifts=["全天",cleanShift];
+        if(cleanShift.startsWith("早")) activeShifts.push("早班");
+        if(cleanShift.startsWith("中") || cleanShift.startsWith("午")) activeShifts.push("中班");
+        if(cleanShift.startsWith("晚")) activeShifts.push("晚班");
+        var y=date.getFullYear(), m=date.getMonth(), d=date.getDate(), w=date.getDay(), mDays=new Date(y,m+1,0).getDate(), dateStr=formatDateToYYYYMMDD(date);
+        (appSettings.tasks||[]).forEach(t=>{
+            if(!activeShifts.includes(t.shift)) return;
+            var match=false;
+            switch(t.rule){
+                case 'every_shift': match=true; break;
+                case 'specific_date': match=t.ruleValue===dateStr; break;
+                case 'weekly': match=w===parseInt(t.ruleValue,10); break;
+                case 'monthly_day': match=d===parseInt(t.ruleValue,10); break;
+                case 'monthly_last': match=d===mDays; break;
+                case 'last_monday': match=w===1 && new Date(y,m,d+7).getMonth()!==m; break;
+                case 'yearly_range': var p=(t.ruleValue||"").split('-'); match=(m+1)>=parseInt(p[0],10)&&(m+1)<=parseInt(p[1],10); break;
+                case 'odd_months': match=(m+1)%2!==0; break;
+                case 'even_months': match=(m+1)%2===0; break;
+            }
+            if(match) (t.rule==='every_shift'?regT:perT).push(t.text);
+        });
+        var elapsed=(y-2026)*12+m;
+        if(["D","A","B","C"][(Math.floor(elapsed/2)%4+4)%4]===teamId) monT.push("輪值：本月做月盤查量油取樣 (營業油槽，20日附近)");
+        if((m+1)%2!==0 && ["B","C","D","A"][(Math.floor(elapsed/2)%4+4)%4]===teamId) monT.push("輪值：本月做全規範取樣 (每月10號前)");
+        var html=renderTemporaryTaskLines(dateStr,teamId);
+        html += `<li style="background:transparent;border:none;padding:0 0 5px;margin:0 0 8px;font-weight:bold;color:var(--primary);border-bottom:2px solid var(--border-color);border-radius:0;font-size:1.15rem;">📅 今日當班工作</li>`;
+        var work=perT.concat(regT);
+        html += work.length?work.map(t=>`<li>📍 ${htmlEscape(t)}</li>`).join(""):`<li class="no-task">🎉 今日無排程工作。</li>`;
+        html += `<li style="background:transparent;border:none;padding:0 0 5px;margin:15px 0 8px;font-weight:bold;color:#D97706;border-bottom:2px solid var(--border-color);border-radius:0;font-size:1.15rem;">🗓️ 本月輪值任務</li>`;
+        html += monT.length?monT.map(t=>`<li style="background:#FFFBEB;color:#B45309;border-left-color:#F59E0B;">📌 ${htmlEscape(t)}</li>`).join(""):`<li class="no-task" style="background:#FFFBEB;color:#B45309;border-left-color:#F59E0B;">本月無輪值工作。</li>`;
+        return html;
+    }
+    function renderTasks(date, myTeamId, myShiftText) { el("taskList").innerHTML=buildTaskListHTML(date,myTeamId,myShiftText); loadDriveImagePreviews(); }
+    function toggleTemporaryPhotos(id){var box=el("temporaryPhotos_"+id);if(!box)return;box.style.display=box.style.display==="none"?"grid":"none";loadDriveImagePreviews();}
+
+    function saveTemporaryTask() {
+        var start=getVal("temporaryTaskStart"), end=getVal("temporaryTaskDateMode")==="range"?getVal("temporaryTaskEnd"):start;
+        var text=(getVal("temporaryTaskText")||"").trim(), team=getVal("temporaryTaskTeam");
+        if(!start||!end||end<start||!text) return alert("請確認日期與工作內容，結束日期不可早於開始日期。");
+        var btn=el("temporaryTaskSaveBtn"), original=btn.innerText; btn.disabled=true; btn.innerText="處理中…";
+        (async function(){
+            try {
+                var uploadResult=await uploadImageFiles(Array.from(el("temporaryTaskFiles").files||[]),"temporary_task",status=>el("temporaryTaskUploadStatus").innerText=status);
+                var newPhotos=uploadResult.saved;
+                var item=appSettings.temporaryTasks.find(t=>t.id===temporaryEditingId);
+                if(item){ Object.assign(item,{team,startDate:start,endDate:end,text,time:getVal("temporaryTaskTime").trim(),note:getVal("temporaryTaskNote").trim(),photos:temporaryEditingPhotos.concat(newPhotos),updatedAt:new Date().toISOString()}); }
+                else appSettings.temporaryTasks.push({id:"tmp_"+Date.now(),team,startDate:start,endDate:end,text,time:getVal("temporaryTaskTime").trim(),note:getVal("temporaryTaskNote").trim(),photos:newPhotos,createdAt:new Date().toISOString()});
+                saveExtendedAppData(); closeTemporaryTaskModal(); renderAppSafe();
+                if(el("dateDetailModal").classList.contains("show")) showDateDetail(dateDetailDate,dateDetailTeam);
+                alert(uploadResult.errors.length?`臨時工作已儲存，但有 ${uploadResult.errors.length} 張圖片上傳失敗，請編輯該筆工作後重新選取失敗照片。`:(newPhotos.length?"臨時工作已儲存，圖片已完成上傳。":"臨時工作已儲存。"));
+            } catch(err){ alert("儲存臨時工作時發生問題："+(err.message||err)); }
+            finally { btn.disabled=false; btn.innerText=original; }
+        })();
+    }
+    function openTemporaryTaskModal(dateStr, teamId) {
+        triggerVibrate(); temporaryEditingId=null; temporaryEditingPhotos=[];
+        var d=dateStr||getVal("queryDate")||formatDateToYYYYMMDD(getTWDate());
+        var team=teamId||((currentViewTeam&&currentViewTeam!=="ALL")?currentViewTeam:appSettings.myTeam);
+        setVal("temporaryTaskTeam",team); setVal("temporaryTaskDateMode","single"); setVal("temporaryTaskStart",d); setVal("temporaryTaskEnd",d);
+        setVal("temporaryTaskText",""); setVal("temporaryTaskTime",""); setVal("temporaryTaskNote",""); el("temporaryTaskFiles").value="";
+        el("temporaryTaskModalTitle").innerText="新增臨時工作"; el("temporaryTaskExistingPhotos").innerHTML=""; el("temporaryTaskUploadStatus").innerText="";
+        toggleTemporaryDateMode(); el("temporaryTaskModal").classList.add("show");
+    }
+    function closeTemporaryTaskModal(){el("temporaryTaskModal").classList.remove("show");}
+    function toggleTemporaryDateMode(){el("temporaryTaskEndWrap").style.display=getVal("temporaryTaskDateMode")==="range"?"block":"none"; if(getVal("temporaryTaskDateMode")==="single") setVal("temporaryTaskEnd",getVal("temporaryTaskStart"));}
+    function editTemporaryTask(id){
+        var t=appSettings.temporaryTasks.find(x=>x.id===id); if(!t)return; temporaryEditingId=id; temporaryEditingPhotos=(t.photos||[]).slice();
+        setVal("temporaryTaskTeam",t.team); setVal("temporaryTaskDateMode",t.startDate===(t.endDate||t.startDate)?"single":"range"); setVal("temporaryTaskStart",t.startDate); setVal("temporaryTaskEnd",t.endDate||t.startDate); setVal("temporaryTaskText",t.text); setVal("temporaryTaskTime",t.time||""); setVal("temporaryTaskNote",t.note||""); el("temporaryTaskFiles").value="";
+        el("temporaryTaskModalTitle").innerText="編輯臨時工作"; el("temporaryTaskUploadStatus").innerText="已上傳圖片不會重複上傳；移除圖片只會解除本筆工作關聯，不會刪除雲端原檔。";
+        renderTemporaryExistingPhotos(); toggleTemporaryDateMode(); el("temporaryTaskModal").classList.add("show");
+    }
+    function renderTemporaryExistingPhotos(){
+        el("temporaryTaskExistingPhotos").innerHTML=temporaryEditingPhotos.map((p,i)=>`<div class="journal-photo"><img data-drive-file="${htmlEscape(p.fileId)}" alt="臨時工作照片"><button onclick="removeTemporaryPhoto(${i})">×</button></div>`).join(""); loadDriveImagePreviews();
+    }
+    function removeTemporaryPhoto(i){temporaryEditingPhotos.splice(i,1); renderTemporaryExistingPhotos();}
+    function deleteTemporaryTask(id){if(!confirm("確定刪除這筆臨時工作？雲端原始圖片不會刪除。"))return; appSettings.temporaryTasks=appSettings.temporaryTasks.filter(t=>t.id!==id); saveExtendedAppData(); renderAppSafe(); if(el("dateDetailModal").classList.contains("show"))showDateDetail(dateDetailDate,dateDetailTeam);}
+
+    // 日期詳情獨立顯示，不改動今日班表上方的日期選擇器。
+    function showDateDetail(dateStr,teamId){
+        dateDetailDate=dateStr; dateDetailTeam=teamId||appSettings.myTeam;
+        var d=new Date(dateStr.replace(/-/g,"/")+" 00:00:00"), shift=getActualShift(getLogicalShift(dateDetailTeam,dateStr),dateDetailTeam,dateStr);
+        el("dateDetailTitle").innerText=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${["日","一","二","三","四","五","六"][d.getDay()]}）`;
+        el("dateDetailShift").innerHTML=`<div class="cal-date-detail"><strong>${dateDetailTeam}班（${htmlEscape(appSettings.teams[dateDetailTeam]?.name||"未設定")}）</strong><span class="shift-badge ${getBadgeClass(shift)}">${htmlEscape(formatShiftLabel(shift))}</span></div>`;
+        el("dateDetailTasks").innerHTML=`<ul class="task-list">${buildTaskListHTML(d,dateDetailTeam,shift)}</ul>`;
+        el("dateDetailModal").classList.add("show"); loadDriveImagePreviews();
+    }
+    function closeDateDetail(){el("dateDetailModal").classList.remove("show");}
+
+    // 月曆所有日期都可點擊，詳情不會改動 queryDate。
+    function renderMonthTable(){
+        var y=calendarViewDate.getFullYear(),m=calendarViewDate.getMonth(); ensureHolidaysForYear(y);
+        var days=new Date(y,m+1,0).getDate(),fw=new Date(y,m,1).getDay(),prevDays=new Date(y,m,0).getDate();
+        if(el("calendarTitle"))el("calendarTitle").innerText=`🗓️ ${y}年${m+1}月班表總覽`;
+        var q=getVal("queryDate"),today=q?new Date(q.replace(/-/g,"/")):getTWDate();
+        var html=["日","一","二","三","四","五","六"].map(w=>`<div class="cal-header">${w}</div>`).join("");
+        var team=currentMonthViewTeam||appSettings.myTeam;
+        function cell(cy,cm,cd,isCurrent){
+            var dt=new Date(cy,cm,cd),ds=formatDateToYYYYMMDD(dt),holiday=appSettings.holidays?.[ds],isToday=dt.getFullYear()===today.getFullYear()&&dt.getMonth()===today.getMonth()&&dt.getDate()===today.getDate();
+            var style=(isCurrent?"":"opacity:.45;background:#F9FAFB;");
+            var out=`<div class="cal-cell ${isToday?"today":""}" onclick="openCalendarDateDetail('${ds}')" style="${style}">`;
+            out+=`<div class="cal-day-num">${dt.getDate()}${holiday?'<span style="font-size:.9rem;">🎈</span>':""}</div>`;
+            if(team==="ALL"){
+                out+='<div class="cal-shift-all">'+TEAMS.map(id=>{var st=getActualShift(getLogicalShift(id,ds),id,ds),cl=getBadgeClass(st),bs=badgeStyles[cl]||badgeStyles["shift-rest"];return `<span style="background:${bs.bg};color:${bs.fg};border-left:3px solid ${bs.fg};"><span class="shift-prefix">${id}:</span><span class="shift-name">${htmlEscape(st.replace("班","").replace("調:","✏️"))}</span></span>`;}).join("")+'</div>';
+            }else{var st2=getActualShift(getLogicalShift(team,ds),team,ds),cl2=getBadgeClass(st2),bs2=badgeStyles[cl2]||badgeStyles["shift-rest"];out+=`<div class="cal-shift-single" style="background:${bs2.bg};color:${bs2.fg};${bs2.border||""}">${htmlEscape(st2.replace("班","").replace("調:","✏️"))}</div>`;}
+            return out+'</div>';
+        }
+        for(var i=0;i<fw;i++)html+=cell(y,m-1,prevDays-fw+i+1,false);
+        for(var day=1;day<=days;day++)html+=cell(y,m,day,true);
+        var extra=(7-(fw+days)%7)%7;for(var j=1;j<=extra;j++)html+=cell(y,m+1,j,false);
+        el("monthCalendar").innerHTML=html;
+    }
+    function openCalendarDateDetail(dateStr){var team=currentMonthViewTeam||appSettings.myTeam;if(team==="ALL")team=appSettings.myTeam;showDateDetail(dateStr,team);}
+
+    // 工作日誌：每班可不限張數持續追加照片；照片原檔存 Drive，資料內只保存 fileId/網址及 OCR 狀態。
+    function getJournalRecord(date,shift,create){
+        var item=appSettings.workJournals.find(x=>x.date===date&&x.shift===shift);
+        if(!item&&create){item={id:"wj_"+Date.now()+"_"+shift,date,shift,text:"",photos:[],createdAt:new Date().toISOString()};appSettings.workJournals.push(item);}
+        if(item){item.photos=Array.isArray(item.photos)?item.photos:[];item.text=item.text||"";} return item;
+    }
+    function getJournalPhotoOcrLabel(photo){
+        if(photo.ocrStatus==="processing"){
+            if(photo.ocrCloudState==="preparing")return "正在準備雲端辨識…";
+            return photo.ocrCloudState==="processing"?"GAS 雲端辨識中…":"已排入雲端辨識…";
+        }
+        if(photo.ocrError||photo.ocrStatus==="failed")return "OCR 失敗，可重新辨識";
+        if(photo.ocrStatus==="success")return "OCR 已完成";
+        if(photo.ocrStatus==="empty")return photo.ocrText?"本次未辨識到文字，舊文字仍保留":"未辨識到文字，可重試";
+        if((photo.ocrText||"").includes("未辨識到可讀的手寫文字"))return "未辨識到文字，可重試";
+        if(photo.ocrText)return "已有辨識文字";
+        return "尚未辨識，可按重新 OCR";
+    }
+    function renderWorkJournal(){
+        if(!el("queryDate"))return;
+        var date=getVal("queryDate")||workJournalSelectedDate||formatDateToYYYYMMDD(getTWDate());
+        workJournalSelectedDate=date;
+        var shifts=["晚班","早班","午班"],html="";
+        shifts.forEach(sh=>{
+            var r=getJournalRecord(date,sh,false),photos=r?.photos||[],text=r?.text||"";
+            html+=`<div class="journal-shift-card"><div class="journal-shift-head"><span>${date.replace(/-/g,"/")} ${sh}</span><span class="journal-note">${photos.length?`已保存 ${photos.length} 張照片`:"尚未上傳照片"}</span></div>`;
+            html+=`<div class="journal-note" style="margin:0 0 8px;">拍照會呼叫手機系統相機，並優先要求使用後置鏡頭；也可從相簿一次選取多張。可重複新增，已上傳照片會保留。OCR 失敗時，可在該張照片下方按「重新 OCR」。</div>`;
+            if(photos.length){
+                html+=`<div class="journal-photo-grid">${photos.map((ph,i)=>{
+                    var state=getJournalPhotoOcrLabel(ph),stateClass=(ph.ocrError||ph.ocrStatus==="failed")?"failed":(ph.ocrStatus==="success"?"success":"");
+                    var errorHint=ph.ocrError?`<div class="journal-photo-error">原因：${htmlEscape(ph.ocrError)}</div>`:"";
+                    var rawInspector=ph.ocrRawText?`<details style="margin-top:7px;"><summary style="cursor:pointer;font-size:12px;color:var(--muted);">查看 Gemini 原始辨識回傳</summary><pre style="white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.5;background:var(--input-bg);padding:8px;border-radius:7px;margin-top:6px;">${htmlEscape(ph.ocrRawText)}</pre></details>`:"";
+                    return `<div class="journal-photo-item"><div class="journal-photo"><img data-drive-file="${htmlEscape(ph.fileId)}" alt="${sh}工作日誌照片 ${i+1}" onclick="openDrivePhoto('${htmlEscape(ph.fileId||"")}')"></div><div class="journal-photo-meta"><div class="journal-photo-state ${stateClass}">照片 ${i+1}・${htmlEscape(state)}</div>${errorHint}${rawInspector}<button type="button" class="subtle-btn journal-photo-retry" ${ph.ocrStatus==="processing"?"disabled":""} onclick="retryJournalPhotoOcr('${date}','${sh}',${i},this)">↻ ${ph.ocrStatus==="processing"?"雲端辨識中…":"重新 OCR"}</button><button type="button" class="subtle-btn journal-photo-delete" ${ph.ocrStatus==="processing"?"disabled":""} onclick="deleteJournalPhoto('${date}','${sh}',${i},this)">🗑️ 刪除照片</button></div></div>`;
+                }).join("")}</div>`;
+            }
+            // 相機入口：呼叫系統相機介面，capture=environment 提示優先使用後置鏡頭；每次拍攝一張，可重複新增。
+            html+=`<input type="file" id="journalCamera_${sh}" accept="image/*" capture="environment" style="display:none" onchange="uploadJournalPhotos('${date}','${sh}',this)">`;
+            // 相簿入口：保留一次多選功能，與拍照入口分開，避免 capture 影響相簿選取。
+            html+=`<input type="file" id="journalAlbum_${sh}" accept="image/*" multiple style="display:none" onchange="uploadJournalPhotos('${date}','${sh}',this)">`;
+            html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px;">`;
+            html+=`<button type="button" class="subtle-btn" style="flex:1;min-width:115px;" onclick="openJournalCamera('${date}','${sh}')">📷 拍照</button>`;
+            html+=`<button type="button" class="subtle-btn" style="flex:1;min-width:115px;" onclick="el('journalAlbum_${sh}').click()">🖼️ 從相簿選取</button>`;
+            html+=`</div>`;
+            html+=`<label class="field-label">OCR 辨識文字（自動辨識後可自行修正）</label><textarea id="journalText_${sh}" placeholder="選擇照片後會自動辨識並放在這裡，也可以自行修正或補充。">${htmlEscape(text)}</textarea>`;
+            html+=`<button type="button" class="subtle-btn" style="margin-top:6px;" onclick="saveJournalText('${date}','${sh}')">儲存文字</button><div id="journalStatus_${sh}" class="journal-note" style="margin-top:7px;" aria-live="polite"></div></div>`;
+        });
+        el("workJournalShiftList").innerHTML=html; loadDriveImagePreviews();
+    }
+    function removeJournalOcrBlock(record,photo){
+        var title=photo.ocrBlockTitle;
+        if(!title)return;
+        var lines=String(record.text||"").split("\n"),start=lines.findIndex(line=>line.trim()===title);
+        if(start<0)return;
+        var finish=lines.length;
+        for(var i=start+1;i<lines.length;i++){
+            if(/^【(?:晚班|早班|午班)照片 \d+ OCR】$/.test(lines[i].trim())){finish=i;break;}
+        }
+        lines.splice(start,finish-start);
+        record.text=lines.join("\n").replace(/^\s+|\s+$/g,"");
+    }
+    async function deleteJournalPhoto(date,shift,photoIndex,button){
+        var record=getJournalRecord(date,shift,false),photo=record&&record.photos[photoIndex];
+        if(!record||!photo||!photo.fileId)return;
+        if(photo.ocrStatus==="processing"){alert("這張照片正在 OCR 辨識，請完成後再刪除。");return;}
+        if(!confirm(`確定刪除${shift}第 ${photoIndex+1} 張工作日誌照片？\n\n照片將從工作日誌清單移除，雲端原始檔會移至 Google 雲端硬碟垃圾桶（可在垃圾桶復原）。\n這張照片對應的 OCR 文字也會一併移除；其他照片及文字不受影響。`))return;
+        var editor=el("journalText_"+shift);if(editor)record.text=editor.value;
+        if(button){button.disabled=true;button.innerText="刪除中…";}
+        var status=promptStatusLine(shift);if(status)status.innerText=`正在刪除${shift}第 ${photoIndex+1} 張照片…`;
+        try{
+            await callScheduleImageApi({action:"schedule_image_delete",category:"work_journal",fileId:photo.fileId});
+            removeJournalOcrBlock(record,photo);
+            record.photos.splice(photoIndex,1);
+            record.updatedAt=new Date().toISOString();
+            saveExtendedAppData();renderWorkJournal();searchWorkJournals();
+            status=promptStatusLine(shift);if(status)status.innerText=`${shift}第 ${photoIndex+1} 張照片已刪除，雲端原始檔已移至垃圾桶。`;
+        }catch(err){
+            renderWorkJournal();status=promptStatusLine(shift);
+            if(status)status.innerText=`照片刪除失敗：${String(err&&err.message?err.message:err)}`;
+            alert(`照片刪除失敗：\n${String(err&&err.message?err.message:err)}\n\n照片資料仍保留，請確認網路及共用 GAS 部署版本後重試。`);
+        }
+    }
+    function saveJournalText(date,shift){var r=getJournalRecord(date,shift,true);r.text=getVal("journalText_"+shift).trim();r.updatedAt=new Date().toISOString();saveExtendedAppData();searchWorkJournals();alert("工作日誌文字已儲存。");}
+    function promptStatusLine(shift){return el("journalStatus_"+shift);}
+    function replaceJournalOcrBlock(record,photo,shift,photoIndex,newText){
+        var title=photo.ocrBlockTitle||`【${shift}照片 ${photoIndex+1} OCR】`;
+        photo.ocrBlockTitle=title;
+        var lines=String(record.text||"").split("\n"),start=-1;
+        for(var i=0;i<lines.length;i++){if(lines[i].trim()===title){start=i;break;}}
+        if(start>=0){
+            var finish=lines.length;
+            for(var j=start+1;j<lines.length;j++){
+                if(/^【(?:晚班|早班|午班)照片 \d+ OCR】$/.test(lines[j].trim())){finish=j;break;}
+            }
+            lines.splice(start,finish-start);
+        }
+        var base=lines.join("\n").replace(/^\s+|\s+$/g,"");
+        record.text=base?(newText?base+"\n\n"+title+"\n"+newText:base):(newText?title+"\n"+newText:"");
+    }
+
+    // 使用手機系統相機程式拍攝，避免 getUserMedia 瀏覽器預覽降低照片畫質。
+    // capture="environment" 是 HTML Media Capture 提供的後置鏡頭提示；
+    // 實際使用哪顆鏡頭仍由手機作業系統／相機程式決定，網頁無法強制指定原生相機的鏡頭。
+    function openJournalCamera(date,shift){
+        var input=el("journalCamera_"+shift);
+        if(!input){
+            alert("找不到相機輸入欄位，請重新整理工作日誌後再試。");
+            return;
+        }
+        // 每次拍照前重新指定，避免瀏覽器或舊版 DOM 狀態遺失後置鏡頭提示。
+        input.type="file";
+        input.accept="image/*";
+        input.multiple=false;
+        input.setAttribute("capture","environment");
+        try{input.capture="environment";}catch(e){}
+        // 清空上次選取值，確保連續拍攝同一張內容時仍會觸發 change。
+        input.value="";
+        // 必須在使用者點擊事件內同步呼叫，讓 Android／瀏覽器交由系統相機介面處理。
+        input.click();
+    }
+
+    // 手機只負責裁切及把辨識工作交給 GAS；Gemini 辨識由伺服器端排程執行。
+    // 一旦 GAS 回覆「已排入」，關閉 PWA、瀏覽器或手機都不會中斷該筆辨識。
+    function queueJournalPhotoOcr(date,shift,photo,photoIndex,isRetry,sourceFile){
+        if(!photo||!photo.fileId)return Promise.resolve(false);
+        var key=String(photo.fileId);
+        if(journalOcrInFlight[key])return journalOcrInFlight[key];
+        journalOcrInFlight[key]=(async function(){
+            try{
+                if(!sourceFile){
+                    var imageData=await callScheduleImageApi({action:"schedule_image_get",fileId:photo.fileId});
+                    sourceFile=base64ToJournalFile(imageData.base64,imageData.mimeType,imageData.fileName||photo.name);
+                }
+                var regions=await cropJournalOcrSections(sourceFile);
+                if(!regions.length)throw new Error("沒有產生工作記事裁切圖片。");
+                var region=regions[0];
+                var result=await callScheduleImageApi({
+                    action:"schedule_image_ocr_enqueue",
+                    fileId:photo.fileId,
+                    date:date,
+                    shift:shift,
+                    photoIndex:photoIndex,
+                    sectionTitle:region.title,
+                    ocrMimeType:region.mimeType,
+                    ocrBase64:region.base64
+                });
+                photo.ocrStatus="processing";
+                photo.ocrCloudState="pending";
+                photo.ocrEnqueuedAt=result.queuedAt||new Date().toISOString();
+                photo.ocrError="";
+                photo.ocrRawText="";
+                photo.ocrText="";
+                var record=getJournalRecord(date,shift,false);
+                if(record){record.updatedAt=new Date().toISOString();saveExtendedAppData();}
+                if(isWorkJournalTabActive()&&getVal("queryDate")===date)renderWorkJournal();
+                var status=promptStatusLine(shift);
+                if(status)status.innerText=`第 ${photoIndex+1} 張照片已排入 GAS 雲端辨識；現在可以關閉 APP，辨識會在雲端繼續。`;
+                return true;
+            }catch(err){
+                photo.ocrStatus="failed";
+                photo.ocrCloudState="failed";
+                photo.ocrError=String(err&&err.message?err.message:err);
+                photo.lastOcrAt=new Date().toISOString();
+                var record=getJournalRecord(date,shift,false);
+                if(record){record.updatedAt=new Date().toISOString();saveExtendedAppData();}
+                if(isWorkJournalTabActive()&&getVal("queryDate")===date)renderWorkJournal();
+                console.error("工作日誌 OCR 排入雲端佇列失敗",err);
+                return false;
+            }finally{
+                delete journalOcrInFlight[key];
+            }
+        })();
+        return journalOcrInFlight[key];
+    }
+
+    async function uploadJournalPhotos(date,shift,input){
+        var files=Array.from(input.files||[]);if(!files.length)return;
+        var record=getJournalRecord(date,shift,true),status=promptStatusLine(shift),failed=0,uploadedCount=0,queuedCount=0,queueFailed=0;
+        // 選擇追加照片前，先保留使用者尚未按「儲存文字」的手動修改。
+        var currentTextEditor=el("journalText_"+shift);
+        if(currentTextEditor)record.text=currentTextEditor.value;
+        saveExtendedAppData();
+        for(var i=0;i<files.length;i++){
+            if(status)status.innerText=`${shift}照片上傳中：${i+1}/${files.length}`;
+            var uploaded=await uploadImageFiles([files[i]],"work_journal",msg=>{if(status)status.innerText=msg;},false);
+            if(uploaded.saved.length){
+                var photo=uploaded.saved[0],photoIndex=record.photos.length;
+                photo.ocrBlockTitle=`【${shift}照片 ${photoIndex+1} OCR】`;
+                photo.ocrStatus="processing";photo.ocrCloudState="preparing";photo.ocrError="";photo.ocrText="";photo.ocrRawText="";photo.ocrAttempts=0;
+                record.photos.push(photo);uploadedCount++;
+                record.updatedAt=new Date().toISOString();saveExtendedAppData();
+                if(isWorkJournalTabActive()&&getVal("queryDate")===date)renderWorkJournal();
+                // 先在手機端完成一次裁切並將裁切圖交給 GAS，之後所有 Gemini 工作都在雲端執行。
+                if(await queueJournalPhotoOcr(date,shift,photo,photoIndex,false,files[i]))queuedCount++;
+                else queueFailed++;
+            }
+            failed+=uploaded.errors.length;
+        }
+        input.value="";
+        if(isWorkJournalTabActive()&&getVal("queryDate")===date)renderWorkJournal();
+        searchWorkJournals();
+        status=promptStatusLine(shift);
+        if(status){
+            if(queueFailed)status.innerText=`照片已上傳 ${uploadedCount} 張；${queueFailed} 張建立雲端辨識工作失敗，可按「重新 OCR」。`;
+            else status.innerText=`照片已上傳 ${uploadedCount} 張，${queuedCount} 張已排入 GAS 雲端辨識；現在可以關閉 APP。`;
+        }
+        if(failed||queueFailed)alert(`照片上傳結果：\n成功上傳：${uploadedCount} 張\n上傳失敗：${failed} 張\n建立雲端辨識工作失敗：${queueFailed} 張\n\n已成功排入雲端的照片，關閉 APP 後仍會繼續辨識。`);
+    }
+
+    // 前端重新開啟時只查詢雲端狀態，不重新呼叫 Gemini；避免重複計費或重複辨識。
+    async function syncPendingJournalOcrStatuses(){
+        if(document.hidden)return;
+        var pending=[];
+        (appSettings.workJournals||[]).forEach(function(record){
+            (record.photos||[]).forEach(function(photo,index){
+                if(photo&&photo.fileId&&photo.ocrStatus==="processing")pending.push({record:record,photo:photo,index:index});
+            });
+        });
+        for(var i=0;i<pending.length;i++){
+            var item=pending[i],key="status_"+item.photo.fileId;
+            if(journalOcrStatusInFlight[key])continue;
+            journalOcrStatusInFlight[key]=true;
+            try{
+                var result=await callScheduleImageApi({action:"schedule_image_ocr_status",fileId:item.photo.fileId});
+                if(!result.jobFound){
+                    item.photo.ocrStatus="failed";
+                    item.photo.ocrCloudState="failed";
+                    item.photo.ocrError="找不到這張照片的雲端辨識工作。請按「重新 OCR」重新排入。";
+                    item.record.updatedAt=new Date().toISOString();saveExtendedAppData();
+                    continue;
+                }
+                var previousCloudState=item.photo.ocrCloudState||"";
+                item.photo.ocrCloudState=result.jobState||"pending";
+                if(result.jobState==="done"||result.jobState==="empty"){
+                    var raw=String(result.rawText||"");
+                    var recognized=cleanJournalOcrText(raw);
+                    item.photo.ocrRawText=raw;
+                    item.photo.ocrText=recognized;
+                    item.photo.ocrStatus=recognized?"success":"empty";
+                    item.photo.ocrError="";
+                    item.photo.lastOcrAt=result.completedAt||new Date().toISOString();
+                    item.photo.ocrAttempts=Number(result.attempts||1);
+                    if(recognized){
+                        if(isWorkJournalTabActive()&&getVal("queryDate")===item.record.date){
+                            var editor=el("journalText_"+item.record.shift);if(editor)item.record.text=editor.value;
+                        }
+                        replaceJournalOcrBlock(item.record,item.photo,item.record.shift,item.index,`【工作記事第4點以後】\n${recognized}`);
+                    }
+                    item.record.updatedAt=new Date().toISOString();saveExtendedAppData();
+                    if(isWorkJournalTabActive()&&getVal("queryDate")===item.record.date)renderWorkJournal();
+                    searchWorkJournals();
+                }else if(result.jobState==="failed"||result.jobState==="cancelled"){
+                    item.photo.ocrStatus="failed";
+                    item.photo.ocrError=result.error||"雲端辨識失敗，請重新 OCR。";
+                    item.photo.lastOcrAt=new Date().toISOString();
+                    item.record.updatedAt=new Date().toISOString();saveExtendedAppData();
+                    if(isWorkJournalTabActive()&&getVal("queryDate")===item.record.date)renderWorkJournal();
+                }else if(previousCloudState!==item.photo.ocrCloudState){
+                    item.record.updatedAt=new Date().toISOString();saveExtendedAppData();
+                    if(isWorkJournalTabActive()&&getVal("queryDate")===item.record.date)renderWorkJournal();
+                }
+            }catch(err){
+                // 查詢失敗不改成 OCR 失敗；雲端工作仍可能正在執行，下次輪詢再確認。
+                console.warn("查詢工作日誌雲端 OCR 狀態失敗",err);
+            }finally{delete journalOcrStatusInFlight[key];}
+        }
+    }
+
+    function resumePendingJournalOcr(){
+        syncPendingJournalOcrStatuses();
+    }
+
+    function base64ToJournalFile(base64,mimeType,fileName){
+        var binary=atob(String(base64||"")),bytes=new Uint8Array(binary.length);
+        for(var i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+        return new File([bytes],fileName||"工作日誌照片.jpg",{type:mimeType||"image/jpeg"});
+    }
+
+    async function retryJournalPhotoOcr(date,shift,photoIndex,button){
+        var record=getJournalRecord(date,shift,false),photo=record&&record.photos[photoIndex];
+        if(!photo||!photo.fileId||photo.ocrStatus==="processing")return;
+        var currentTextEditor=el("journalText_"+shift);if(currentTextEditor)record.text=currentTextEditor.value;
+        photo.ocrStatus="processing";photo.ocrCloudState="preparing";photo.ocrError="";photo.ocrRawText="";
+        saveExtendedAppData();renderWorkJournal();
+        var status=promptStatusLine(shift);if(status)status.innerText=`第 ${photoIndex+1} 張照片正在重新建立雲端辨識工作…`;
+        await queueJournalPhotoOcr(date,shift,photo,photoIndex,true,null);
+    }
+
+    // 圖片壓縮後再上傳。原始圖片仍保留在雲端，JSON 備份只記檔案 ID/網址。
+    async function compressImageToData(file){
+        // 先嘗試用瀏覽器解碼並壓成 JPEG；若 HEIC 等格式無法解碼，仍上傳原圖保存，
+        // 後續 OCR 會回報明確原因，不會因為辨識失敗而丟掉原始照片。
+        var blob=file, loaded=null;
+        try{
+            loaded=await loadImageForCanvas(file);
+            var max=1600,scale=Math.min(1,max/Math.max(loaded.width,loaded.height));
+            var c=document.createElement("canvas");c.width=Math.max(1,Math.round(loaded.width*scale));c.height=Math.max(1,Math.round(loaded.height*scale));
+            var ctx=c.getContext("2d");if(!ctx)throw new Error("無法建立圖片壓縮畫布");
+            ctx.drawImage(loaded.source,0,0,c.width,c.height);
+            var converted=await new Promise(resolve=>c.toBlob(resolve,"image/jpeg",.84));
+            if(converted)blob=converted;
+        }catch(e){blob=file;}
+        finally{if(loaded)loaded.close();}
+        return await new Promise((resolve,reject)=>{
+            var reader=new FileReader();
+            reader.onload=()=>{var data=String(reader.result).split(",")[1]||"";if(!data){reject(new Error("讀取圖片內容失敗"));return;}resolve({base64:data,mimeType:blob.type||file.type||"image/jpeg",fileName:(file.name||"photo").replace(/\.[^.]+$/," ").trim()+".jpg"});};
+            reader.onerror=()=>reject(new Error("讀取圖片失敗"));reader.readAsDataURL(blob);
+        });
+    }
+
+    async function callScheduleImageApi(payload){
+        var response=null,lastError=null;
+        // 手機切換 App、網路短暫切換或 GAS 冷啟動時，瀏覽器可能回報 Failed to fetch。
+        // 對傳輸層錯誤自動重試；GAS 明確回傳的業務錯誤則不重試。
+        for(var attempt=0;attempt<3;attempt++){
+            try{
+                response=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+                break;
+            }catch(fetchError){
+                lastError=fetchError;
+                var message=String(fetchError&&fetchError.message?fetchError.message:fetchError);
+                var transient=/failed to fetch|networkerror|load failed|network request failed|the operation was aborted/i.test(message);
+                if(!transient || attempt===2){
+                    throw new Error("連線共用 GAS 失敗："+message+"。請確認網路連線；若剛切換其他程式，回到供油班表後可再按「重新 OCR」。");
+                }
+                await new Promise(function(resolve){setTimeout(resolve,[1200,2600][attempt]||2600);});
+            }
+        }
+        if(!response)throw new Error("連線共用 GAS 失敗："+String(lastError||"未知網路錯誤"));
+        var raw=await response.text(),data;
+        try{data=JSON.parse(raw);}catch(parseError){throw new Error("共用 GAS 沒有回傳 JSON（HTTP "+response.status+"）。請確認已部署最新版本及 GAS 網址；回應開頭："+String(raw||"").slice(0,160));}
+        if(!response.ok||!data||data.status!=="success")throw new Error((data&&data.message)||("圖片服務回應失敗（HTTP "+response.status+"）"));
+        return data;
+    }
+    // 依目前工作日誌紙本版面，將「一、工作記事」與「二、交待事項」合併成單一 OCR 區域。
+    // 合併範圍：原圖 y=1135~1785；避開上方油量表格及底部簽名欄。
+    // 固定印刷標題會在 OCR 結果整理時移除，不寫入工作日誌搜尋文字。
+    async function loadImageForCanvas(file){
+        if(window.createImageBitmap){
+            try{
+                var bitmap=await createImageBitmap(file);
+                return {source:bitmap,width:bitmap.width,height:bitmap.height,close:function(){bitmap.close?.();}};
+            }catch(e){}
+        }
+        var objectUrl=URL.createObjectURL(file);
+        try{
+            var img=await new Promise((resolve,reject)=>{
+                var node=new Image();node.onload=()=>resolve(node);node.onerror=()=>reject(new Error("無法讀取照片，請改用 JPG 或 PNG 格式。"));node.src=objectUrl;
+            });
+            return {source:img,width:img.naturalWidth,height:img.naturalHeight,close:function(){URL.revokeObjectURL(objectUrl);}};
+        }catch(err){URL.revokeObjectURL(objectUrl);throw err;}
+    }
+    async function canvasToJpegBase64(canvas){
+        var blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",0.94));
+        if(!blob)throw new Error("建立 OCR 裁切圖片失敗。");
+        return await new Promise((resolve,reject)=>{
+            var reader=new FileReader();reader.onload=()=>{var encoded=String(reader.result).split(",")[1]||"";encoded?resolve(encoded):reject(new Error("OCR 裁切圖片內容為空。"));};
+            reader.onerror=()=>reject(new Error("讀取 OCR 裁切圖片失敗。"));reader.readAsDataURL(blob);
+        });
+    }
+    // 只保留工作記事的手寫第 4 點及其後條目；模型若混入其他印刷內容，前端再做一次防護。
+    function cleanJournalOcrText(rawText){
+        var lines=String(rawText||"").replace(/\r\n?/g,"\n").split("\n");
+        var result=[],started=false,currentIndex=-1,lastItemNumber=0;
+        lines.forEach(function(rawLine){
+            var line=String(rawLine||"").trim();
+            if(!line)return;
+            line=line.replace(/^```[a-zA-Z]*\s*/,"" ).replace(/```$/g,"").trim();
+            line=line.replace(/^[-*•]\s*/,"");
+            // 項目編號必須有句點、頓號、括號、連字號或空白分隔；避免把 08:23 誤判成第 8 點。
+            var match=line.match(/^(\d{1,2})(?:\s*[.．、:：)）-]\s*|\s+)(.*)$/);
+            if(match){
+                var number=Number(match[1]),content=String(match[2]||"").trim();
+                if(!started){
+                    // 忽略紙本印刷的第 1～3 點，從第一個手寫第 4 點或之後的條目開始。
+                    if(number>=4){
+                        started=true;lastItemNumber=number;
+                        result.push(number+". "+content);currentIndex=result.length-1;
+                    }
+                    return;
+                }
+                if(number>lastItemNumber&&number>=4){
+                    // 僅遞增的 5、6、7…視為新工作記事；小於等於目前項目編號的數字
+                    // 可能是第 6 點內部的油罐車 1、2、3、4 號，必須保留為續行。
+                    lastItemNumber=number;
+                    result.push(number+". "+content);currentIndex=result.length-1;
+                }else if(currentIndex>=0){
+                    result[currentIndex]+=(result[currentIndex].trim()?"\n":"")+line;
+                }
+                return;
+            }
+            // 模型可能將同一點的長句換行；只把第 4 點開始後的續行併入前一點。
+            if(started&&currentIndex>=0){
+                result[currentIndex]+=(result[currentIndex].trim()?"\n":"")+line;
+            }
+        });
+        return result.join("\n").replace(/\n{3,}/g,"\n\n").trim();
+    }
+    async function cropJournalOcrSections(file){
+        var loaded=await loadImageForCanvas(file);
+        try{
+            if(!loaded.width||!loaded.height)throw new Error("無法讀取照片尺寸；請改用 JPG 或 PNG 照片。");
+            if(loaded.height<loaded.width)throw new Error("照片目前是橫式。請將工作日誌紙本以直式、完整頁面拍攝後再辨識。");
+            // 改為擷取完整「一、工作記事」欄位，而不是從固定的第 4 點高度開始窄裁切。
+            // 範圍 y=65%～87%、x=2%～98%，包含欄位標題、印刷第 1～3 點、所有手寫第 4 點以後條目，
+            // 並延伸到「二、交待事項」標題附近，降低紙張偏移、拍攝角度不同時漏掉前幾點或末尾條目的風險。
+            // Gemini 會依提示排除印刷第 1～3 點及「二、交待事項」標題，只逐項輸出手寫第 4 點以後內容。
+            var sx=Math.max(0,Math.floor(loaded.width*0.02));
+            var sy=Math.max(0,Math.floor(loaded.height*0.65));
+            var sw=Math.min(loaded.width-sx,Math.ceil(loaded.width*0.96));
+            var sh=Math.min(loaded.height-sy,Math.ceil(loaded.height*0.22));
+            if(sw<100||sh<50)throw new Error("照片取景範圍不符合工作日誌紙本版面，無法定位第 4 點以後的手寫記事。");
+            var scale=Math.min(2.2,2600/sw),canvas=document.createElement("canvas");
+            canvas.width=Math.max(1,Math.round(sw*scale));canvas.height=Math.max(1,Math.round(sh*scale));
+            var ctx=canvas.getContext("2d");if(!ctx)throw new Error("瀏覽器無法建立圖片辨識畫布。");
+            ctx.fillStyle="#FFFFFF";ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+            ctx.drawImage(loaded.source,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
+            var base64=await canvasToJpegBase64(canvas);
+            return [{key:"work_notes_4_plus",title:"工作記事第4點以後",mimeType:"image/jpeg",base64:base64}];
+        }finally{loaded.close();}
+    }
+    async function uploadImageFiles(files,category,onProgress,doOcr){
+        var saved=[],errors=[],ocrErrors=[];
+        for(var i=0;i<files.length;i++){
+            try{
+                if(onProgress)onProgress(`圖片壓縮／上傳中 ${i+1}/${files.length}：${files[i].name}`);
+                var payload=await compressImageToData(files[i]);
+                var result=await callScheduleImageApi({action:"schedule_image_upload",category:category,fileName:payload.fileName,mimeType:payload.mimeType,base64:payload.base64});
+                var photo={fileId:result.fileId,name:result.fileName||payload.fileName,url:result.url||"",thumbnailUrl:result.thumbnailUrl||"",uploadedAt:new Date().toISOString()};
+                if(doOcr){
+                    var sectionTexts=[],photoOcrErrors=[],recognizedAny=false;
+                    try{
+                        var regions=await cropJournalOcrSections(files[i]);
+                        for(var ri=0;ri<regions.length;ri++){
+                            var region=regions[ri];
+                            if(onProgress)onProgress(`正在以 Gemini 辨識${region.title} ${i+1}/${files.length}：${files[i].name}`);
+                            try{
+                                var ocrResult=await callScheduleImageApi({
+                                    action:"schedule_image_ocr",fileId:result.fileId,language:"zh",
+                                    section:region.key,ocrMimeType:region.mimeType,ocrBase64:region.base64
+                                });
+                                var recognized=cleanJournalOcrText(ocrResult.text);
+                                if(recognized){recognizedAny=true;sectionTexts.push(`【${region.title}】\n${recognized}`);}
+                            }catch(sectionErr){
+                                photoOcrErrors.push({fileName:files[i].name,section:region.title,error:String(sectionErr.message||sectionErr)});
+                            }
+                        }
+                    }catch(ocrErr){photoOcrErrors.push({fileName:files[i].name,error:String(ocrErr.message||ocrErr)});}
+                    photo.ocrText=sectionTexts.join("\n\n");
+                    photo.ocrStatus=photoOcrErrors.length?"failed":(recognizedAny?"success":"empty");
+                    if(photoOcrErrors.length){photo.ocrError=photoOcrErrors.map(x=>x.error).join("；");ocrErrors=ocrErrors.concat(photoOcrErrors);}
+                    photo.lastOcrAt=new Date().toISOString();photo.ocrAttempts=1;
+                }
+                saved.push(photo);
+            }catch(err){errors.push({fileName:files[i].name,error:String(err.message||err)});}
+        }
+        return {saved,errors,ocrErrors};
+    }
+    function searchWorkJournals(){
+        var q=(getVal("journalSearchInput")||"").trim().toLowerCase(),box=el("journalSearchResults");if(!box)return;
+        if(!q){box.innerText="輸入關鍵字即可搜尋已儲存的文字。";return;}
+        var hits=appSettings.workJournals.filter(r=>(r.text||"").toLowerCase().includes(q));
+        box.innerHTML=hits.length?hits.map(r=>{var pos=(r.text||"").toLowerCase().indexOf(q),snippet=(r.text||"").slice(Math.max(0,pos-22),Math.min((r.text||"").length,pos+q.length+45));return `<div class="journal-result" onclick="openJournalSearchHit('${r.date}','${r.shift}')"><strong>${htmlEscape(r.date)}　${htmlEscape(r.shift)}</strong><div style="margin-top:4px;">${htmlEscape(snippet)}</div><div class="journal-note">原始照片 ${(r.photos||[]).length} 張</div></div>`;}).join(""):`<div class="journal-note">找不到包含「${htmlEscape(q)}」的已儲存文字。</div>`;
+    }
+    function openJournalSearchHit(date,shift){
+        setVal("queryDate",date);
+        handleSharedDateChange();
+        setTimeout(function(){var target=el("journalText_"+shift);if(target)target.scrollIntoView({behavior:"smooth",block:"center"});},30);
+    }
+    async function openDrivePhoto(fileId){
+        // 照片檢視加入一筆瀏覽歷史；手機返回鍵會先關閉照片，不會直接離開程式。
+        if(!fileId)return;
+        if(schedulePhotoViewerClose){schedulePhotoViewerClose(true);}
+        var viewer=document.createElement("div");viewer.className="journal-photo-viewer";viewer.setAttribute("role","dialog");viewer.setAttribute("aria-modal","true");
+        var closed=false;
+        var close=(fromPop)=>{
+            if(closed)return;closed=true;
+            viewer.remove();document.removeEventListener("keydown",onKey);
+            if(schedulePhotoViewer===viewer){schedulePhotoViewer=null;schedulePhotoViewerClose=null;}
+            if(!fromPop && history.state && history.state.schedulePhotoViewer){scheduleIgnoreNextPopState=true;history.back();}
+        };
+        var onKey=e=>{if(e.key==="Escape")close(false);};
+        schedulePhotoViewer=viewer;schedulePhotoViewerClose=close;
+        try{history.pushState({scheduleApp:true,schedulePhotoViewer:true},"",location.href);}catch(e){}
+        viewer.addEventListener("click",e=>{if(e.target===viewer)close(false);});
+        var closeBtn=document.createElement("button");closeBtn.type="button";closeBtn.className="journal-photo-viewer-close";closeBtn.textContent="×";closeBtn.setAttribute("aria-label","關閉照片");closeBtn.onclick=()=>close(false);
+        var status=document.createElement("div");status.className="journal-photo-viewer-status";status.textContent="照片載入中…";
+        viewer.appendChild(closeBtn);viewer.appendChild(status);document.body.appendChild(viewer);document.addEventListener("keydown",onKey);
+        try{
+            var src=driveImageCache[fileId];
+            if(!src){var data=await callScheduleImageApi({action:"schedule_image_get",fileId:fileId});src=`data:${data.mimeType||"image/jpeg"};base64,${data.base64}`;driveImageCache[fileId]=src;}
+            if(!viewer.isConnected)return;
+            var img=document.createElement("img");img.alt="工作日誌照片";img.src=src;status.replaceWith(img);
+        }catch(err){if(viewer.isConnected)status.textContent="照片載入失敗："+String(err&&err.message?err.message:err);}
+    }
+
+    function loadDriveImagePreviews(){
+        document.querySelectorAll("img[data-drive-file]").forEach(img=>{
+            var id=img.getAttribute("data-drive-file");if(!id||img.dataset.loading==="1")return;
+            if(driveImageCache[id]){img.src=driveImageCache[id];return;}
+            img.dataset.loading="1";
+            callScheduleImageApi({action:"schedule_image_get",fileId:id}).then(data=>{var src=`data:${data.mimeType||"image/jpeg"};base64,${data.base64}`;driveImageCache[id]=src;img.src=src;}).catch(()=>{img.alt="圖片預覽暫時無法載入，點擊可嘗試開啟雲端原檔";img.style.objectFit="contain";}).finally(()=>{img.dataset.loading="0";});
+        });
+    }
+
+    // 試挪班別：一組預排包含兩個日期，各自指定新的班別，不再自動交換原班別。
+    // 七休一與一例一休讀取標準排班（含本次預排），不讀取「實際出勤」模式。
+    function openShiftSwapModal(){
+        trialSwapPairs=[];lastTrialCheck=null;
+        var team=currentMonthViewTeam&&currentMonthViewTeam!=="ALL"?currentMonthViewTeam:appSettings.myTeam;
+        setVal("swapTeam",team);
+        setVal("swapDateA",formatDateToYYYYMMDD(getTWDate()));
+        setVal("swapDateB","");
+        setVal("swapShiftA","早班");
+        setVal("swapShiftB","早班");
+        setVal("swapReason","");
+        // 公假時間固定為正常班 08:30-17:00，不提供調整欄位。
+        appSettings.shiftTimeRules=normalizeShiftTimeRules(appSettings.shiftTimeRules);
+        renderTrialPairs();renderShiftSwapHistory();renderTrialCheck(null);el("shiftSwapModal").classList.add("show");
+    }
+    function closeShiftSwapModal(){el("shiftSwapModal").classList.remove("show");}
+    function trialKey(team,date){return `${date}_${team}`;}
+    function trialShiftForDate(team,date){
+        for(var i=0;i<trialSwapPairs.length;i++){
+            var p=trialSwapPairs[i];
+            if(p.team===team&&p.dateA===date)return String(p.afterA||"");
+            if(p.team===team&&p.dateB===date)return String(p.afterB||"");
+        }
+        // getLogicalShift 取標準排班與既有正式日期覆蓋，不會取實際出勤結果。
+        return String(getLogicalShift(team,date)||"").replace(/^調:/,"");
+    }
+    function addTrialSwapPair(){
+        var team=getVal("swapTeam"),a=getVal("swapDateA"),b=getVal("swapDateB"),
+            afterA=getVal("swapShiftA"),afterB=getVal("swapShiftB"),reason=getVal("swapReason").trim();
+        if(!a||!afterA)return alert("請先選擇第一個日期及要調整的班別。");
+        if(!b||!afterB)return alert("請再選擇第二個日期及要調整的班別。");
+        if(a===b)return alert("兩個日期不可相同。");
+        if(trialSwapPairs.length&&trialSwapPairs.some(p=>p.team!==team))return alert("同一份預排請先只選擇一個班別。");
+        if(trialSwapPairs.some(p=>p.team===team&&[p.dateA,p.dateB].some(d=>d===a||d===b)))return alert("同一個日期在本次預排中只能調整一次，請先移除重複日期。");
+        if(appSettings.manualShifts?.[trialKey(team,a)]||appSettings.manualShifts?.[trialKey(team,b)])return alert("其中一個日期已有系統手動改班設定。為避免覆蓋既有設定，請先處理該日期後再試挪。");
+        var oldA=String(getLogicalShift(team,a)||"").replace(/^調:/,"");
+        var oldB=String(getLogicalShift(team,b)||"").replace(/^調:/,"");
+        trialSwapPairs.push({team,dateA:a,dateB:b,beforeA:oldA,beforeB:oldB,afterA:afterA,afterB:afterB,reason:reason||"未填寫"});
+        lastTrialCheck=null;renderTrialPairs();renderTrialCheck(null);
+    }
+    function removeTrialSwapPair(index){trialSwapPairs.splice(index,1);lastTrialCheck=null;renderTrialPairs();renderTrialCheck(null);}
+    function renderTrialPairs(){
+        var box=el("trialSwapPairs");
+        if(!trialSwapPairs.length){box.innerHTML='<div class="journal-note">尚未加入預排調整。</div>';return;}
+        box.innerHTML='<strong>預排調整清單</strong>'+trialSwapPairs.map((p,i)=>`<div class="trial-pair"><div style="display:flex;justify-content:space-between;gap:8px;"><strong>${htmlEscape(p.team)}班</strong><button class="subtle-btn" onclick="removeTrialSwapPair(${i})">移除</button></div><div>${htmlEscape(p.dateA)}：${htmlEscape(formatShiftLabel(p.beforeA))} → <strong>${htmlEscape(formatShiftLabel(p.afterA))}</strong></div><div>${htmlEscape(p.dateB)}：${htmlEscape(formatShiftLabel(p.beforeB))} → <strong>${htmlEscape(formatShiftLabel(p.afterB))}</strong></div><div class="journal-note">原因：${htmlEscape(p.reason)}</div></div>`).join("");
+    }
+    function parseClock(s){if(!/^\d{2}:\d{2}$/.test(s||""))return null;var p=s.split(":").map(Number);if(p[0]>23||p[1]>59)return null;return p[0]*60+p[1];}
+    function getShiftGroup(shift){
+        var s=String(shift||"").replace(/^\$/ ,"").replace(/^調:/,"");
+        if(s==="大休"||s==="小休")return "rest";
+        if(s.includes("公假"))return "public";
+        if(s.includes("早"))return "early";
+        if(s.includes("中")||s.includes("午"))return "mid";
+        if(s.includes("晚"))return "late";
+        return "unknown";
+    }
+    // 七休一只看排班標籤：公假算工作；只有大休、小休才算休息日。
+    function shiftIsWork(shift){
+        var s=String(shift||"").replace(/^\$/ ,"").replace(/^調:/,"").trim();
+        return s!=="大休"&&s!=="小休";
+    }
+    function makeLocalDateTime(dateStr,clock,dayOffset){
+        var mins=parseClock(clock);if(mins===null)return null;
+        var d=new Date(dateStr.replace(/-/g,"/")+" 00:00:00");
+        d.setDate(d.getDate()+(dayOffset||0));d.setMinutes(mins);return d;
+    }
+    function formatDateTimeForCheck(d){return d.toLocaleString("zh-TW",{timeZone:"Asia/Taipei",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false});}
+    function makeShiftIntervalForDate(dateStr,shift,publicRules){
+        var group=getShiftGroup(shift),start=null,end=null;
+        if(group==="rest")return null;
+        if(group==="early"){
+            start=makeLocalDateTime(dateStr,"07:00",0);end=makeLocalDateTime(dateStr,"15:00",0);
+        }else if(group==="mid"){
+            start=makeLocalDateTime(dateStr,"15:00",0);end=makeLocalDateTime(dateStr,"23:00",0);
+        }else if(group==="late"){
+            // 使用者特別確認：選定日期的晚班，前一天 23:00 上班，選定日期 07:00 下班。
+            start=makeLocalDateTime(dateStr,"23:00",-1);end=makeLocalDateTime(dateStr,"07:00",0);
+        }else if(group==="public"){
+            var ps=parseClock(publicRules.start),pe=parseClock(publicRules.end);
+            if(ps===null||pe===null||ps===pe)return {unknown:true,date:dateStr,shift:shift,reason:"公假時間尚未正確設定"};
+            start=makeLocalDateTime(dateStr,publicRules.start,0);end=makeLocalDateTime(dateStr,publicRules.end,pe<=ps?1:0);
+        }else{
+            return {unknown:true,date:dateStr,shift:shift,reason:"班別無法辨識"};
+        }
+        return {date:dateStr,shift:shift,start:start,end:end,group:group};
+    }
+    function runShiftCompliance(){
+        if(!trialSwapPairs.length)return {ok:false,items:[{type:"wait",text:"請先加入至少一組兩日期班別預排。"}]};
+        var team=trialSwapPairs[0].team;
+        if(trialSwapPairs.some(p=>p.team!==team))return {ok:false,items:[{type:"fail",text:"同一次試挪請先只處理同一個班別。"}]};
+        var dates=trialSwapPairs.flatMap(p=>[p.dateA,p.dateB]).sort(),min=dates[0],max=dates[dates.length-1];
+        var items=[],failed=false,waiting=false;
+
+        // 7休1：以標準班表的班別標籤（套用本次預排後）跨週檢查，不讀取實際出勤。
+        var scanStart=dateAdd(min,-6),scanEnd=max,badRuns=[];
+        for(var cur=scanStart;cur<=scanEnd;cur=dateAdd(cur,1)){
+            var allWork=true;
+            for(var k=0;k<7;k++){
+                if(!shiftIsWork(trialShiftForDate(team,dateAdd(cur,k)))){allWork=false;break;}
+            }
+            if(allWork)badRuns.push(`${cur}～${dateAdd(cur,6)}`);
+        }
+        if(badRuns.length){failed=true;items.push({type:"fail",text:`7休1：不符合，發現連續七天都是工作班別（公假也計入）：${badRuns.slice(0,5).join("、")}${badRuns.length>5?"…":""}`});}
+        else items.push({type:"pass",text:"7休1：符合。以標準班表檢查，已跨週計算連續工作日；公假計入工作日，只有大休、小休算休息。"});
+
+        // 一例一休：每個受影響的星期一至星期日，至少各有一個大休及一個小休；公假不抵休。
+        var weeks=new Set();
+        dates.forEach(ds=>{var d=new Date(ds.replace(/-/g,"/")+" 00:00:00");d.setDate(d.getDate()-(d.getDay()===0?6:d.getDay()-1));weeks.add(formatDateToYYYYMMDD(d));});
+        var badWeeks=[];
+        weeks.forEach(mon=>{
+            var big=0,small=0;
+            for(var j=0;j<7;j++){
+                var sh=String(trialShiftForDate(team,dateAdd(mon,j))).replace(/^\$/ ,"").replace(/^調:/,"");
+                if(sh.includes("大休"))big++;
+                if(sh.includes("小休"))small++;
+            }
+            if(!big||!small)badWeeks.push(`${mon}～${dateAdd(mon,6)}（大休 ${big} 日、小休 ${small} 日）`);
+        });
+        if(badWeeks.length){failed=true;items.push({type:"fail",text:`一例一休：不符合，以下星期缺少大休或小休：${badWeeks.join("；")}`});}
+        else items.push({type:"pass",text:"一例一休：符合。每個受影響的星期一至星期日均至少有一個大休及一個小休；公假不抵休。"});
+
+        // 8 小時間隔：將排班日期轉成實際工作區間；晚班以前一天 23:00 至當天 07:00 計算。
+        // 公假固定採正常班時間 08:30-17:00，不讀取舊版備份中的自訂時間。
+        var publicRules={start:"08:30",end:"17:00"};
+        appSettings.shiftTimeRules=normalizeShiftTimeRules(appSettings.shiftTimeRules);
+        var intervals=[],unknown=[];
+        // 前後多取三日，以涵蓋晚班跨日及鄰接班別。
+        for(var day=dateAdd(min,-3);day<=dateAdd(max,3);day=dateAdd(day,1)){
+            var sh=trialShiftForDate(team,day),iv=makeShiftIntervalForDate(day,sh,publicRules);
+            if(!iv)continue;
+            if(iv.unknown){unknown.push(`${day}（${formatShiftLabel(sh)}：${iv.reason}）`);continue;}
+            intervals.push(iv);
+        }
+        intervals.sort((a,b)=>a.start-b.start||a.end-b.end);
+        var intervalProblems=[];
+        for(var z=1;z<intervals.length;z++){
+            var prev=intervals[z-1],next=intervals[z],hours=(next.start-prev.end)/3600000;
+            if(hours<8){
+                var gapText=hours<0?`重疊 ${Math.abs(hours).toFixed(1)} 小時`:`僅 ${hours.toFixed(1)} 小時`;
+                intervalProblems.push(`${formatDateTimeForCheck(prev.start)}～${formatDateTimeForCheck(prev.end)}（${formatShiftLabel(prev.shift)}）→ ${formatDateTimeForCheck(next.start)}～${formatDateTimeForCheck(next.end)}（${formatShiftLabel(next.shift)}）：間隔${gapText}`);
+            }
+        }
+        if(intervalProblems.length){failed=true;items.push({type:"fail",text:"8小時間隔：不符合。"+intervalProblems.slice(0,6).join("；")});}
+        else if(unknown.length){waiting=true;items.push({type:"wait",text:`8小時間隔：有班別無法換算時間，尚不能判定：${unknown.slice(0,5).join("、")}`});}
+        else items.push({type:"pass",text:`8小時間隔：符合。已依班別實際上下班時間檢查；晚班以前一天 23:00 至當天 07:00 計算；公假固定採正常班 ${publicRules.start}～${publicRules.end}。`});
+        return {ok:!failed&&!waiting,failed,waiting,items,team};
+    }
+    function checkTrialShiftPlan(){
+        // 排班檢查只產生暫時計算結果，沒有修改正式資料，不觸發備份。
+        var result=runShiftCompliance();lastTrialCheck=result;
+        renderTrialCheck(result);
+    }
+    function renderTrialCheck(result){
+        var box=el("trialShiftCheckResults"),btn=el("applyShiftSwapBtn");
+        if(!result){box.innerHTML='<div class="journal-note">加入互調日期後，按「執行排班檢查」。</div>';btn.disabled=true;btn.style.opacity=".5";return;}
+        box.innerHTML='<strong>排班檢查結果</strong>'+result.items.map(it=>`<div class="check-line ${it.type==='pass'?'check-pass':it.type==='fail'?'check-fail':'check-wait'}">${it.type==='pass'?'✓':it.type==='fail'?'✕':'!'} ${htmlEscape(it.text)}</div>`).join("")+(result.ok?'<div class="check-line check-pass"><strong>檢查通過，可以正式套用。</strong></div>':'<div class="check-line check-wait">目前尚未全部通過，請修正預排或補齊班別時間後重新檢查。</div>');
+        btn.disabled=!result.ok;btn.style.opacity=result.ok?"1":".5";
+    }
+    function applyTrialShiftPlan(){
+        if(!lastTrialCheck||!lastTrialCheck.ok)return alert("請先完成並通過全部排班檢查。");
+        var team=trialSwapPairs[0].team;
+        if(!confirm(`確定正式套用 ${team} 班的 ${trialSwapPairs.length} 組日期班別調整？\n只會覆蓋指定日期，不會改變標準循環及隔年班表。`))return;
+        var now=new Date().toISOString();
+        trialSwapPairs.forEach(p=>{
+            appSettings.shiftSwapOverrides[trialKey(team,p.dateA)]=p.afterA;
+            appSettings.shiftSwapOverrides[trialKey(team,p.dateB)]=p.afterB;
+            appSettings.shiftSwapRecords.push({id:"swap_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),team:p.team,dateA:p.dateA,dateB:p.dateB,beforeA:p.beforeA,beforeB:p.beforeB,afterA:p.afterA,afterB:p.afterB,reason:p.reason,adjustedAt:now});
+        });
+        saveExtendedAppData();trialSwapPairs=[];lastTrialCheck=null;renderAppSafe();renderMonthTable();renderShiftSwapHistory();renderTrialPairs();renderTrialCheck(null);alert("班別調整已正式套用。標準循環及隔年班表未更動，調整紀錄已保存。");closeShiftSwapModal();
+    }
+    function renderShiftSwapHistory(){
+        var box=el("shiftSwapHistory"),rows=(appSettings.shiftSwapRecords||[]).slice().reverse().slice(0,30);
+        box.innerHTML=rows.length?rows.map(r=>`<div class="trial-pair"><strong>${htmlEscape(r.team)}班</strong><div>${htmlEscape(r.dateA)}：${htmlEscape(formatShiftLabel(r.beforeA))} → <strong>${htmlEscape(formatShiftLabel(r.afterA))}</strong></div><div>${htmlEscape(r.dateB)}：${htmlEscape(formatShiftLabel(r.beforeB))} → <strong>${htmlEscape(formatShiftLabel(r.afterB))}</strong></div><div>原因：${htmlEscape(r.reason)}</div><div class="journal-note">調整時間：${htmlEscape(new Date(r.adjustedAt).toLocaleString("zh-TW"))}</div></div>`).join(""):'尚無調班紀錄。';
+    }
+
+    // 導覽列第四頁為系統設定；工作日誌使用同一個日期選擇器，但日期記憶獨立。
+    function switchTab(num,fromHistory){
+        if(el('tab4')?.classList.contains('active')&&num!==4&&coreSettingsDirty){
+            if(!confirm("核心排班設定尚未套用。要放棄這次修改並離開設定頁嗎？"))return;
+            coreSettingsDirty=false;loadSettingsToForm();
+        }
+        if(scheduleNavigationReady && !fromHistory){
+            var last=scheduleTabHistory.length?scheduleTabHistory[scheduleTabHistory.length-1]:null;
+            if(last!==num){scheduleTabHistory.push(num);try{history.pushState({scheduleApp:true,tab:num},"",location.href);}catch(e){}}
+        }
+        var wasJournal = isWorkJournalTabActive();
+        if (wasJournal && num === 3) preserveWorkJournalEditors();
+        if (wasJournal && num !== 3) {
+            preserveWorkJournalEditors();
+            workJournalSelectedDate = getVal("queryDate") || workJournalSelectedDate;
+            try { localStorage.setItem("ScheduleApp_WorkJournalDate", workJournalSelectedDate); } catch (e) {}
+            moveSharedDatePickerToJournal(false);
+            setVal("queryDate", normalQueryDateValue || formatDateToYYYYMMDD(getTWDate()));
+        } else if (!wasJournal && num === 3) {
+            normalQueryDateValue = getVal("queryDate") || normalQueryDateValue || formatDateToYYYYMMDD(getTWDate());
+        }
+        triggerVibrate();document.querySelectorAll('.tab-content,.tab-btn').forEach(node=>node.classList.remove('active'));
+        el('tab'+num).classList.add('active');document.querySelector(`.tab-bar .tab-btn:nth-child(${num})`).classList.add('active');
+        if(el('settingsStatusBar'))el('settingsStatusBar').style.display=num===4?'block':'none';
+        applyModeUI();
+        updateSettingsStatus();
+        var controls=el('headerControls'),header=el('mainHeaderSection');
+        if(num===3){
+            moveSharedDatePickerToJournal(true);
+            setVal("queryDate", workJournalSelectedDate || formatDateToYYYYMMDD(getTWDate()));
+            controls.style.display='none';
+            controls.style.opacity='0';
+            header.style.paddingBottom='5px';
+        } else if(num===4){
+            controls.style.opacity='0';
+            setTimeout(()=>{controls.style.display='none';header.style.paddingBottom='5px';},150);
+        } else {
+            controls.style.display='block';
+            setTimeout(()=>{controls.style.opacity='1';header.style.paddingBottom='10px';},10);
+        }
+        el('tab'+num).scrollTop=0;
+        if(num===3)renderWorkJournal();
+        else if(wasJournal){renderAppSafe();renderMonthTable();}
+    }
+
+    // 備份還原與恢復預設的共用函式已於系統設定區統一定義，避免重複覆寫。
+
+    // 尚未套用核心排班草稿時，離開或重新整理頁面前提醒使用者。
+    window.addEventListener("beforeunload", function (event) {
+        if (coreSettingsDirty && !scheduleAllowLeave) { event.preventDefault(); event.returnValue = ""; }
+    });
+
+    // 初始值與首次顯示
+    document.addEventListener("DOMContentLoaded",function(){
+        updateSettingsStatus();
+        // 目前首頁作為程式導覽根節點；後續分頁及照片檢視各自建立歷史項目。
+        if(!scheduleNavigationReady){
+            scheduleTabHistory=[1];
+            try{history.replaceState({scheduleApp:true,tab:1},"",location.href);history.pushState({scheduleApp:true,rootGuard:true},"",location.href);}catch(e){}
+            scheduleNavigationReady=true;
+        }
+        resumePendingJournalOcr();
+        // 前端只在開啟時查詢雲端工作結果；Gemini 本身由 GAS 觸發器執行，不依賴此計時器。
+        if(!window.scheduleJournalOcrPollTimer){
+            window.scheduleJournalOcrPollTimer=setInterval(function(){if(!document.hidden)syncPendingJournalOcrStatuses();},20000);
+        }
+    });
+    window.addEventListener("popstate",function(event){
+        if(scheduleIgnoreNextPopState){scheduleIgnoreNextPopState=false;return;}
+        // 手機返回鍵第一優先：關閉照片檢視並回到工作日誌。
+        if(schedulePhotoViewer && schedulePhotoViewerClose){schedulePhotoViewerClose(true);return;}
+        // 其次依照使用者進入分頁的順序逐層返回。
+        if(scheduleTabHistory.length>1){
+            scheduleTabHistory.pop();
+            var previous=scheduleTabHistory[scheduleTabHistory.length-1];
+            switchTab(previous,true);
+            return;
+        }
+        // 已在最上層，才詢問是否離開。取消時補回根節點，留在程式內。
+        var leaveMessage=coreSettingsDirty?"核心排班設定尚未套用。確定要離開供油班表嗎？":"確定要離開供油班表嗎？";
+        if(!confirm(leaveMessage)){
+            try{history.pushState({scheduleApp:true,rootGuard:true},"",location.href);}catch(e){}
+        }else{
+            scheduleAllowLeave=true;
+        }
+    });
+    document.addEventListener("visibilitychange",function(){
+        if(!document.hidden)resumePendingJournalOcr();
+    });
+
+</script>
+</body>
+</html>
