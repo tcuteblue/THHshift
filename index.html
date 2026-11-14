@@ -924,6 +924,12 @@
             renderWorkJournal();
         } else {
             normalQueryDateValue = selected;
+            // 使用者主動變更首頁日期時，班表總覽才跟著切換到該日期所在月份。
+            // 單純切換標準／實際模式或更新首頁其他內容，不得覆寫總覽目前瀏覽月份。
+            var selectedDateForCalendar = new Date(selected.replace(/-/g, '/') + " 00:00:00");
+            if (!isNaN(selectedDateForCalendar.getTime())) {
+                calendarViewDate = new Date(selectedDateForCalendar.getFullYear(), selectedDateForCalendar.getMonth(), 1);
+            }
             renderAppSafe();
         }
     }
@@ -1101,7 +1107,8 @@
         el("taskTeamLabel").innerText = isAllView ? `(顯示專屬班別 ${calcTeamId}班)` : "";
         renderTasks(targetDate, calcTeamId, myShiftTextForCalc); 
         
-        calendarViewDate = new Date(targetDate);
+        // 不在首頁 render 時重設 calendarViewDate。
+        // 班表總覽月份由自己的月份切換控制，只有使用者主動變更首頁日期時才同步月份。
         renderMonthTable();
     }
 
