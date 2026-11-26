@@ -33,7 +33,7 @@
         document.getElementById('manifestLink').setAttribute('href', 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest)));
     </script>
 
-    <title>班表查詢與工作提醒系統 蔡宏和製作20260308（臨時工作／工作日誌／試挪班別版）</title>
+    <title>班表查詢與工作提醒系統 蔡宏和製作20260308（臨時工作／工作日誌／調換班表版）</title>
     <link rel="icon" type="image/jpeg" href="icon.jpg">
     <link rel="apple-touch-icon" href="icon.jpg">
     
@@ -185,7 +185,7 @@
         .ios-step { display: flex; align-items: center; text-align:left; font-size:1.1rem; color:var(--text-main); margin-bottom: 15px; font-weight: bold; background: #F9FAFB; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
         .ios-icon { font-size: 1.5rem; margin: 0 10px; }
 
-        /* 新增：臨時工作、工作日誌、日期詳情與試挪班別 */
+        /* 新增：臨時工作、工作日誌、日期詳情與調換班表 */
         /* 工作提醒標題獨立置中；新增臨時工作按鈕另起一行靠右，使用臨時工作區塊相同配色。 */
         .task-card-title { display:block; width:100%; padding-right:0; text-align:center; margin-bottom:12px; }
         .task-card-heading { display:flex; justify-content:center; align-items:center; gap:8px; width:100%; text-align:center; }
@@ -193,7 +193,7 @@
         .temp-task-entry { position:static; transform:none; border:1px solid #14B8A6; background:#F0FDFA; color:#0F766E; border-radius:8px; font-size:.82rem; font-weight:700; padding:6px 10px; cursor:pointer; white-space:nowrap; line-height:1.35; }
         .temp-task-entry:hover { background:#CCFBF1; border-color:#0D9488; }
         .temp-task-entry:active { background:#99F6E4; color:#115E59; }
-        /* 班表總覽工具列：試挪按鈕與班別選單並排，節省垂直空間。 */
+        /* 班表總覽工具列：調換按鈕與班別選單並排，節省垂直空間。 */
         .calendar-toolbar-row { display:flex; justify-content:space-between; align-items:center; gap:8px; min-width:0; margin:0 0 9px; padding:0 0 8px; border-bottom:2px solid var(--border-color); }
         .trial-swap-entry { flex:0 0 auto; border:1px solid #14B8A6; background:#F0FDFA; color:#0F766E; border-radius:8px; font-size:.82rem; font-weight:700; padding:6px 10px; cursor:pointer; white-space:nowrap; line-height:1.35; }
         .trial-swap-entry:hover { background:#CCFBF1; border-color:#0D9488; }
@@ -212,10 +212,12 @@
         .trial-day-cell:active { transform:scale(.98); }
         .trial-day-cell .trial-day-number { font-size:.85rem; font-weight:800; line-height:1.1; }
         .trial-day-cell .trial-day-shift { font-size:.69rem; line-height:1.2; text-align:center; overflow-wrap:anywhere; }
-        .trial-day-cell.selected { outline:3px solid #2563EB; outline-offset:-2px; background:#EFF6FF; }
-        .trial-day-cell.changed { border:2px solid #0F766E; background:#F0FDFA; }
-        .trial-day-cell.manual { background:#F3F4F6; border-style:dashed; color:#6B7280; }
+        /* 調換班表日期格沿用首頁班別色票；選取、預排及手動改班只改外框，不覆蓋班別底色。 */
+        .trial-day-cell.selected { outline:3px solid #2563EB; outline-offset:-2px; }
+        .trial-day-cell.changed { border:2px solid #0F766E !important; }
+        .trial-day-cell.manual { border:2px dashed #6B7280 !important; }
         .trial-day-cell .trial-day-arrow { color:#0F766E; font-weight:800; font-size:.62rem; }
+        .trial-rest-duty-marker { color:#B91C1C; font-weight:900; margin-right:2px; }
         .trial-calendar-legend { display:flex; flex-wrap:wrap; gap:10px; margin:8px 0 12px; font-size:.72rem; color:var(--text-muted); }
         .trial-calendar-legend span { display:inline-flex; align-items:center; gap:4px; }
         .trial-legend-dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:#9CA3AF; }
@@ -227,6 +229,9 @@
         .trial-date-editor select, .trial-date-editor input { margin-bottom:7px; }
         .trial-date-editor-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:5px; }
         .trial-date-editor-actions .btn { flex:1; min-width:120px; }
+        .trial-rest-duty-option { display:flex; align-items:center; gap:9px; margin:8px 0 2px; padding:10px 12px; border:1px solid #FCA5A5; border-radius:9px; background:#FEF2F2; color:#991B1B; font-weight:700; }
+        .trial-rest-duty-option input { width:20px; height:20px; margin:0; accent-color:#DC2626; }
+        .trial-rest-duty-option input:disabled { opacity:.45; }
         .trial-change-row { background:#F0FDFA; border:1px solid #99F6E4; border-radius:9px; padding:9px; margin:7px 0; }
         .trial-change-row button { margin-top:6px; }
         .trial-history-change { font-size:.82rem; line-height:1.45; padding:3px 0; }
@@ -399,9 +404,9 @@
                 <button type="button" class="btn-icon" style="padding: 4px 15px; font-size: 1.1rem; box-shadow: none; border: 1px solid var(--border-color); cursor: pointer; background: #F9FAFB;" onclick="changeCalendarMonth(1)">▶</button>
             </div>
             <!-- 第二行：顯示視角選單 (靠右對齊) -->
-            <!-- 班別視角與試挪班別共用同一列，避免多占一整行把月曆往下推。 -->
+            <!-- 班別視角與調換班表共用同一列，避免多占一整行把月曆往下推。 -->
             <div class="calendar-toolbar-row">
-                <button type="button" class="trial-swap-entry" onclick="openShiftSwapModal()">⇄ 試挪班別</button>
+                <button type="button" class="trial-swap-entry" onclick="openShiftSwapModal()">⇄ 調換班表</button>
                 <select id="monthViewSelect" onchange="changeMonthViewTeam()" aria-label="選擇班表總覽班別">
                     <!-- 動態載入選單選項 -->
                 </select>
@@ -611,11 +616,11 @@
   </div>
 </div>
 
-<!-- 整期試挪班表：每期為上月 16 日至本月 15 日 -->
+<!-- 整期調換班表：每期為上月 16 日至本月 15 日 -->
 <div id="shiftSwapModal" class="modal-overlay" onclick="if(event.target===this) closeShiftSwapModal()">
   <div class="app-modal trial-period-modal">
-    <div class="modal-head"><h3>⇄ 整期試挪班表</h3><button class="modal-close" onclick="closeShiftSwapModal()">×</button></div>
-    <div class="journal-note">以標準班表預排，不讀取實際出勤。每期為上個月 16 日至選定月份 15 日。點選日期即可修改該日班別，可連續調整多天；所有修改先暫存，通過整期檢查後才正式套用。</div>
+    <div class="modal-head"><h3>⇄ 整期調換班表</h3><button class="modal-close" onclick="closeShiftSwapModal()">×</button></div>
+    <div class="journal-note">以標準班表預排，不讀取實際出勤。每期為上個月 16 日至選定月份 15 日。點選日期可修改班別，也可單獨勾選／取消「$ 休息日出勤」而不更換班別；所有修改先暫存，通過整期檢查後才正式套用。每個週一至週日最多只能有一個 $。</div>
 
     <label class="field-label" for="swapTeam">查看／調整班別（預設為你的專屬班別）</label>
     <select id="swapTeam" onchange="changeTrialSwapTeam()"></select>
@@ -630,7 +635,7 @@
 
     <div class="trial-month-weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
     <div id="trialMonthCalendar" class="trial-month-calendar"></div>
-    <div class="trial-calendar-legend"><span><i class="trial-legend-dot"></i>原班別</span><span><i class="trial-legend-dot changed"></i>已預排變更</span><span><i class="trial-legend-dot locked"></i>已有手動改班，不可覆蓋</span></div>
+    <div class="trial-calendar-legend"><span><i class="trial-legend-dot"></i>原班別顏色</span><span><i class="trial-legend-dot changed"></i>已調換預排</span><span><i class="trial-legend-dot locked"></i>已有手動改班，不可覆蓋</span><span><strong style="color:#B91C1C;">$</strong> 休息日出勤</span></div>
 
     <div id="trialSwapDateEditor" class="trial-date-editor"><div class="journal-note">請點選上方日期，查看當天班別並設定新班別。</div></div>
     <div id="trialSwapPairs" style="margin-top:12px;"></div>
@@ -638,11 +643,11 @@
     <hr style="border:0; border-top:1px solid var(--border-color); margin:14px 0;">
     <strong>排班檢查規則</strong>
     <div class="journal-note" style="margin:5px 0 8px;">
-      7 休 1：不得連續七天工作；一例一休：每個週一至週日週期至少各有一個大休及小休；輪班間隔至少 8 小時。早班 07:00–15:00、午班 15:00–23:00、晚班前一天 23:00 至當天 07:00；公假固定以 08:30–17:00 計算。檢查會跨越班表期別，納入前後日期及完整週期。
+      7 休 1：不得連續七天工作；一例一休：每個週一至週日完整週期，須有大休及小休，或只有一個大休／小休並另有一個「$」休息日出勤；同一週最多只能有一個 $，兩個以上不允許。輪班間隔至少 8 小時。早班 07:00–15:00、午班 15:00–23:00、晚班前一天 23:00 至當天 07:00；公假固定以 08:30–17:00 計算。檢查會跨越班表期別，納入前後日期及完整週期。
     </div>
     <button type="button" class="btn" style="background:#0F766E; font-size:1rem; padding:9px; margin-top:10px;" onclick="checkTrialShiftPlan()">檢查整期班表</button>
     <div id="trialShiftCheckResults" style="margin-top:10px;"></div>
-    <div class="modal-actions"><button class="btn" style="background:#6B7280;" onclick="closeShiftSwapModal()">關閉</button><button id="applyShiftSwapBtn" class="btn" onclick="applyTrialShiftPlan()" disabled style="opacity:.5;">正式套用整期調整</button></div>
+    <div class="modal-actions"><button class="btn" style="background:#6B7280;" onclick="closeShiftSwapModal()">關閉</button><button id="applyShiftSwapBtn" class="btn" onclick="applyTrialShiftPlan()" disabled style="opacity:.5;">正式套用整期調換</button></div>
     <hr style="border:0; border-top:1px solid var(--border-color); margin:14px 0;">
     <strong>過去調班紀錄（可復原）</strong><div id="shiftSwapHistory" class="journal-note" style="margin-top:8px;"></div>
   </div>
@@ -1337,6 +1342,7 @@
             temporaryTasks: JSON.parse(JSON.stringify(appSettings.temporaryTasks || [])),
             workJournals: JSON.parse(JSON.stringify(appSettings.workJournals || [])),
             shiftSwapOverrides: JSON.parse(JSON.stringify(appSettings.shiftSwapOverrides || {})),
+            shiftRestDutyOverrides: JSON.parse(JSON.stringify(appSettings.shiftRestDutyOverrides || {})),
             shiftSwapRecords: JSON.parse(JSON.stringify(appSettings.shiftSwapRecords || [])),
             shiftTimeRules: JSON.parse(JSON.stringify(appSettings.shiftTimeRules || {}))
         };
@@ -1376,6 +1382,7 @@
             restored.temporaryTasks = Array.isArray(restored.temporaryTasks) ? restored.temporaryTasks : [];
             restored.workJournals = Array.isArray(restored.workJournals) ? restored.workJournals : [];
             restored.shiftSwapOverrides = restored.shiftSwapOverrides && typeof restored.shiftSwapOverrides === "object" ? restored.shiftSwapOverrides : {};
+            restored.shiftRestDutyOverrides = restored.shiftRestDutyOverrides && typeof restored.shiftRestDutyOverrides === "object" ? restored.shiftRestDutyOverrides : {};
             restored.shiftSwapRecords = Array.isArray(restored.shiftSwapRecords) ? restored.shiftSwapRecords : [];
             restored.shiftTimeRules = normalizeShiftTimeRules(restored.shiftTimeRules);
             if (!restored.myTeam || !TEAMS.includes(restored.myTeam)) restored.myTeam = defaultSettings.myTeam;
@@ -1832,7 +1839,7 @@
 
 
     // =====================================================
-    // 功能：臨時工作、工作日誌、獨立日期詳情、試挪班別及紙本工作日誌 OCR。
+    // 功能：臨時工作、工作日誌、獨立日期詳情、調換班表及紙本工作日誌 OCR。
     // OCR 將「工作記事及交待事項」合併成單一裁切區域辨識。
     // =====================================================
     appSettings.temporaryTasks = Array.isArray(appSettings.temporaryTasks) ? appSettings.temporaryTasks : [];
@@ -1848,6 +1855,8 @@
         });
     });
     appSettings.shiftSwapOverrides = appSettings.shiftSwapOverrides || {};
+    // $ 休息日出勤獨立於班別保存：true=顯示 $、false=明確取消自動 $；未設定則沿用原班表規則。
+    appSettings.shiftRestDutyOverrides = appSettings.shiftRestDutyOverrides && typeof appSettings.shiftRestDutyOverrides === "object" ? appSettings.shiftRestDutyOverrides : {};
     appSettings.shiftSwapRecords = Array.isArray(appSettings.shiftSwapRecords) ? appSettings.shiftSwapRecords : [];
     // 固定班別時間：早班 07:00-15:00、午班 15:00-23:00。
     // 晚班以「所選日期」為下班日：前一天 23:00 上班、所選日期 07:00 下班。
@@ -1893,16 +1902,23 @@
         return SHIFT_CYCLE[(((appSettings.teams[teamId].offset || 0) + diffDays) % 8 + 8) % 8];
     }
     function addWeeklyRestMarker(teamId, targetDateStr, coreShift, coreGetter) {
-        if (String(coreShift).replace(/^\$/, "") !== "晚班1") return coreShift;
+        var raw = String(coreShift == null ? "" : coreShift);
+        var explicitMarker = raw.startsWith("$");
+        var rawName = raw.replace(/^\$/, "");
+        var adjustmentPrefix = rawName.startsWith("調:") ? "調:" : "";
+        var coreName = rawName.replace(/^調:/, "");
+        var displayName = adjustmentPrefix + coreName;
+        // 已明確標記為休息日出勤者，調整班別後仍保留標記（只要仍是工作班）。
+        if (coreName !== "晚班1") return explicitMarker ? "$" + displayName : displayName;
         var d = new Date(targetDateStr.replace(/-/g, '/') + " 00:00:00");
         d.setDate(d.getDate() + (d.getDay() === 0 ? -6 : 1 - d.getDay()));
         var restCount = 0;
         for (var i = 0; i < 7; i++) {
             var cur = new Date(d); cur.setDate(d.getDate() + i);
-            var core = String(coreGetter(teamId, formatDateToYYYYMMDD(cur))).replace(/^\$/, "");
+            var core = String(coreGetter(teamId, formatDateToYYYYMMDD(cur))).replace(/^\$/, "").replace(/^調:/, "");
             if (core === "小休" || core === "大休") restCount++;
         }
-        return restCount === 1 ? "$" + String(coreShift).replace(/^\$/, "") : String(coreShift).replace(/^\$/, "");
+        return (explicitMarker || restCount === 1) ? "$" + displayName : displayName;
     }
     function getBaseLogicalShift(teamId, targetDateStr) {
         return addWeeklyRestMarker(teamId, targetDateStr, getBaseCoreShift(teamId, targetDateStr), getBaseCoreShift);
@@ -1910,15 +1926,32 @@
     function getCurrentCoreShift(teamId, targetDateStr) {
         var key = `${targetDateStr}_${teamId}`;
         var value = appSettings.shiftSwapOverrides?.[key] || getBaseCoreShift(teamId, targetDateStr);
-        return String(value).replace(/^\$/, "");
+        // 正式調換若明確保存「$」休息日出勤標記，必須保留；一般八日循環仍由 addWeeklyRestMarker 自動判斷。
+        return String(value == null ? "" : value);
     }
 
-    // 唯一正式版本：舊手動改班優先；正式試挪覆蓋次之；最後才使用八日標準循環。
-    function getLogicalShift(teamId, targetDateStr) {
+    // 將單日明確設定的 $ 覆蓋套用到最終班別；未設定時沿用既有八日循環自動判斷。
+    function applyRestDutyOverride(teamId, targetDateStr, shiftValue) {
         var key = `${targetDateStr}_${teamId}`;
-        if (appSettings.manualShifts && appSettings.manualShifts[key]) return appSettings.manualShifts[key];
-        var core = getCurrentCoreShift(teamId, targetDateStr);
-        return addWeeklyRestMarker(teamId, targetDateStr, core, getCurrentCoreShift);
+        var map = appSettings.shiftRestDutyOverrides || {};
+        if (!Object.prototype.hasOwnProperty.call(map, key)) return String(shiftValue == null ? "" : shiftValue);
+        var raw = String(shiftValue == null ? "" : shiftValue);
+        var core = raw.replace(/^\$/, "");
+        // 大休／小休不是出勤班，不能掛上 $；true/false 都只控制工作班別。
+        if (!shiftIsWork(core)) return core;
+        return map[key] === true ? "$" + core : core;
+    }
+
+    // 唯一正式版本：舊手動改班優先；正式調換覆蓋次之；最後才使用八日標準循環。
+    // 最後再套用獨立的 $ 設定，讓使用者能只標記／取消休息日出勤而不更改班別。
+    function getLogicalShift(teamId, targetDateStr) {
+        var key = `${targetDateStr}_${teamId}`, logical;
+        if (appSettings.manualShifts && appSettings.manualShifts[key]) logical = appSettings.manualShifts[key];
+        else {
+            var core = getCurrentCoreShift(teamId, targetDateStr);
+            logical = addWeeklyRestMarker(teamId, targetDateStr, core, getCurrentCoreShift);
+        }
+        return applyRestDutyOverride(teamId, targetDateStr, logical);
     }
 
     // 依指定日期與所選班別取得臨時工作；只顯示該班別且日期涵蓋當天的項目。
@@ -2591,7 +2624,7 @@
         });
     }
 
-    // 整期試挪班表：依「上月 16 日至選定月份 15 日」編輯，正式套用後保留可復原紀錄。
+    // 整期調換班表：依「上月 16 日至選定月份 15 日」編輯，正式套用後保留可復原紀錄。
     // 所有檢查依標準排班與暫存變更計算，不讀取實際出勤模式。
     function pad2(value){return String(value).padStart(2,"0");}
     function defaultTrialPeriodMonth(){
@@ -2630,12 +2663,12 @@
         el("shiftSwapModal").classList.add("show");
     }
     function closeShiftSwapModal(){
-        if(trialSwapChanges.length&&!confirm("目前還有尚未正式套用的預排修改，關閉後這些暫存會清除。確定關閉嗎？"))return;
+        if(trialSwapChanges.length&&!confirm("目前還有尚未正式套用的調換預排，關閉後這些暫存會清除。確定關閉嗎？"))return;
         trialSwapChanges=[];lastTrialCheck=null;el("shiftSwapModal").classList.remove("show");
     }
     function changeTrialPeriodMonth(delta){
         var previousMonth=trialPeriodEnd?trialPeriodEnd.slice(0,7):defaultTrialPeriodMonth();
-        if(trialSwapChanges.length&&!confirm("切換班表期別會清除目前尚未套用的預排修改，確定繼續嗎？")){
+        if(trialSwapChanges.length&&!confirm("切換班表期別會清除目前尚未套用的調換預排，確定繼續嗎？")){
             setVal("swapPeriodMonth",previousMonth);return;
         }
         var value=getVal("swapPeriodMonth"),p=value.split("-").map(Number),d=new Date(p[0],p[1]-1+(delta||0),1);
@@ -2645,7 +2678,7 @@
         renderTrialCalendar();renderTrialDateEditor();renderTrialPairs();renderTrialCheck(null);
     }
     function changeTrialSwapTeam(){
-        if(trialSwapChanges.length&&!confirm("切換班別會清除目前尚未套用的預排修改，確定切換嗎？")){
+        if(trialSwapChanges.length&&!confirm("切換班別會清除目前尚未套用的調換預排，確定切換嗎？")){
             var previous=trialSwapChanges[0]?.team||appSettings.myTeam;setVal("swapTeam",previous);return;
         }
         trialSwapChanges=[];lastTrialCheck=null;selectedTrialSwapDate=trialPeriodStart;
@@ -2653,11 +2686,33 @@
     }
     function trialKey(team,date){return `${date}_${team}`;}
     function cleanTrialShift(value){return String(value==null?"":value).replace(/^\$/ ,"").replace(/^調:/,"").trim();}
+    function trialShiftCoreValue(value){return String(value == null ? "" : value).replace(/^\$/, "").trim();}
+    function trialHasRestDuty(value){return String(value == null ? "" : value).trim().startsWith("$");}
+    function trialRestDutyForDate(team,date){
+        var draft=trialSwapChanges.find(x=>x.team===team&&x.date===date);
+        if(draft)return !!draft.afterRestDuty && shiftIsWork(draft.after);
+        return trialHasRestDuty(getLogicalShift(team,date));
+    }
     function trialShiftForDate(team,date){
         var p=trialSwapChanges.find(x=>x.team===team&&x.date===date);
-        if(p)return String(p.after||"");
-        // getLogicalShift 讀取既有正式調班與標準循環，不讀取實際出勤。
-        return String(getLogicalShift(team,date)||"").replace(/^調:/,"");
+        if(p){
+            var core=trialShiftCoreValue(p.after);
+            return (p.afterRestDuty && shiftIsWork(core) ? "$" : "") + core;
+        }
+        return String(getLogicalShift(team,date)||"");
+    }
+    function toggleTrialRestDutyControl(){
+        var shift=getVal("swapTargetShift"),checkbox=el("swapRestDayDuty");
+        if(!checkbox)return;
+        var enabled=shiftIsWork(shift);
+        checkbox.disabled=!enabled;
+        if(!enabled)checkbox.checked=false;
+        var note=el("swapRestDayDutyHint");
+        if(note)note.textContent=enabled?"勾選代表該日為休息日出勤（$）；不更換班別也可以單獨設定。":"大休／小休屬休假，不適用 $ 休息日出勤。";
+    }
+    function formatTrialShiftLabel(value){
+        var raw=String(value||"");
+        return (raw.trim().startsWith("$")?"$ ":"")+formatShiftLabel(raw);
     }
     function trialShiftChoice(value){
         var group=getShiftGroup(value);
@@ -2680,9 +2735,12 @@
         for(var date=trialPeriodStart;date<=trialPeriodEnd;date=dateAdd(date,1)){
             var key=trialKey(team,date),draft=trialSwapChanges.find(x=>x.team===team&&x.date===date);
             var manual=!!(appSettings.manualShifts&&appSettings.manualShifts[key]);
-            var shown=draft?draft.after:getLogicalShift(team,date),isSelected=date===selectedTrialSwapDate;
-            var shiftText=formatShiftLabel(shown);
-            html+=`<button type="button" class="trial-day-cell${draft?' changed':''}${manual?' manual':''}${isSelected?' selected':''}" onclick="selectTrialSwapDate('${date}')" aria-label="${htmlEscape(date)} ${htmlEscape(shiftText)}${manual?'，已有手動改班':''}"><span class="trial-day-number">${Number(date.slice(-2))}</span><span class="trial-day-shift">${htmlEscape(shiftText)}</span>${draft?'<span class="trial-day-arrow">已預排</span>':manual?'<span class="trial-day-arrow">手動改班</span>':''}</button>`;
+            var shown=trialShiftForDate(team,date),isSelected=date===selectedTrialSwapDate;
+            var shiftText=formatTrialShiftLabel(shown),badgeClass=getBadgeClass(shown),badge=badgeStyles[badgeClass]||badgeStyles["shift-rest"];
+            var cellBorder=manual?"2px dashed #6B7280":draft?"2px solid #0F766E":(badge.border||"1px solid var(--border-color)");
+            var marked=String(shown||"").trim().startsWith("$");
+            var shiftMarkup=(marked?'<span class="trial-rest-duty-marker">$</span>':'')+htmlEscape(formatShiftLabel(shown));
+            html+=`<button type="button" class="trial-day-cell${draft?' changed':''}${manual?' manual':''}${isSelected?' selected':''}" style="background:${badge.bg};color:${badge.fg};border:${cellBorder};" onclick="selectTrialSwapDate('${date}')" aria-label="${htmlEscape(date)} ${htmlEscape(shiftText)}${manual?'，已有手動改班':''}"><span class="trial-day-number">${Number(date.slice(-2))}</span><span class="trial-day-shift">${shiftMarkup}</span>${draft?'<span class="trial-day-arrow">已預排</span>':manual?'<span class="trial-day-arrow">手動改班</span>':''}</button>`;
         }
         box.innerHTML=html;
     }
@@ -2691,31 +2749,54 @@
         if(!selectedTrialSwapDate){box.innerHTML='<div class="journal-note">請點選上方日期。</div>';return;}
         var team=getVal("swapTeam")||appSettings.myTeam,date=selectedTrialSwapDate,key=trialKey(team,date);
         var draft=trialSwapChanges.find(x=>x.team===team&&x.date===date);
-        var baseline=draft?draft.before:getLogicalShift(team,date),shown=draft?draft.after:baseline;
+        var baseline=draft?draft.before:getLogicalShift(team,date),shown=trialShiftForDate(team,date);
         var manual=!!(appSettings.manualShifts&&appSettings.manualShifts[key]);
-        if(manual){
-            box.innerHTML=`<div class="trial-date-editor-title">${htmlEscape(date)}　${htmlEscape(team)}班</div><div class="trial-date-editor-meta">目前班別：<strong>${htmlEscape(formatShiftLabel(baseline))}</strong></div><div class="check-line check-wait">此日期已有系統手動改班設定。為避免覆蓋原有設定，請先到原手動改班功能處理，再進行試挪。</div>`;
-            return;
-        }
-        var options=["早班","午班","晚班","公假","大休","小休"],selected=trialShiftChoice(shown);
-        box.innerHTML=`<div class="trial-date-editor-title">${htmlEscape(date)}　${htmlEscape(team)}班</div><div class="trial-date-editor-meta">原本班別：<strong>${htmlEscape(formatShiftLabel(baseline))}</strong>${draft?`　目前預排：<strong>${htmlEscape(formatShiftLabel(draft.after))}</strong>`:""}</div><label class="field-label" for="swapTargetShift">調整為</label><select id="swapTargetShift">${options.map(v=>`<option value="${v}" ${v===selected?'selected':''}>${v}</option>`).join("")}</select><label class="field-label" for="swapReason">調整原因（選填）</label><input type="text" id="swapReason" maxlength="120" placeholder="例如：出差、受訓、工作調度" value="${htmlEscape(draft?.reason||"")}"><div class="trial-date-editor-actions"><button type="button" class="btn" style="background:#0F766E;" onclick="saveTrialDateChange()">${draft?'更新此日預排':'加入此日預排'}</button>${draft?'<button type="button" class="btn" style="background:#6B7280;" onclick="removeTrialSwapChange(\''+date+'\')">取消此日預排</button>':''}</div>`;
+        var shownCore=trialShiftCoreValue(shown),selected=trialShiftChoice(shown);
+        var dutyChecked=trialHasRestDuty(shown);
+        var options=["早班","午班","晚班","公假","大休","小休"];
+        var shiftControl=manual
+            ? `<div class="trial-date-editor-meta">目前班別：<strong>${htmlEscape(formatTrialShiftLabel(shown))}</strong><div class="journal-note">此日期已有手動改班；為保護原設定，只能獨立調整 $，不能更換班別。</div></div>`
+            : `<label class="field-label" for="swapTargetShift">調整班別</label><select id="swapTargetShift" onchange="toggleTrialRestDutyControl()">${options.map(v=>`<option value="${v}" ${v===selected?'selected':''}>${v}</option>`).join("")}</select>`;
+        var beforeLabel=formatTrialShiftLabel(baseline);
+        var afterLabel=formatTrialShiftLabel(shown);
+        box.innerHTML=`<div class="trial-date-editor-title">${htmlEscape(date)}　${htmlEscape(team)}班</div><div class="trial-date-editor-meta">原本班別：<strong>${htmlEscape(beforeLabel)}</strong>${draft?`　目前預排：<strong>${htmlEscape(afterLabel)}</strong>`:""}</div>${shiftControl}<label class="trial-rest-duty-option"><input type="checkbox" id="swapRestDayDuty" ${dutyChecked?'checked':''} ${shiftIsWork(shownCore)?'':'disabled'}> <strong>休息日出勤（$）</strong></label><div id="swapRestDayDutyHint" class="journal-note">${shiftIsWork(shownCore)?"勾選代表該日為休息日出勤（$）；不更換班別也可以單獨設定。":"大休／小休屬休假，不適用 $ 休息日出勤。"}</div><label class="field-label" for="swapReason">調整原因（選填）</label><input type="text" id="swapReason" maxlength="120" placeholder="例如：休息日出勤、出差、受訓、工作調度" value="${htmlEscape(draft?.reason||"")}"><div class="trial-date-editor-actions"><button type="button" class="btn" style="background:#0F766E;" onclick="saveTrialDateChange()">${draft?'更新此日預排':'加入此日預排'}</button>${draft?'<button type="button" class="btn" style="background:#6B7280;" onclick="removeTrialSwapChange(\''+date+'\')">取消此日預排</button>':''}</div>`;
+        if(!manual)toggleTrialRestDutyControl();
     }
     function saveTrialDateChange(){
-        var team=getVal("swapTeam")||appSettings.myTeam,date=selectedTrialSwapDate,target=getVal("swapTargetShift"),reason=getVal("swapReason").trim();
+        var team=getVal("swapTeam")||appSettings.myTeam,date=selectedTrialSwapDate,reason=getVal("swapReason")?.trim()||"";
         if(!date||date<trialPeriodStart||date>trialPeriodEnd)return alert("請先選擇本期班表中的日期。");
-        var key=trialKey(team,date);
-        if(appSettings.manualShifts?.[key])return alert("此日期已有系統手動改班設定，為避免覆蓋暫時不能試挪。");
+        var key=trialKey(team,date),manual=!!(appSettings.manualShifts&&appSettings.manualShifts[key]);
         var index=trialSwapChanges.findIndex(x=>x.team===team&&x.date===date);
         var existing=index>=0?trialSwapChanges[index]:null;
-        var before=existing?existing.before:cleanTrialShift(getLogicalShift(team,date));
-        if(getShiftGroup(before)===getShiftGroup(target)){
+        var before=existing?existing.before:getLogicalShift(team,date);
+        var target=manual?trialShiftChoice(before):getVal("swapTargetShift");
+        if(!target)return alert("請先選擇調整後的班別。");
+        var beforeCore=trialShiftCoreValue(before);
+        // 若只是同一類班別的 $ 設定，保留原本細分班別（例如早班1、晚班2），不覆寫八日循環細節。
+        var afterCore=getShiftGroup(before)===getShiftGroup(target)?beforeCore:target;
+        var checkbox=el("swapRestDayDuty");
+        var afterRestDuty=shiftIsWork(afterCore)&&!!(checkbox&&checkbox.checked);
+        var beforeRestDuty=trialHasRestDuty(before);
+        var shiftChanged=afterCore!==beforeCore;
+        var markerChanged=afterRestDuty!==beforeRestDuty;
+        if(manual&&shiftChanged)return alert("此日期已有手動改班，只能設定或取消 $，不能更換班別。");
+        if(!shiftChanged&&!markerChanged){
             if(existing)trialSwapChanges.splice(index,1);
             lastTrialCheck=null;renderTrialCalendar();renderTrialDateEditor();renderTrialPairs();renderTrialCheck(null);
-            return alert("選擇的班別與原班別相同，已取消這一天的預排變更。");
+            return alert("班別及 $ 標記都沒有變更，已取消這一天的預排。");
         }
         var beforeOverrideExists=existing?existing.beforeOverrideExists:Object.prototype.hasOwnProperty.call(appSettings.shiftSwapOverrides,key);
         var beforeOverrideValue=existing?existing.beforeOverrideValue:(beforeOverrideExists?appSettings.shiftSwapOverrides[key]:null);
-        var change={team:team,date:date,before:before,after:target,reason:reason||"未填寫",beforeOverrideExists:beforeOverrideExists,beforeOverrideValue:beforeOverrideValue};
+        var dutyMap=appSettings.shiftRestDutyOverrides||{};
+        var beforeRestDutyOverrideExists=existing?!!existing.beforeRestDutyOverrideExists:Object.prototype.hasOwnProperty.call(dutyMap,key);
+        var beforeRestDutyOverrideValue=existing?existing.beforeRestDutyOverrideValue:(beforeRestDutyOverrideExists?dutyMap[key]:null);
+        var change={
+            team:team,date:date,before:before,after:afterCore,reason:reason|| (markerChanged?"調整休息日出勤標記":"未填寫"),
+            beforeOverrideExists:beforeOverrideExists,beforeOverrideValue:beforeOverrideExists?beforeOverrideValue:null,
+            beforeRestDuty:beforeRestDuty,afterRestDuty:afterRestDuty,
+            beforeRestDutyOverrideExists:beforeRestDutyOverrideExists,beforeRestDutyOverrideValue:beforeRestDutyOverrideValue,
+            shiftChanged:shiftChanged
+        };
         if(existing)trialSwapChanges[index]=change;else trialSwapChanges.push(change);
         trialSwapChanges.sort((a,b)=>a.date.localeCompare(b.date));
         lastTrialCheck=null;renderTrialCalendar();renderTrialDateEditor();renderTrialPairs();renderTrialCheck(null);
@@ -2726,14 +2807,23 @@
     }
     function clearTrialSwapChanges(){
         if(!trialSwapChanges.length)return;
-        if(!confirm("確定清除本次所有尚未正式套用的預排修改？"))return;
+        if(!confirm("確定清除本次所有尚未正式套用的調換預排？"))return;
         trialSwapChanges=[];lastTrialCheck=null;renderTrialCalendar();renderTrialDateEditor();renderTrialPairs();renderTrialCheck(null);
+    }
+    function formatTrialChangeValue(shift,restDuty){
+        var core=trialShiftCoreValue(shift);
+        return formatTrialShiftLabel((restDuty&&shiftIsWork(core)?"$":"")+core);
     }
     function renderTrialPairs(){
         var box=el("trialSwapPairs");if(!box)return;
-        if(!trialSwapChanges.length){box.innerHTML='<div class="journal-note">尚未加入任何預排修改。請點選上方日期，逐日選擇要更換的班別。</div>';return;}
-        var rows=trialSwapChanges.map(p=>`<div class="trial-change-row"><strong>${htmlEscape(p.date)}</strong>：${htmlEscape(formatShiftLabel(p.before))} → <strong>${htmlEscape(formatShiftLabel(p.after))}</strong><div class="journal-note">原因：${htmlEscape(p.reason)}</div><button type="button" class="subtle-btn" onclick="removeTrialSwapChange('${p.date}')">取消此日預排</button></div>`).join("");
-        box.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><strong>本期預排修改（${trialSwapChanges.length} 日）</strong><button type="button" class="subtle-btn" onclick="clearTrialSwapChanges()">清除全部預排</button></div>${rows}`;
+        if(!trialSwapChanges.length){box.innerHTML='<div class="journal-note">尚未加入任何班別或 $ 預排。可只勾選休息日出勤（$），不必更換班別。</div>';return;}
+        var rows=trialSwapChanges.map(p=>{
+            var before=formatTrialChangeValue(p.before,trialHasRestDuty(p.before));
+            var after=formatTrialChangeValue(p.after,p.afterRestDuty);
+            var onlyDollar=!p.shiftChanged;
+            return `<div class="trial-change-row"><strong>${htmlEscape(p.date)}</strong>：${htmlEscape(before)} → <strong>${htmlEscape(after)}</strong><div class="journal-note">${onlyDollar?"僅調整 $ 休息日出勤標記":(p.afterRestDuty?"已更換班別並設定 $ 休息日出勤":"已更換班別") }；原因：${htmlEscape(p.reason||"未填寫")}</div><button type="button" class="subtle-btn" onclick="removeTrialSwapChange('${p.date}')">取消此日預排</button></div>`;
+        }).join("");
+        box.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><strong>本期預排（${trialSwapChanges.length} 日）</strong><button type="button" class="subtle-btn" onclick="clearTrialSwapChanges()">清除全部預排</button></div>${rows}`;
     }
     function parseClock(s){if(!/^\d{2}:\d{2}$/.test(s||""))return null;var p=s.split(":").map(Number);if(p[0]>23||p[1]>59)return null;return p[0]*60+p[1];}
     function getShiftGroup(shift){
@@ -2749,6 +2839,29 @@
     function shiftIsWork(shift){
         var s=String(shift||"").replace(/^\$/ ,"").replace(/^調:/,"").trim();
         return s!=="大休"&&s!=="小休";
+    }
+    // 一例一休週檢查：大休與小休各一日可通過；若僅有一個休假日，需另有 $ 休息日出勤標記。
+    function evaluateTrialWeekRest(team,weekStart){
+        var big=0,small=0,restDayDuty=0;
+        for(var j=0;j<7;j++){
+            var rawShift=String(trialShiftForDate(team,dateAdd(weekStart,j))||"");
+            var shift=cleanTrialShift(rawShift);
+            if(shift==="大休")big++;
+            if(shift==="小休")small++;
+            if(rawShift.trim().startsWith("$") && shiftIsWork(rawShift))restDayDuty++;
+        }
+        var totalRest=big+small;
+        // 每週 $ 最多一日；2 日以上一律不通過。休假安排仍須為大休+小休，
+        // 或只有一個大休／小休且同週另有且僅有一個 $ 休息日出勤。
+        var restPatternOk=(big>0&&small>0)||(totalRest===1&&restDayDuty===1);
+        return {
+            big:big,
+            small:small,
+            restDayDuty:restDayDuty,
+            restPatternOk:restPatternOk,
+            tooManyRestDayDuty:restDayDuty>1,
+            ok:restDayDuty<=1&&restPatternOk
+        };
     }
     function makeLocalDateTime(dateStr,clock,dayOffset){
         var mins=parseClock(clock);if(mins===null)return null;
@@ -2776,7 +2889,7 @@
         return {date:dateStr,shift:shift,start:start,end:end,group:group};
     }
     function runShiftCompliance(){
-        if(!trialSwapChanges.length)return {ok:false,items:[{type:"wait",text:"請先點選日期並加入至少一筆預排修改。"}]};
+        if(!trialSwapChanges.length)return {ok:false,items:[{type:"wait",text:"請先點選日期並加入至少一筆調換預排。"}]};
         var team=getVal("swapTeam")||appSettings.myTeam;
         if(trialSwapChanges.some(p=>p.team!==team))return {ok:false,items:[{type:"fail",text:"本次預排含有其他班別，請重新選擇或清除預排。"}]};
         if(!refreshTrialPeriodBounds())return {ok:false,items:[{type:"wait",text:"請先選擇有效的班表期別。"}]};
@@ -2799,17 +2912,17 @@
         firstDate.setDate(firstDate.getDate()-(firstDate.getDay()===0?6:firstDate.getDay()-1));
         var weekStart=formatDateToYYYYMMDD(firstDate),badWeeks=[];
         while(weekStart<=end){
-            var big=0,small=0;
-            for(var j=0;j<7;j++){
-                var sh=cleanTrialShift(trialShiftForDate(team,dateAdd(weekStart,j)));
-                if(sh.includes("大休"))big++;
-                if(sh.includes("小休"))small++;
+            var weekRest=evaluateTrialWeekRest(team,weekStart);
+            if(!weekRest.ok){
+                var reasons=[];
+                if(weekRest.tooManyRestDayDuty)reasons.push("$ 超過每週 1 日上限");
+                if(!weekRest.restPatternOk)reasons.push("休假日不足或缺少必要的 $ 休息日出勤");
+                badWeeks.push(`${weekStart}～${dateAdd(weekStart,6)}（大休 ${weekRest.big} 日、小休 ${weekRest.small} 日、$ ${weekRest.restDayDuty} 日；${reasons.join("、")}）`);
             }
-            if(!big||!small)badWeeks.push(`${weekStart}～${dateAdd(weekStart,6)}（大休 ${big} 日、小休 ${small} 日）`);
             weekStart=dateAdd(weekStart,7);
         }
-        if(badWeeks.length){failed=true;items.push({type:"fail",text:`一例一休：以下與本期相交的完整週期缺少大休或小休：${badWeeks.join("；")}`});}
-        else items.push({type:"pass",text:"一例一休：符合。已檢查本期涵蓋的所有完整週一至週日週期；每週至少各有一個大休及小休，公假不抵休。"});
+        if(badWeeks.length){failed=true;items.push({type:"fail",text:`一例一休：以下與本期相交的完整週期，既沒有大休及小休各一日，也沒有「一個大休或小休＋$ 休息日出勤」的安排：${badWeeks.join("；")}`});}
+        else items.push({type:"pass",text:"一例一休：符合。每個完整週一至週日週期，若同時有大休及小休即符合；若僅有一個大休或小休，另有 $ 休息日出勤標記也視為符合。"});
 
         // 8 小時間隔：前後各多讀七日，以涵蓋跨日班別及期別銜接。
         var publicRules={start:"08:30",end:"17:00"};
@@ -2825,7 +2938,7 @@
         var intervalProblems=[];
         for(var z=1;z<intervals.length;z++){
             var prev=intervals[z-1],next=intervals[z];
-            // 只回報至少一個班別日期落在本期內的相鄰組合；避免把期外既有問題誤算成本次試挪結果。
+            // 只回報至少一個班別日期落在本期內的相鄰組合；避免把期外既有問題誤算成本次調換結果。
             var prevInPeriod=prev.date>=start&&prev.date<=end,nextInPeriod=next.date>=start&&next.date<=end;
             if(!prevInPeriod&&!nextInPeriod)continue;
             var hours=(next.start-prev.end)/3600000;
@@ -2849,32 +2962,49 @@
         btn.disabled=!result.ok;btn.style.opacity=result.ok?"1":".5";
     }
     function applyTrialShiftPlan(){
-        if(!trialSwapChanges.length)return alert("目前沒有預排修改。");
+        if(!trialSwapChanges.length)return alert("目前沒有班別或 $ 預排。");
         if(!lastTrialCheck||!lastTrialCheck.ok)return alert("請先完成並通過整期排班檢查。");
         var team=getVal("swapTeam")||appSettings.myTeam;
-        // 防止檢查後有人改動資料，套用前再次確認每一日的原班別仍一致。
+        // 防止檢查後資料改動；既有手動改班日仍可單獨調整 $，但不能覆寫手動班別。
         for(var i=0;i<trialSwapChanges.length;i++){
-            var p=trialSwapChanges[i],key=trialKey(team,p.date);
-            if(appSettings.manualShifts?.[key])return alert(`${p.date} 已有手動改班設定，請先處理後重新檢查。`);
-            if(cleanTrialShift(getLogicalShift(team,p.date))!==cleanTrialShift(p.before))return alert(`${p.date} 的原班別已經改變，為避免覆蓋新資料，請移除該日預排後重新設定。`);
+            var p=trialSwapChanges[i],key=trialKey(team,p.date),current=String(getLogicalShift(team,p.date)||"");
+            if(appSettings.manualShifts?.[key]&&p.shiftChanged)return alert(`${p.date} 已有手動改班設定，只能調整 $，不能更換班別。`);
+            if(trialShiftCoreValue(current)!==trialShiftCoreValue(p.before)||trialHasRestDuty(current)!==trialHasRestDuty(p.before))return alert(`${p.date} 的原班別或 $ 狀態已經改變，為避免覆蓋新資料，請移除該日預排後重新設定。`);
         }
-        if(!confirm(`確定正式套用 ${team} 班 ${trialPeriodStart} 至 ${trialPeriodEnd} 的 ${trialSwapChanges.length} 筆日期調整？\n只修改指定日期，保留標準八日循環及其他日期不變。`))return;
+        var dollarCount=0;
+        trialSwapChanges.forEach(p=>{if(p.afterRestDuty&&shiftIsWork(p.after))dollarCount++;});
+        if(!confirm(`確定正式套用 ${team} 班 ${trialPeriodStart} 至 ${trialPeriodEnd} 的 ${trialSwapChanges.length} 筆日期預排（含班別及 $ 標記）？\n只修改有預排的日期，未修改日期及八日標準循環保持不變。`))return;
         var oldOverrides=JSON.parse(JSON.stringify(appSettings.shiftSwapOverrides||{}));
+        var oldDutyOverrides=JSON.parse(JSON.stringify(appSettings.shiftRestDutyOverrides||{}));
         var oldRecords=JSON.parse(JSON.stringify(appSettings.shiftSwapRecords||[]));
         var now=new Date().toISOString(),batchId="shift_period_"+Date.now()+"_"+Math.random().toString(36).slice(2,7);
-        var changes=trialSwapChanges.map(p=>({
-            date:p.date,before:p.before,after:p.after,reason:p.reason,
-            beforeOverrideExists:!!p.beforeOverrideExists,beforeOverrideValue:p.beforeOverrideExists?p.beforeOverrideValue:null,
-            afterOverrideValue:p.after
-        }));
-        changes.forEach(p=>{appSettings.shiftSwapOverrides[trialKey(team,p.date)]=p.after;});
+        var changes=trialSwapChanges.map(p=>{
+            var key=trialKey(team,p.date),beforeOverrideExists=!!p.beforeOverrideExists;
+            var afterOverrideExists=p.shiftChanged?true:beforeOverrideExists;
+            var afterOverrideValue=p.shiftChanged?p.after:(beforeOverrideExists?p.beforeOverrideValue:null);
+            return {
+                date:p.date,before:p.before,after:p.after,reason:p.reason,
+                shiftChanged:!!p.shiftChanged,
+                beforeOverrideExists:beforeOverrideExists,beforeOverrideValue:beforeOverrideExists?p.beforeOverrideValue:null,
+                afterOverrideExists:afterOverrideExists,afterOverrideValue:afterOverrideValue,
+                beforeRestDuty:!!p.beforeRestDuty,afterRestDuty:!!p.afterRestDuty,
+                beforeRestDutyOverrideExists:!!p.beforeRestDutyOverrideExists,
+                beforeRestDutyOverrideValue:p.beforeRestDutyOverrideExists?p.beforeRestDutyOverrideValue:null,
+                afterRestDutyOverrideExists:true,afterRestDutyOverrideValue:!!p.afterRestDuty
+            };
+        });
+        changes.forEach(p=>{
+            var key=trialKey(team,p.date);
+            if(p.shiftChanged)appSettings.shiftSwapOverrides[key]=p.after;
+            appSettings.shiftRestDutyOverrides[key]=p.afterRestDuty;
+        });
         appSettings.shiftSwapRecords.push({id:batchId,type:"period",team:team,periodStart:trialPeriodStart,periodEnd:trialPeriodEnd,changes:changes,adjustedAt:now,undoneAt:"",revertedDates:[]});
         if(!saveExtendedAppData()){
-            appSettings.shiftSwapOverrides=oldOverrides;appSettings.shiftSwapRecords=oldRecords;return;
+            appSettings.shiftSwapOverrides=oldOverrides;appSettings.shiftRestDutyOverrides=oldDutyOverrides;appSettings.shiftSwapRecords=oldRecords;return;
         }
         trialSwapChanges=[];lastTrialCheck=null;
         renderAppSafe();renderMonthTable();renderShiftSwapHistory();renderTrialCalendar();renderTrialDateEditor();renderTrialPairs();renderTrialCheck(null);
-        alert(`已正式套用 ${changes.length} 筆班別調整，完整變更紀錄已保存；日後可從「過去調班紀錄」整期復原。`);
+        alert(`已正式套用 ${changes.length} 筆日期預排（其中 ${dollarCount} 日設定 $）；完整變更紀錄已保存，可從「過去調班紀錄」復原。`);
     }
     function undoShiftSwapRecord(recordId){
         var record=(appSettings.shiftSwapRecords||[]).find(r=>String(r.id)===String(recordId));
@@ -2892,23 +3022,38 @@
         if(!todo.length)return alert("這筆紀錄的日期都已復原。");
         if(!confirm(`確定復原 ${record.team} 班這筆調整？\n將嘗試還原 ${todo.length} 個日期的原班別；若日期後來又被其他設定修改，系統會跳過以免覆蓋較新的資料。`))return;
         var oldOverrides=JSON.parse(JSON.stringify(appSettings.shiftSwapOverrides||{}));
+        var oldDutyOverrides=JSON.parse(JSON.stringify(appSettings.shiftRestDutyOverrides||{}));
         var oldReverted=JSON.parse(JSON.stringify(record.revertedDates||[])),oldUndoneAt=record.undoneAt||"";
         var restored=[],skipped=[];
         todo.forEach(c=>{
             var key=trialKey(record.team,c.date),has=Object.prototype.hasOwnProperty.call(appSettings.shiftSwapOverrides,key),current=has?appSettings.shiftSwapOverrides[key]:null;
-            if(appSettings.manualShifts?.[key]){skipped.push(c.date+"（已有手動改班）");return;}
-            if(!has||String(current)!==String(c.afterOverrideValue!=null?c.afterOverrideValue:c.after)){
+            if(appSettings.manualShifts?.[key]&&c.shiftChanged!==false){skipped.push(c.date+"（已有手動改班，不能復原班別調整）");return;}
+            // 新版紀錄明確保存套用後的 shift override 是否存在；舊版紀錄沿用原本「一定存在」的判斷。
+            var expectedShiftExists=Object.prototype.hasOwnProperty.call(c,"afterOverrideExists")?!!c.afterOverrideExists:true;
+            if(has!==expectedShiftExists||(has&&String(current)!==String(c.afterOverrideValue!=null?c.afterOverrideValue:c.after))){
                 skipped.push(c.date+"（目前班別已不是這筆紀錄所套用的班別）");return;
+            }
+            // 新版紀錄同時檢查 $ 覆蓋狀態，避免復原時蓋掉後續的休息日出勤修改。
+            var dutyMap=appSettings.shiftRestDutyOverrides||{};
+            if(Object.prototype.hasOwnProperty.call(c,"afterRestDutyOverrideExists")){
+                var hasDuty=Object.prototype.hasOwnProperty.call(dutyMap,key),currentDuty=hasDuty?dutyMap[key]:null;
+                if(hasDuty!==!!c.afterRestDutyOverrideExists||(hasDuty&&currentDuty!==c.afterRestDutyOverrideValue)){
+                    skipped.push(c.date+"（$ 休息日出勤標記已被後續修改）");return;
+                }
             }
             if(c.beforeOverrideExists){appSettings.shiftSwapOverrides[key]=c.beforeOverrideValue;}
             else if(legacy){appSettings.shiftSwapOverrides[key]=c.before;}
             else{delete appSettings.shiftSwapOverrides[key];}
+            if(Object.prototype.hasOwnProperty.call(c,"beforeRestDutyOverrideExists")){
+                if(c.beforeRestDutyOverrideExists)appSettings.shiftRestDutyOverrides[key]=c.beforeRestDutyOverrideValue;
+                else delete appSettings.shiftRestDutyOverrides[key];
+            }
             restored.push(c.date);
         });
         record.revertedDates=Array.from(new Set([...(record.revertedDates||[]),...restored]));
         if(record.revertedDates.length>=changes.length)record.undoneAt=new Date().toISOString();
         if(restored.length&&!saveExtendedAppData()){
-            appSettings.shiftSwapOverrides=oldOverrides;record.revertedDates=oldReverted;record.undoneAt=oldUndoneAt;return;
+            appSettings.shiftSwapOverrides=oldOverrides;appSettings.shiftRestDutyOverrides=oldDutyOverrides;record.revertedDates=oldReverted;record.undoneAt=oldUndoneAt;return;
         }
         renderAppSafe();renderMonthTable();renderShiftSwapHistory();
         var message=`已復原 ${restored.length} 個日期。`;
@@ -2921,12 +3066,18 @@
         box.innerHTML=rows.map(r=>{
             var undone=!!r.undoneAt,remaining=Array.isArray(r.changes)?r.changes.length-(r.revertedDates||[]).length:0;
             if(Array.isArray(r.changes)){
-                var detail=r.changes.map(c=>`<div class="trial-history-change">${htmlEscape(c.date)}：${htmlEscape(formatShiftLabel(c.before))} → <strong>${htmlEscape(formatShiftLabel(c.after))}</strong>（${htmlEscape(c.reason||"未填寫")}）${(r.revertedDates||[]).includes(c.date)?'<span class="trial-history-status undone">已復原</span>':''}</div>`).join("");
+                var detail=r.changes.map(c=>{
+                    var beforeText=formatTrialChangeValue(c.before,trialHasRestDuty(c.before));
+                    var afterDuty=Object.prototype.hasOwnProperty.call(c,"afterRestDuty")?!!c.afterRestDuty:trialHasRestDuty(c.after);
+                    var afterText=formatTrialChangeValue(c.after,afterDuty);
+                    var note=c.shiftChanged===false?"僅調整 $ 標記":(afterDuty?"班別／$ 均有設定":"班別調整");
+                    return `<div class="trial-history-change">${htmlEscape(c.date)}：${htmlEscape(beforeText)} → <strong>${htmlEscape(afterText)}</strong>（${htmlEscape(note)}；${htmlEscape(c.reason||"未填寫")}）${(r.revertedDates||[]).includes(c.date)?'<span class="trial-history-status undone">已復原</span>':''}</div>`;
+                }).join("");
                 return `<div class="trial-pair"><strong>${htmlEscape(r.team)}班｜${htmlEscape(r.periodStart||"")} ～ ${htmlEscape(r.periodEnd||"")}</strong><span class="trial-history-status ${undone?'undone':''}">${undone?'整期已復原':`調整 ${r.changes.length} 日，尚可復原 ${remaining} 日`}</span><details style="margin-top:7px;"><summary>查看本次 ${r.changes.length} 筆日期變更</summary>${detail}</details><div class="journal-note">套用時間：${htmlEscape(new Date(r.adjustedAt).toLocaleString("zh-TW"))}</div>${!undone&&remaining?`<button type="button" class="subtle-btn" onclick="undoShiftSwapRecord('${htmlEscape(r.id)}')">復原這期班表</button>`:''}</div>`;
             }
             var oldTotal=(r.dateA?1:0)+(r.dateB?1:0),oldDone=(r.revertedDates||[]).length;
             var oldStatus=undone?'<span class="trial-history-status undone">已復原</span>':(oldDone?`<span class="trial-history-status undone">已復原 ${oldDone}/${oldTotal} 日</span>`:'');
-            var oldDetails=`${r.dateA?`<div>${htmlEscape(r.dateA)}：${htmlEscape(formatShiftLabel(r.beforeA))} → <strong>${htmlEscape(formatShiftLabel(r.afterA))}</strong></div>`:''}${r.dateB?`<div>${htmlEscape(r.dateB)}：${htmlEscape(formatShiftLabel(r.beforeB))} → <strong>${htmlEscape(formatShiftLabel(r.afterB))}</strong></div>`:''}`;
+            var oldDetails=`${r.dateA?`<div>${htmlEscape(r.dateA)}：${htmlEscape(formatTrialShiftLabel(r.beforeA))} → <strong>${htmlEscape(formatTrialShiftLabel(r.afterA))}</strong></div>`:''}${r.dateB?`<div>${htmlEscape(r.dateB)}：${htmlEscape(formatTrialShiftLabel(r.beforeB))} → <strong>${htmlEscape(formatTrialShiftLabel(r.afterB))}</strong></div>`:''}`;
             return `<div class="trial-pair"><strong>${htmlEscape(r.team)}班｜舊版調班紀錄</strong>${oldStatus}${oldDetails}<div class="journal-note">原因：${htmlEscape(r.reason||"未填寫")}；調整時間：${htmlEscape(new Date(r.adjustedAt).toLocaleString("zh-TW"))}</div>${!undone&&oldDone<oldTotal?`<button type="button" class="subtle-btn" onclick="undoShiftSwapRecord('${htmlEscape(r.id)}')">復原這筆舊版調班</button>`:''}</div>`;
         }).join("");
     }
